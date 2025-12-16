@@ -203,15 +203,15 @@
     };
 
     # https://wiki.nixos.org/wiki/Creating_a_NixOS_live_CD
-    packages = forSystems (system: let
-      pkgs = mkPackages system inputs.unstable;
-    in {
-      davis = pkgs.callPackage ./nix/packages/by-name/davis/package.nix {};
-      depp = pkgs.callPackage ./nix/packages/by-name/depp/package.nix {};
-      fcitx5-black-simplicity = pkgs.callPackage ./nix/packages/by-name/fcitx5-black-simplicity/package.nix {};
-      foxessprom = pkgs.callPackage ./nix/packages/by-name/foxessprom/package.nix {};
-      sonicradio = pkgs.callPackage ./nix/packages/by-name/sonicradio/package.nix {};
-      tlm = pkgs.callPackage ./nix/packages/by-name/tlm/package.nix {};
-    });
+    packages = let
+      inherit (lib.filesystem) packagesFromDirectoryRecursive;
+    in
+      forSystems (system: let
+        pkgs = mkPackages system inputs.unstable;
+      in
+        packagesFromDirectoryRecursive {
+          inherit (pkgs) callPackage;
+          directory = ./nix/packages/by-name;
+        });
   };
 }
