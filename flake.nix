@@ -176,14 +176,12 @@
           [
             ./etc/aether
           ]
-          ++ (map mkHome [
-            {
-              user = "git";
-              spec = [
-                ./dot/aether
-              ];
-            }
-          ]);
+          ++ (mkHome {
+            user = "git";
+            spec = [
+              ./dot/aether
+            ];
+          });
       };
 
       albedo = mkSystem {
