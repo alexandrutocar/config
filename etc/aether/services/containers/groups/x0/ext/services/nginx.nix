@@ -7,7 +7,7 @@
 #
 # ────────────────────────────────────────────────────────────────────────
 {container, ...}: let
-  inherit (container) self x0-fin x0-flx x0-git x0-pim x0-ins;
+  inherit (container) self x0-fin x0-flx x0-pim x0-ins;
 in {
   services.nginx = {
     enable = true;
@@ -49,25 +49,6 @@ in {
             extraConfig = ''
               default_type application/x-apple-aspen-config;
             '';
-          };
-        };
-      };
-
-      "repos.aether.ip" = {
-        # ────────────────────────────────────────────────────────────────────────
-        # TODO: Compile the right chain.pem.
-        # ────────────────────────────────────────────────────────────────────────
-        # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
-
-        sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
-        sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
-
-        forceSSL = true;
-        kTLS = true;
-
-        locations = {
-          "/" = {
-            proxyPass = "http://${x0-git.address}:8080";
           };
         };
       };
