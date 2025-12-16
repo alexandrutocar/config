@@ -1,6 +1,5 @@
 .devenv
 .direnv
-.vscode
-result/
+/result
 
 .pre-commit-config.yaml
