@@ -1,0 +1,15 @@
+{
+    "CN": "AETHER Root X0",
+    "key": {
+        "algo": "rsa",
+        "size": 4096
+    },
+    "names": [
+        {
+            "C": "DE",
+            "L": "Cologne",
+            "O": "AETHER Group®",
+            "ST": "North Rhine-Westphalia"
+        }
+    ]
+}

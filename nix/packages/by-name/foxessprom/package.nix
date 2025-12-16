@@ -1,0 +1,62 @@
+{
+  lib,
+  fetchFromGitHub,
+  python3Packages,
+  ...
+}: let
+  pname = "foxessprom";
+  version = "2.0.4";
+in
+  python3Packages.buildPythonApplication rec {
+    inherit pname version;
+
+    src = fetchFromGitHub {
+      owner = "andrewjw";
+      repo = "foxessprom";
+      tag = "v${version}";
+      hash = "sha256-ImoUEprNv1KW5ou9LaVkzDuHcsKpNYW2kQEVENgBFsY=";
+    };
+    
+    pyproject = true;
+
+    strictDeps = true;
+
+    build-system = [python3Packages.setuptools];
+
+    pythonRelaxDeps = true;
+
+    pythonRemoveDeps = ["python-semantic-release"];
+
+    dependencies = with python3Packages; [
+      requests
+      paho-mqtt
+      pymodbus
+      sentry-sdk
+    ];
+
+    nativeBuildInputs = with python3Packages; [
+      pycodestyle
+      coveralls
+      twine
+      types-requests
+      mypy
+      requests-mock
+    ];
+
+    nativeCheckInputs = with python3Packages; [
+      pytestCheckHook
+    ];
+
+    # ────────────────────────────────────────────────────────────────────────
+    # TODO: Try enabling tests - not tested yet.
+    # ────────────────────────────────────────────────────────────────────────
+    doCheck = false;
+
+    meta = {
+      description = "Prometheus exporter for Fox ESS Inverters (using the Fox Cloud API)";
+      mainProgram = "foxessprom";
+      license = lib.licenses.mit;
+      platforms = with lib.platforms; linux ++ darwin ++ windows;
+      maintainers = with lib.maintainers; [alexandrutocar];
+    };
+  }
