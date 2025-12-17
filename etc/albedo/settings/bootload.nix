@@ -7,6 +7,7 @@
 #
 # ────────────────────────────────────────────────────────────────────────
 {
+  config,
   pkgs,
   lib,
   ...
@@ -31,6 +32,6 @@ in {
   };
 
   environment.persistence."/state".directories = [
-    "/var/lib/sbctl"
+    config.boot.lanzaboote.pkiBundle
   ];
 }
