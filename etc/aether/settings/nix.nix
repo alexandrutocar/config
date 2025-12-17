@@ -23,6 +23,4 @@ in {
       options = "--delete-older-than 365d";
     };
   };
-
-  nixpkgs.hostPlatform.system = "x86_64-linux";
 }

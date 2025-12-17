@@ -15,8 +15,6 @@
 in {
   imports = singleton (self + /etc/shared/settings/nix.nix);
 
-  nixpkgs.hostPlatform.system = "x86_64-linux";
-
   nix = {
     distributedBuilds = true;
 
