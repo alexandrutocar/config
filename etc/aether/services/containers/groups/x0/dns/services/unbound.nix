@@ -22,14 +22,26 @@ in {
     unbound = {
       enable = true;
 
-      package = pkgs.unbound.override {
-        withSystemd = true;
-        withDNSTAP = true;
-        withECS = true;
-        withDoH = true;
-        withTFO = true;
-        withRedis = true;
-      };
+      package =
+        (
+          pkgs.unbound.override {
+            withSystemd = true;
+            withDNSTAP = true;
+            withECS = true;
+            withDoH = true;
+            withTFO = true;
+            withRedis = true;
+          }
+        ).overrideAttrs (oldAttrs: let
+          version = "1.24.2";
+        in {
+          src = pkgs.fetchFromGitHub {
+            owner = "NLnetLabs";
+            repo = "unbound";
+            tag = "release-${version}";
+            hash = "sha256-kyTcDmNGKJuOMZ7cxIWh6o7aasRUoAB4M0tIG81BQsE=";
+          };
+        });
 
       settings = {
         server = mkMerge [
