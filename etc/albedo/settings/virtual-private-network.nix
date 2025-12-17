@@ -32,7 +32,6 @@ in {
         FirewallMark = 2370;
         RouteTable = "off";
       };
-      # dropdb 'davis' --host 10.0.0.15 --user davis --maintenance-db davis
       wireguardPeers = [
         # [Peer]
         {
