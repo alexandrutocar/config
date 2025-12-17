@@ -112,8 +112,8 @@ in {
             num-queries-per-thread = 32;
           }
           {
-            # log-queries = false;
-            # log-replies = false;
+            log-queries = true;
+            log-replies = true;
           }
           {
             extended-statistics = true;
