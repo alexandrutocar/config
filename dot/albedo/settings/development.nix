@@ -217,6 +217,12 @@
         # Flakes
         nix
 
+        # YAML
+        yaml
+
+        # OAS
+        openapi
+
         # Spelling
         spelling.en
         spelling.de

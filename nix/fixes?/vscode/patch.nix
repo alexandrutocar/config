@@ -178,5 +178,19 @@ _: super: {
         publisher = "jebbs";
         hash = "sha256-o4FN/vUEK53ZLz5vAniUcnKDjWaKKH0oPZMbXVarDng=";
       };
+
+      yaml = super.vscode-utils.extensionFromVscodeMarketplace {
+        name = "vscode-yaml";
+        version = "1.20.2025121608";
+        publisher = "redhat";
+        hash = "sha256-1LtsaRsZM6xj72GsdbsXZYVeEHH26OW4fYYCxdd3eRA=";
+      };
+
+      openapi = super.vscode-utils.extensionFromVscodeMarketplace {
+        name = "vscode-openapi";
+        version = "4.40.0";
+        publisher = "42Crunch";
+        hash = "sha256-nV7RZpDd+15YmINKrFSIlFurC955bnE4A8esrKWYVnE=";
+      };
     };
 }
