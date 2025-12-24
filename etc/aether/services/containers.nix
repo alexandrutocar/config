@@ -445,6 +445,21 @@ in {
 
       config = mkConfig (recursive ./containers/groups/x1/wkm);
     };
+
+    # ────────────────────────────────────────────────────────────────────────
+    #
+    # ▀▄▀ ▀█ ▀   ▀█▀ ░ █░█ █▀▀ █░█ █ █▀▀ ░ █▀▄ █▀▀ █░█
+    # █░█ █▄ ▄   ░█░ ▄ █▄█ ██▄ █▄█ █ ██▄ ▄ █▄▀ ██▄ ▀▄▀
+    #
+    # services for projects in case their primary provider goes down
+    #
+    # ────────────────────────────────────────────────────────────────────────
+    x2-alk = mkContainer "x2-alk" {
+      gateway = "10.255.255.238";
+      address = "10.0.0.17";
+
+      config = mkConfig (recursive ./containers/groups/x2/alk);
+    };
   };
 
   fileSystems."/blobs/var/lib/machines/x0-fin/var/lib/fava" = {

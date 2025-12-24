@@ -7,7 +7,7 @@
 #
 # ────────────────────────────────────────────────────────────────────────
 {container, ...}: let
-  inherit (container) self x0-ins x1-nix x1-wkm;
+  inherit (container) self x0-ins x1-nix x1-wkm x2-alk;
 in {
   services.nginx = {
     enable = true;
@@ -99,6 +99,22 @@ in {
         locations = {
           "/" = {
             proxyPass = "http://${x0-ins.address}:8080";
+            proxyWebsockets = true;
+          };
+        };
+      };
+
+      "t.ueuie.dev" = {
+        sslTrustedCertificate = "/var/lib/acme/ueuie.dev/chain.pem";
+        sslCertificateKey = "/var/lib/acme/ueuie.dev/key.pem";
+        sslCertificate = "/var/lib/acme/ueuie.dev/fullchain.pem";
+
+        forceSSL = true;
+        kTLS = true;
+
+        locations = {
+          "/" = {
+            proxyPass = "http://${x2-alk.address}:8080";
             proxyWebsockets = true;
           };
         };
