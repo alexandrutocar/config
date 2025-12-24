@@ -42,7 +42,7 @@ php.buildComposerProject2 (finalAttrs: {
 
   strictDeps = true;
 
-  vendorHash = "sha256-ub2iv4455AAP9ohN2Zh+8DCbYT1uJOasMeZ/P7tDdw0=";
+  vendorHash = "sha256-VpINHPy2gwA5dk8OGQjmWnCpS9JVyEAUG+bptggCybk=";
 
   composerNoPlugins = false;
 
