@@ -30,6 +30,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    bun2nix = {
+      url = "github:nix-community/bun2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     devenv = {
       url = "github:cachix/devenv";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -56,7 +61,7 @@
           builtins.elem (getName pkg) [
             "fcitx5-black-simplicity"
           ];
-        overlays = attrValues self.overlays;
+        overlays = (attrValues self.overlays) ++ [inputs.bun2nix.overlays.default];
       };
 
     lib = inputs.nixpkgs.lib.extend (final: super: ((import (self + /nix/lib) final super) // inputs.home-manager.lib));
@@ -92,7 +97,7 @@
 
             # Cross-system package overlays and prefixes of allowed unfree packages.
             {
-              nixpkgs.overlays = builtins.attrValues self.overlays;
+              nixpkgs.overlays = (attrValues self.overlays) ++ [inputs.bun2nix.overlays.default];
               system.stateVersion = "25.11";
             }
           ]
