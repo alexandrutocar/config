@@ -748,6 +748,10 @@
     url = "https://registry.npmjs.org/@solid-primitives/utils/-/utils-6.3.2.tgz";
     hash = "sha512-hZ/M/qr25QOCcwDPOHtGjxTD8w2mNyVAYvcfgwzBHq2RwNqHNdDNsMZYap20+ruRwW4A3Cdkczyoz0TSxLCAPQ==";
   };
+  "@solid-primitives/virtual@0.2.2" = fetchurl {
+    url = "https://registry.npmjs.org/@solid-primitives/virtual/-/virtual-0.2.2.tgz";
+    hash = "sha512-ofaVh6EQ/QMah0aUKZIuDQD+WdYBaoJMcHcnJqDtE4ZRmsqyxL4EFD3sqxdC18GCV7Zwhg/NYh9QHM6JZq3SSw==";
+  };
   "@solidjs-use/shared@2.3.0" = fetchurl {
     url = "https://registry.npmjs.org/@solidjs-use/shared/-/shared-2.3.0.tgz";
     hash = "sha512-xuPNzZ9fwigkmYXTO+a8kaT45XQCPt6jVlyiDDYCD9NRZheRJOZWiUcVjYHzjececbWTctcY8NFdsXVyxARHKg==";
