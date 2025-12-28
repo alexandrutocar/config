@@ -41,7 +41,7 @@ in {
         Type = "simple";
         DynamicUser = true;
         WorkingDirectory = "${cfg.package}";
-        ExecStart = "${pkgs.bun}/bin/bun .output/server/index.mjs";
+        ExecStart = "${pkgs.bun}/bin/bun ${cfg.package}/server/index.mjs";
         Restart = "on-failure";
         RestartSec = "5s";
 
