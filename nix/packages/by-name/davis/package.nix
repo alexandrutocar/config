@@ -29,7 +29,7 @@
   php,
   ...
 }:
-php.buildComposerProject2 (finalAttrs: {
+php.buildComposerProject (finalAttrs: {
   pname = "davis";
   version = "5.3.0";
 
@@ -42,7 +42,7 @@ php.buildComposerProject2 (finalAttrs: {
 
   strictDeps = true;
 
-  vendorHash = "sha256-VpINHPy2gwA5dk8OGQjmWnCpS9JVyEAUG+bptggCybk=";
+  vendorHash = "sha256-RpvqgFvs1Yra7Z2vUWhAIIe8vJwUtp2FVtPBva9g90U=";
 
   composerNoPlugins = false;
 
