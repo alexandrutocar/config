@@ -4,7 +4,7 @@
   ...
 }: let
   pname = "alkaline";
-  version = "0.0.2";
+  version = "0.0.3";
 in
   stdenv.mkDerivation {
     inherit pname version;
@@ -12,7 +12,7 @@ in
     src = fetchGit {
       url = "git@codeberg.org:alexandrutocar/${pname}.git";
       ref = "v${version}";
-      rev = "ebdaab0db6f6fb6ded14e73754091023987fc3dc";
+      rev = "7f447a118284f05af3027de59a8720e226601bd8";
     };
 
     strictDeps = true;
