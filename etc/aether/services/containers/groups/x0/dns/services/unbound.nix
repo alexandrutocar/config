@@ -123,7 +123,7 @@ in {
         auth-zone = [
           {
             name = "aether.ip";
-            zonefile = "/var/lib/unbound/zones/aether.ip.zone";
+            zonefile = "${./zones/aether.ip.zone}";
           }
         ];
 

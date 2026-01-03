@@ -6,14 +6,22 @@
 # nsd, dns, ueuie.dev...
 #
 # ────────────────────────────────────────────────────────────────────────
-{container, ...}: let
+{
+  container,
+  lib,
+  ...
+}: let
   inherit (container) self;
+
+  inherit (lib.modules) mkForce;
 in {
   services.nsd = {
     enable = true;
 
     settings = {
       server = {
+        chroot = mkForce ''""'';
+
         interface = with self; [
           "${address}@53"
           "${address}@583"
@@ -58,7 +66,7 @@ in {
       zone = [
         {
           name = ''"ueuie.dev"'';
-          zonefile = ''"/var/lib/nsd/zones/%s.zone"'';
+          zonefile = ''"${./zones/ueuie.dev.zone}"'';
         }
       ];
     };
