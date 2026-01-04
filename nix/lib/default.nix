@@ -1,5 +1,6 @@
 final: super: {
   custom = {
+    attrsets = import ./custom/attrsets.nix final super;
     strings = import ./custom/strings.nix final super;
     colors = import ./custom/colors.nix final super;
     files = import ./custom/files.nix final super;
