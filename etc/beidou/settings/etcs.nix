@@ -23,14 +23,7 @@ in {
   nix.settings.trusted-users = ["alex"];
 
   boot.supportedFilesystems = mkForce [
-    "reiserfs"
-    "btrfs"
     "vfat"
-    "f2fs"
-    "xfs"
-    "zfs"
-    "ntfs"
-    "cifs"
   ];
 
   isoImage.contents = [
