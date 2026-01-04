@@ -43,11 +43,4 @@ in {
       default_session = initial_session;
     };
   };
-
-  isoImage.contents = [
-    {
-      source = /home/alex + "/04 Medien/04.01 Kunstwerke/01 Pixelart/waneella-long-time-no-see.gif";
-      target = "/background"; # /iso/background
-    }
-  ];
 }
