@@ -22,9 +22,10 @@ in {
     alex = {
       isNormalUser = true;
       extraGroups = ["wheel" "video"];
-      initialHashedPassword = "";
+      hashedPassword = "$y$j9T$r/58rmQLoznvI2tTLuQia.$b5xhV/i8SdeQySSU3pGM2/y2CTx4BuxoVYg33/MjHL1";
     };
-    root.initialHashedPassword = "";
+
+    root.hashedPassword = "$y$j9T$OzsTZYTshaOkZm7RSqQnZ1$F7gdqJ3GWKxUpuWJYmEpphmAmu2C6aI.2lpyIyjOT24";
   };
 
   # SMART CARDS
