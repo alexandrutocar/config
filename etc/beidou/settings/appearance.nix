@@ -15,7 +15,7 @@
   inherit (lib.lists) singleton;
   inherit (lib.meta) getExe;
 in {
-  imports = singleton (self +/etc/shared/settings/appearance.nix);
+  imports = singleton (self + /etc/shared/settings/appearance.nix);
 
   # TILING COMPOSITOR
   # -----------------

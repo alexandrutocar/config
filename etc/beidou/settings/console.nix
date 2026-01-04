@@ -13,5 +13,5 @@
 }: let
   inherit (lib.lists) singleton;
 in {
-  imports = singleton (self +/etc/shared/settings/console.nix);
+  imports = singleton (self + /etc/shared/settings/console.nix);
 }
