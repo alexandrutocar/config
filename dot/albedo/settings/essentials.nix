@@ -65,9 +65,6 @@ in {
     # Common
     libreoffice
 
-    # Publishing
-    scribus
-
     # READERS
     # -------
     sioyek
