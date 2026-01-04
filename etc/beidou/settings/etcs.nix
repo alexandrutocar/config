@@ -49,5 +49,14 @@ in {
       '';
       target = "/utilities.txt"; # /iso/utilities.txt
     }
+    {
+      source = pkgs.fetchFromGitHub {
+        owner = "drduh";
+        repo = "yubikey-guide";
+        rev = "7513db34cc7196a8b83e18b78264511c5aed4c71";
+        hash = "sha256-Ne7BKmEJJKnJR1qngIqBGFFbKDA2Cn3pgqGX7jteRx8=";
+      };
+      target = "/guide";
+    }
   ];
 }
