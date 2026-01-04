@@ -25,22 +25,6 @@
     spice
 
     # Management
-    (nemu.overrideAttrs (oldAttrs: {
-      nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [copyDesktopItems];
-
-      desktopItems = [
-        (makeDesktopItem {
-          name = "nemu";
-          exec = "nemu %u";
-          terminal = true;
-          comment = oldAttrs.meta.description;
-          desktopName = "Nemu";
-          genericName = "Qemu Manager";
-          categories = [];
-          keywords = [];
-        })
-      ];
-    }))
     qemu
     virt-viewer
     virt-manager
