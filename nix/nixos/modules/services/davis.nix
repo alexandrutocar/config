@@ -391,4 +391,9 @@ in {
         };
       }
     ]);
+
+  meta = {
+    doc = ./davis.md;
+    maintainers = pkgs.davis.meta.maintainers;
+  };
 }

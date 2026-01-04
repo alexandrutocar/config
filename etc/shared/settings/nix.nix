@@ -9,12 +9,6 @@
 {lib, ...}: let
   inherit (lib.modules) mkDefault;
 in {
-  # ────────────────────────────────────────────────────────────────────────
-  # NOTE: Needed to be disabled as compilation of documentation relies on
-  #       upstream documentation which is removed from some packages here.
-  # ────────────────────────────────────────────────────────────────────────
-  documentation.nixos.enable = false;
-
   # NIX
   # ---
   nix = {
