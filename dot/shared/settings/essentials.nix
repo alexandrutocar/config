@@ -11,6 +11,10 @@
     # PDF/EPUB READER
     # ---------------
     zathura
+
+    # MARKDOWN READER
+    # ---------------
+    glow
   ];
 
   # GNU PRIVACY GUARD
