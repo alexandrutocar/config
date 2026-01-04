@@ -47,7 +47,9 @@
   };
 
   outputs = {self, ...} @ inputs: let
+    inherit (lib.filesystem) packagesFromDirectoryRecursive;
     inherit (lib.attrsets) attrValues genAttrs;
+    inherit (lib.custom.attrsets) mergeAttrsList;
     inherit (lib.strings) getName;
 
     forSystems = genAttrs [
@@ -206,15 +208,47 @@
     };
 
     # https://wiki.nixos.org/wiki/Creating_a_NixOS_live_CD
-    packages = let
-      inherit (lib.filesystem) packagesFromDirectoryRecursive;
-    in
-      forSystems (system: let
+    packages = forSystems (
+      system: let
         pkgs = mkPackages system inputs.unstable;
       in
-        packagesFromDirectoryRecursive {
-          inherit (pkgs) callPackage;
-          directory = ./nix/packages/by-name;
-        });
+        mergeAttrsList [
+          (
+            packagesFromDirectoryRecursive {
+              inherit (pkgs) callPackage;
+              directory = ./nix/packages/by-name;
+            }
+          )
+          {
+            beidou = let
+              _system = mkSystem {
+                inherit (inputs) nixpkgs;
+                hostname = "beidou";
+                modules =
+                  [
+                    {
+                      nixpkgs.hostPlatform = system;
+                    }
+                    ./etc/beidou
+                  ]
+                  ++ (mkHome {
+                    user = "alex";
+                    spec = [
+                      ./dot/beidou
+                    ];
+                  });
+              };
+            in
+              inputs.nixos-generators.nixosGenerate {
+                inherit system;
+
+                format = "iso";
+
+                inherit (_system._module.args) modules;
+                inherit (_system._module) specialArgs;
+              };
+          }
+        ]
+    );
   };
 }
