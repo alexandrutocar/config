@@ -148,10 +148,6 @@ in {
           hostPath = "/state/var/lib/machines/x0-dns/var/lib/acme/aether.ip/";
           isReadOnly = false;
         };
-        "/var/lib/unbound/zones/aether.ip.zone" = {
-          hostPath = "/state/var/lib/machines/x0-dns/var/lib/unbound/zones/aether.ip.zone";
-          isReadOnly = false;
-        };
       };
 
       config = mkConfig (recursive ./containers/groups/x0/dns);
@@ -360,9 +356,6 @@ in {
         };
         "/var/lib/nsd/certs/" = {
           hostPath = "/state/var/lib/machines/x1-dns/var/lib/nsd/certs/";
-        };
-        "/var/lib/nsd/zones/ueuie.dev.zone" = {
-          hostPath = "/state/var/lib/machines/x1-dns/var/lib/nsd/zones/ueuie.dev.zone";
         };
       };
 
