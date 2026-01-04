@@ -7,7 +7,7 @@
   pname = "foxessprom";
   version = "2.0.4";
 in
-  python3Packages.buildPythonApplication rec {
+  python3Packages.buildPythonApplication {
     inherit pname version;
 
     src = fetchFromGitHub {
