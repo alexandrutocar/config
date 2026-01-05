@@ -2,35 +2,33 @@
   bun2nix,
   stdenv,
   ...
-}: let
+}:
+stdenv.mkDerivation (finalAttrs: {
   pname = "alkaline";
   version = "0.0.3";
-in
-  stdenv.mkDerivation {
-    inherit pname version;
 
-    src = fetchGit {
-      url = "git@codeberg.org:alexandrutocar/${pname}.git";
-      ref = "v${version}";
-      rev = "7f447a118284f05af3027de59a8720e226601bd8";
-    };
+  src = fetchGit {
+    url = "git@codeberg.org:alexandrutocar/${finalAttrs.pname}.git";
+    ref = "v${finalAttrs.version}";
+    rev = "7f447a118284f05af3027de59a8720e226601bd8";
+  };
 
-    strictDeps = true;
+  strictDeps = true;
 
-    nativeBuildInputs = [
-      bun2nix.hook
-    ];
+  nativeBuildInputs = [
+    bun2nix.hook
+  ];
 
-    bunDeps = bun2nix.fetchBunDeps {
-      bunNix = ./bun.lock.nix;
-    };
+  bunDeps = bun2nix.fetchBunDeps {
+    bunNix = ./bun.lock.nix;
+  };
 
-    buildPhase = ''
-      bun run build --minify
-    '';
+  buildPhase = ''
+    bun run build --minify
+  '';
 
-    installPhase = ''
-      mkdir -p $out
-      cp -r .output/* $out/
-    '';
-  }
+  installPhase = ''
+    mkdir -p $out
+    cp -r .output/* $out/
+  '';
+})
