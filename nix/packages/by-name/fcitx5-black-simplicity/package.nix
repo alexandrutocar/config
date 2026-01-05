@@ -29,13 +29,13 @@
   unstableGitUpdater,
   ...
 }:
-stdenvNoCC.mkDerivation {
+stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "fcitx5-black-simplicity";
   version = "0-unstable-2021-11-23";
 
   src = fetchFromGitHub {
     owner = "fuzakebito";
-    repo = "fcitx5-Black-Simplicity";
+    repo = finalAttrs.pname;
     rev = "27e279c4e4f1c2318b19360367a0b9a5ef83efbb";
     hash = "sha256-XWnYaUBwXDJwy4n37WKW3DEKkUdUEOFvR/8v5ibF96k=";
   };
@@ -60,4 +60,4 @@ stdenvNoCC.mkDerivation {
     maintainers = with maintainers; [alexandrutocar];
     platforms = platforms.all;
   };
-}
+})
