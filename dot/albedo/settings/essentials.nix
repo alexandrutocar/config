@@ -89,9 +89,6 @@ in {
     audacious
     cmus
 
-    # Radio
-    custom.sonicradio
-
     # INTERNET
     # --------
     # firefox
