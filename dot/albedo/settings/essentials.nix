@@ -111,9 +111,6 @@ in {
 
     # Password Manager
     pass
-
-    # Machine Learning Tools
-    custom.tlm
   ];
 
   wayland.windowManager.river.settings = {
