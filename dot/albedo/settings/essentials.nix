@@ -102,10 +102,6 @@ in {
     slurp
     grim
 
-    # Documents
-    pandoc
-    qpdf
-
     # Fava
     fava
 
