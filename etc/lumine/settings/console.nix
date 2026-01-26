@@ -6,8 +6,10 @@
 # linux console, virtual console...
 #
 # ────────────────────────────────────────────────────────────────────────
-_: {
-  imports = [
-    ../../shared/settings/console.nix
-  ];
+{
+  self,
+  lib,
+  ...
+}: {
+  imports = lib.lists.singleton (self + /etc/shared/settings/console.nix);
 }

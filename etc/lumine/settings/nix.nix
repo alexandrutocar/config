@@ -6,8 +6,10 @@
 # nix daemon, garbage collection, store optimisation...
 #
 # ────────────────────────────────────────────────────────────────────────
-_: {
-  imports = [
-    ../../shared/settings/nix.nix
-  ];
+{
+  self,
+  lib,
+  ...
+}: {
+  imports = lib.lists.singleton (self + /etc/shared/settings/nix.nix);
 }

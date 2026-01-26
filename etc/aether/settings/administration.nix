@@ -17,10 +17,6 @@
 in {
   imports = singleton (self + /etc/shared/settings/administration.nix);
 
-  # in case of a configuration early in the boot sequence,
-  # allow entering emergency shell (helps with debugging)
-  boot.initrd.systemd.emergencyAccess = "$y$j9T$/wz/tR9.fA4bxAhxqDwtU1$F88.5ajoPgSryf8FUODs.nu1kNwyin3pTUruSE.ahI6";
-
   users.users = {
     root = {
       openssh.authorizedKeys.keys = [

@@ -13,12 +13,12 @@ in {
   # ---
   nix = {
     # flakes supersede channels
-    channel.enable = false;
+    channel.enable = mkDefault false;
 
     # store --optimize
     optimise = {
-      automatic = true;
-      dates = ["03:15"];
+      automatic = mkDefault true;
+      dates = mkDefault ["03:15"];
     };
 
     # nix-collect-garbage --delete-older-than 365d
@@ -29,38 +29,32 @@ in {
     };
 
     settings = {
-      keep-derivations = true;
-      keep-outputs = true;
-
       # store --optimize (every build)
-      auto-optimise-store = true;
+      auto-optimise-store = mkDefault true;
 
       # flake.nix & `$ nix command`
-      experimental-features = ["nix-command" "flakes" "pipe-operators"];
+      experimental-features = mkDefault ["nix-command" "flakes" "pipe-operators"];
 
       # Only allow root to build
-      trusted-users = ["root"];
+      trusted-users = mkDefault ["root"];
 
       # re-evaluate on every rebuild instead of "cached failure of attribute" error
-      eval-cache = false;
-      warn-dirty = false;
+      eval-cache = mkDefault false;
+      warn-dirty = mkDefault false;
 
       # removes ~/.nix-profile and ~/.nix-defexpr
-      use-xdg-base-directories = true;
+      use-xdg-base-directories = mkDefault true;
 
-      # Binary Cache Providers
-      substituters = [
-        "https://cache.nixos.org"
+      substituters = mkDefault [
         "https://cache.ueuie.dev"
       ];
 
-      trusted-public-keys = [
-        "cache.nixos.org:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+      trusted-public-keys = mkDefault [
         "cache.ueuie.dev:yx2Q390VKtD/H/8FdgBBwky6yj18sMxtufAGlUAkSSs="
       ];
     };
 
-    extraOptions = ''
+    extraOptions = mkDefault ''
       builders-use-substitutes = true
     '';
   };

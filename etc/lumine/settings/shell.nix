@@ -6,8 +6,10 @@
 # shell, terminal, utilities...
 #
 # ────────────────────────────────────────────────────────────────────────
-_: {
-  imports = [
-    ../../shared/settings/shell.nix
-  ];
+{
+  self,
+  lib,
+  ...
+}: {
+  imports = lib.lists.singleton (self + /etc/shared/settings/shell.nix);
 }

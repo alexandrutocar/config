@@ -15,10 +15,6 @@
 in {
   imports = singleton (self + /etc/shared/settings/administration.nix);
 
-  # in case of a configuration early in the boot sequence,
-  # allow entering emergency shell (helps with debugging)
-  boot.initrd.systemd.emergencyAccess = "$y$j9T$mLfJsahjXgdzXWe4pzmt61$8jGIETsZydiqyCGeEec58hmiIQvS4neRj51IeVa10W5";
-
   users = {
     users = {
       alex = {

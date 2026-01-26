@@ -4,11 +4,15 @@
 # ██▄ ░█░ █▄▄ ▄█
 #
 # ────────────────────────────────────────────────────────────────────────
-{modulesPath, ...}: {
+{
+  modulesPath,
+  self,
+  lib,
+  ...
+}: {
   imports = [
     (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix")
-    ../../shared/settings/initrd.nix
-    ../../shared/settings/net.nix
+    (self + /etc/shared/settings/net.nix)
   ];
 
   # ignore lid state. it should remain running.

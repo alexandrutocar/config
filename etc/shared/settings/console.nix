@@ -6,11 +6,13 @@
 # linux console, virtual console...
 #
 # ────────────────────────────────────────────────────────────────────────
-_: {
+{lib, ...}: let
+  inherit (lib.modules) mkDefault;
+in {
   # VIRTUAL CONSOLE
   # ---------------
   console = {
-    enable = true;
-    keyMap = "de";
+    enable = mkDefault true;
+    keyMap = mkDefault "de";
   };
 }

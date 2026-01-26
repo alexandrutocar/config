@@ -6,30 +6,36 @@
 # network, firewall, wireless, dns...
 #
 # ────────────────────────────────────────────────────────────────────────
-{pkgs, ...}: {
+{
+  pkgs,
+  lib,
+  ...
+}: let
+  inherit (lib.modules) mkDefault;
+in {
   # NETWORKD
   # --------
-  systemd.network.enable = true;
-  networking.useNetworkd = true;
+  systemd.network.enable = mkDefault true;
+  networking.useNetworkd = mkDefault true;
 
   # RESOLVER
   # --------
   services.resolved = {
-    enable = true;
+    enable = mkDefault true;
   };
 
   networking = {
     # FIREWALL
     # --------
-    nftables.enable = true;
+    nftables.enable = mkDefault true;
 
     # WIRELESS
     # --------
     wireless.iwd = {
-      enable = true;
+      enable = mkDefault true;
       settings = {
         General = {
-          AddressRandomization = "network";
+          AddressRandomization = mkDefault "network";
         };
       };
     };

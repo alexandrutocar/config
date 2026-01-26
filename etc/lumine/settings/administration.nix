@@ -6,10 +6,12 @@
 # system users, security policies, and early boot emergency access...
 #
 # ────────────────────────────────────────────────────────────────────────
-{lib, ...}: {
-  imports = [
-    ../../shared/settings/administration.nix
-  ];
+{
+  self,
+  lib,
+  ...
+}: {
+  imports = lib.lists.singleton (self + /etc/shared/settings/administration.nix);
 
   users.users = {
     root = {

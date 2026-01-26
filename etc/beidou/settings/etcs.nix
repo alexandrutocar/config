@@ -9,13 +9,14 @@
 in {
   imports = [
     (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix")
-    (self + /etc/shared/settings/initrd.nix)
-    (self + /etc/shared/settings/nix.nix)
+    (self + /etc/shared/settings/etcs.nix)
   ];
 
   boot = {
     tmp.cleanOnBoot = true;
-    kernel.sysctl = {"kernel.unprivileged_bpf_disabled" = 1;};
+    kernel.sysctl = {
+      "kernel.unprivileged_bpf_disabled" = 1;
+    };
   };
 
   swapDevices = [];

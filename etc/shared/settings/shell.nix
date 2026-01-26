@@ -14,10 +14,8 @@
 }: let
   inherit (lib.meta) getExe;
 in {
-  imports = [
-    ./utilities.nix
-  ];
-
+  # USER'S SHELL
+  # ------------
   users.defaultUserShell = pkgs.zsh;
 
   programs = {
@@ -113,17 +111,14 @@ in {
       };
     };
 
-    # <description>
+    # PAY-RESPECTS
+    # ------------
     pay-respects = {
       enable = true;
     };
 
-    # customizable shell prompt
-    # starship = {
-    #   enable = true;
-    # };
-
-    # terminal multiplexer for multiple sessions and panes
+    # TMUX
+    # ----
     tmux = {
       enable = true;
 
@@ -182,12 +177,14 @@ in {
       '';
     };
 
-    # text editor
+    # VIM
+    # ---
     vim = {
       enable = true;
     };
 
-    # fast file explorer
+    # YAZI
+    # ----
     yazi = {
       enable = true;
       plugins = {
@@ -223,57 +220,12 @@ in {
       };
     };
 
-    # fast directory navigation tool using a smart jump history
+    # ZOXIDE
+    # ------
     zoxide.enable = true;
 
-    # interactive shell
-    # zsh = {
-    #   enable = true;
-
-    #   shellInit = ''
-    #     HISTFILE=~/.zsh_history
-    #     HISTSIZE=100000
-    #     SAVEHIST=100000
-
-    #     setopt HIST_SAVE_NO_DUPS
-    #     setopt HIST_REDUCE_BLANKS
-
-    #     # write history immidiately
-    #     setopt INC_APPEND_HISTORY
-
-    #     # push directory stack
-    #     setopt AUTO_PUSHD
-    #     setopt PUSHD_SILENT
-
-    #     # easier navigation
-    #     setopt AUTO_CD
-    #     setopt NO_BEEP
-
-    #     # `vi` keybindings
-    #     bindkey -v
-    #     EDITOR=${getExe pkgs.vim}
-
-    #     # use the up and down keys to navigate the history
-    #     bindkey "\e[A" history-beginning-search-backward
-    #     bindkey "\e[B" history-beginning-search-forward
-
-    #     # initialize completion
-    #     autoload -U compinit; compinit
-
-    #     zstyle ":completion:*" menu select
-    #     zstyle ":completion:*" list-colors ""
-    #     zstyle ":completion:*" matcher-list "m:{a-z}={A-Z}" "r:|[._-]=* r:|=*"
-    #   '';
-
-    #   loginShellInit = ''
-    #     # TODO: Write shell init.
-    #   '';
-
-    #   interactiveShellInit = ''
-    #     # TODO: Write shell init.
-    #   '';
-    # };
-
+    # ZSH
+    # ---
     zsh = {
       enable = true;
 
@@ -303,4 +255,70 @@ in {
       syntaxHighlighting.enable = true;
     };
   };
+
+  # STANDARD UTILITIES
+  # ------------------
+  environment.systemPackages = with pkgs; [
+    # System Monitoring
+    btop # modern, feature-rich, interactive monitoring
+    lsof # standard for listing open files
+
+    # Disk & Filesystem
+    ncdu # efficient disk usage analyzer
+    parted # disk partitioning
+    gptfdisk # comfortable disk partitioning
+    rclone # cloud storage sync
+    restic # backup tool
+    rsync # file synchronization
+    glib # virtual filesystems
+
+    # Version Control
+    git-annex
+
+    # Databases
+    sqlitebrowser
+
+    # Encryption & Keys
+    openssl
+    gnupg
+    age
+    yubikey-manager
+
+    # Key Management
+    cfssl
+
+    # Nix
+    nix-tree
+    nix-diff
+    nvd
+
+    # Networking
+    curl # HTTP client
+    dig # DNS lookup
+
+    # Archiving & Compression
+    pigz # parallel gzip compression
+    xz # compression
+    zip # archiving
+    zstd # modern compression
+    unzip # extraction
+
+    # Scripting
+    gnused # stream editor
+    bc # basic calculator
+
+    # Text
+    jq # JSON processor
+    yq # XML, YAML processor
+    xq-xml # XML (XPath) query utility
+
+    # Hardware & Kernel
+    hwinfo # hardware detection
+    inxi # system information
+    iw # wireless interfaces
+
+    # Peripheral & Bus Info
+    pciutils # PCI device info
+    usbutils # USB device info
+  ];
 }

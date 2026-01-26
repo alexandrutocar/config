@@ -6,16 +6,18 @@
 # language time fonts...
 #
 # ────────────────────────────────────────────────────────────────────────
-_: {
+{lib, ...}: let
+  inherit (lib.modules) mkDefault;
+in {
   # SYSTEM TIME
   # -----------
-  time.timeZone = "Europe/Berlin";
+  time.timeZone = mkDefault "Europe/Berlin";
 
   # SYSTEM LOCALE
   # -------------
   i18n = {
-    defaultLocale = "de_DE.UTF-8";
-    extraLocales = [
+    defaultLocale = mkDefault "de_DE.UTF-8";
+    extraLocales = mkDefault [
       # International
       "en_US.UTF-8/UTF-8"
       # East-Europe

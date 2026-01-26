@@ -6,26 +6,27 @@
 # etcs, everything else...
 #
 # ────────────────────────────────────────────────────────────────────────
-{
-  self,
-  lib,
-  ...
-}: {
-  imports = lib.lists.singleton (self + /etc/shared/settings/etcs.nix);
+{lib, ...}: let
+  inherit (lib.modules) mkDefault;
+in {
+  system = {
+    etc.overlay.enable = mkDefault true;
 
-  hardware.enableRedistributableFirmware = true;
+    nixos-init.enable = true;
 
-  hardware.cpu.amd.updateMicrocode = true;
-
-  # POWER MANAGEMENT
-  # ----------------
-  services.tlp = {
-    enable = true;
-    settings = {
-      # NETWORKING
-      # ----------
-      WIFI_PWR_ON_AC = "off";
-      WIFI_PWR_ON_BAT = "on";
+    # Disabled Tools
+    tools = {
+      nixos-build-vms.enable = lib.mkDefault false;
+      nixos-generate-config.enable = lib.mkDefault false;
     };
+  };
+
+  # Disabled Docs
+  documentation = {
+    enable = mkDefault false;
+
+    doc.enable = mkDefault false;
+    info.enable = mkDefault false;
+    nixos.enable = mkDefault false;
   };
 }
