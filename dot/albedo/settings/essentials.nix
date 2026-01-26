@@ -38,10 +38,6 @@ in {
     # ----------
     blender
 
-    # VIDEO
-    # -----
-    kdePackages.kdenlive
-
     # AUDIO
     #------
 
