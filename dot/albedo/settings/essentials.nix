@@ -17,11 +17,6 @@ in {
   imports = singleton (self + /dot/shared/settings/essentials.nix);
 
   home.packages = with pkgs; [
-    # FONTS
-    newcomputermodern # New Computer Modern, ...
-    vista-fonts # Calibri, Cambria, Candara, Consolas, Constantia, Corbel
-    corefonts # Arial, Arial Black, Andalé Mono, Courier New, Comic Sans MS, Georgia, Impact, Times New Roman, Trebuchet MS, Verdana, Webdings
-
     # COMMUNICATION
     # -------------
     signal-desktop
