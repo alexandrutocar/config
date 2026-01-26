@@ -102,9 +102,6 @@ in {
     slurp
     grim
 
-    # Fava
-    fava
-
     # Password Manager
     pass
   ];
