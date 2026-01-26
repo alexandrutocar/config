@@ -1,5 +1,5 @@
 @	IN 	    SOA  	aether.ns.ueuie.dev.    noc.aether.ns.ueuie.dev. 	(
-	2026010401
+	2026012402
 	300
 	60
 	86400
@@ -13,7 +13,7 @@
 
 @           			    	IN 	NS	    aether.ns.ueuie.dev.
 
-aether.ns   			    	IN 	A       91.42.235.23
+aether.ns   			    	IN 	A       79.237.208.77
 
 
 ; ------------
@@ -55,7 +55,7 @@ link.relay					1	IN	CNAME	track.smtp2go.net.
 ; Other Records
 ; -------------
 
-@           			    	IN 	A     	91.42.235.23
+@           			    	IN 	A     	79.237.208.77
 
 metrics				        	IN	CNAME	ueuie.dev.
 status				        	IN 	CNAME 	ueuie.dev.
