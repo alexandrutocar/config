@@ -34,10 +34,6 @@ in {
     # Vector Graphics
     inkscape
 
-    # SPACIOUS GRAPHICS
-    # ----------
-    blender
-
     # AUDIO
     #------
 
