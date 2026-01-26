@@ -83,9 +83,6 @@ in {
 
     # UTILITIES
     # ---------
-    ffmpeg
-
-    # Password Manager
     pass
   ];
 
