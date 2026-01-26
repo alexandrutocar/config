@@ -98,10 +98,6 @@ in {
     # ---------
     ffmpeg
 
-    # Screen Capture
-    slurp
-    grim
-
     # Password Manager
     pass
   ];
