@@ -42,10 +42,6 @@ in {
     # Recorder
     audacity
 
-    # Sheet Music
-    muse-sounds-manager
-    muse-score-studio # (alias)
-
     # DOCUMENTS
     # ---------
 
