@@ -93,7 +93,6 @@
             # the specified name.
             {
               networking.hostName = hostname;
-              nixpkgs.config.allowUnfree = true;
               hardware.bluetooth.settings.General.Name = hostname;
             }
 
