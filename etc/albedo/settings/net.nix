@@ -13,6 +13,7 @@
   ...
 }: let
   inherit (lib.lists) singleton;
+  inherit (lib.modules) mkMerge;
 in {
   imports = singleton (self + /etc/shared/settings/net.nix);
 
@@ -42,26 +43,57 @@ in {
       };
 
       # [Network]
-      networkConfig = {
-        DNSDefaultRoute = true;
-        DHCP = "ipv4";
-        DNS = [
-          "192.168.0.10"
+      networkConfig = mkMerge [
+        {
+          DHCP = "yes";
+          IPv6AcceptRA = "yes";
+          LinkLocalAddressing = "ipv6";
+          IPv4Forwarding = "yes";
+        }
+        {
+          DNS = [
+            # ────────────────────────────────────────────────────────────────────────
+            # TODO: Enable IPv6 when IPv6 for containers is restored.
+            # ────────────────────────────────────────────────────────────────────────
+            # "fe80::9ecc:83ff:fec8:1010"
+            "192.168.0.10"
+          ];
           # ────────────────────────────────────────────────────────────────────────
-          # TODO: Enable IPv6 when IPv6 for containers is restored.
+          # TODO: Enable DNSSEC when aether.ip gets its DNSSEC keys.
           # ────────────────────────────────────────────────────────────────────────
-          # "fe80::9ecc:83ff:fec8:1010"
-        ];
-        DNSOverTLS = "yes";
-        Domains = ["~aether.ip" "~."];
-      };
+          # DNSSEC = "yes";
+          # ────────────────────────────────────────────────────────────────────────
+          # TODO: Provide TLS certificates tied to the IP address
+          #       instead of the domain.
+          # ────────────────────────────────────────────────────────────────────────
+          Domains = ["~aether.ip" "~."];
+          DNSOverTLS = "yes";
+        }
+      ];
 
       dhcpV4Config = {
-        UseDNS = false;
+        UseHostname = "no";
+        UseDNS = "no";
+        UseNTP = "no";
+        UseSIP = "no";
+        UseRoutes = "no";
+        UseGateway = "yes";
       };
+
       dhcpV6Config = {
-        UseDNS = false;
+        WithoutRA = "solicit";
+        UseDelegatedPrefix = true;
+        UseHostname = "no";
+        UseDNS = "no";
+        UseNTP = "no";
       };
+
+      ipv6AcceptRAConfig = {
+        UseDNS = "no";
+        DHCPv6Client = "yes";
+      };
+
+      linkConfig.RequiredForOnline = "routable";
     };
   };
 

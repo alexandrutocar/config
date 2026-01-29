@@ -11,7 +11,7 @@
   lib,
   ...
 }: let
-  inherit (lib.modules) mkDefault;
+  inherit (lib.modules) mkDefault mkForce;
 in {
   # NETWORKD
   # --------
@@ -20,9 +20,7 @@ in {
 
   # RESOLVER
   # --------
-  services.resolved = {
-    enable = mkDefault true;
-  };
+  services.resolved.enable = mkDefault true;
 
   networking = {
     # FIREWALL
