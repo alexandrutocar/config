@@ -48,7 +48,7 @@ in {
         kTLS = true;
         locations = {
           "/" = {
-            root = "/usr/alex/blog/pages/";
+            root = ./ueuie;
           };
         };
 
