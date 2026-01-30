@@ -13,7 +13,7 @@
   lib,
   ...
 }: let
-  inherit (container) x0-dns x0-ext x1-wkm x1-nix x1-ext;
+  inherit (container) x0-dns intranet-gateway x1-wkm x1-nix x1-ext;
 in {
   services.prometheus = {
     enable = true;
@@ -66,7 +66,7 @@ in {
         metrics_path = "/metrics";
         static_configs = [
           {
-            targets = ["${x1-ext.address}:9090" "${x0-ext.address}:9090"];
+            targets = ["${x1-ext.address}:9090" "${intranet-gateway.address}:9090"];
           }
         ];
       }

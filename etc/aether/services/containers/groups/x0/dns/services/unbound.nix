@@ -14,7 +14,7 @@
 }: let
   inherit (lib.modules) mkMerge;
 
-  inherit (container) self x0-ins;
+  inherit (container) self intranet-monitoring;
 in {
   services = {
     # UNBOUND
@@ -175,7 +175,7 @@ in {
 
         clients = [
           {
-            url = "http://${x0-ins.address}:3100/loki/api/v1/push";
+            url = "http://${intranet-monitoring.address}:3100/loki/api/v1/push";
           }
         ];
 

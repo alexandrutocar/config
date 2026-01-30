@@ -95,7 +95,7 @@ in {
     # private services for personal use (primarily)
     #
     # ────────────────────────────────────────────────────────────────────────
-    x0-com = mkContainer "x0-com" {
+    intranet-email = mkContainer "intranet-email" {
       gateway = "10.255.255.254";
       address = "10.0.0.1";
 
@@ -114,11 +114,11 @@ in {
 
       bindMounts = {
         "/usr/" = {
-          hostPath = "/state/var/lib/machines/x0-com/usr/";
+          hostPath = "/state/var/lib/machines/intranet-email/usr/";
         };
       };
 
-      config = mkConfig (recursive ./containers/groups/x0/com);
+      config = mkConfig (recursive ./containers/groups/01-intranet/03-email);
     };
 
     x0-dns = mkContainer "x0-dns" {
@@ -153,7 +153,7 @@ in {
       config = mkConfig (recursive ./containers/groups/x0/dns);
     };
 
-    x0-ext = mkContainer "x0-ext" {
+    intranet-gateway = mkContainer "intranet-gateway" {
       gateway = "10.255.255.252";
       address = "10.0.0.3";
 
@@ -172,65 +172,62 @@ in {
 
       bindMounts = {
         "/var/lib/acme/aether.ip/" = {
-          hostPath = "/state/var/lib/machines/x0-ext/var/lib/acme/aether.ip/";
-        };
-        "/usr/share/html/" = {
-          hostPath = "/state/var/lib/machines/x0-ext/usr/share/html/";
+          hostPath = "/state/var/lib/machines/intranet-gateway/var/lib/acme/aether.ip/";
         };
       };
 
-      config = mkConfig (recursive ./containers/groups/x0/ext);
+      config = mkConfig (recursive ./containers/groups/01-intranet/02-gateway);
     };
 
-    x0-fin = mkContainer "x0-fin" {
+    intranet-accounting = mkContainer "intranet-accounting" {
       gateway = "10.255.255.239";
       address = "10.0.0.16";
 
       bindMounts = {
-        "/var/lib/fava/" = {
-          hostPath = "/blobs/var/lib/machines/x0-fin/var/lib/fava/";
-          isReadOnly = false;
+        "/var/lib/fava" = {
+          hostPath = "/blobs/var/lib/machines/01-intranet/01-accounting/var/lib/fava";
+          isReadOnly = true;
         };
       };
 
-      config = mkConfig (recursive ./containers/groups/x0/fin);
+      config = mkConfig (recursive ./containers/groups/01-intranet/01-accounting);
     };
 
-    x0-flx = mkContainer "x0-flx" {
+    intranet-feed = mkContainer "intranet-feed" {
       gateway = "10.255.255.241";
       address = "10.0.0.14";
 
       bindMounts = {
         "/var/lib/miniflux/admin/username.txt" = {
-          hostPath = "/state/var/lib/machines/x0-flx/var/lib/miniflux/admin/username.txt";
+          hostPath = "/state/var/lib/machines/intranet-feed/var/lib/miniflux/admin/username.txt";
           isReadOnly = false;
         };
         "/var/lib/miniflux/admin/password.txt" = {
-          hostPath = "/state/var/lib/machines/x0-flx/var/lib/miniflux/admin/password.txt";
+          hostPath = "/state/var/lib/machines/intranet-feed/var/lib/miniflux/admin/password.txt";
           isReadOnly = false;
         };
       };
 
-      config = mkConfig (recursive ./containers/groups/x0/flx);
+      config = mkConfig (recursive ./containers/groups/01-intranet/04-feed);
     };
 
-    x0-ins = mkContainer "x0-ins" {
+    intranet-monitoring = mkContainer "intranet-monitoring" {
       gateway = "10.255.255.251";
       address = "10.0.0.4";
 
       bindMounts = {
         # Scrapers Secrets (API Keys)
         "/etc/prometheus/scrapers/" = {
-          hostPath = "/state/var/lib/machines/x0-ins/etc/prometheus/scrapers/";
+          hostPath = "/state/var/lib/machines/intranet-monitoring/etc/prometheus/scrapers/";
           isReadOnly = false;
         };
         # State directories (Databases)
         "/var/lib/prometheus/" = {
-          hostPath = "/blobs/var/lib/machines/x0-ins/var/lib/prometheus/";
+          hostPath = "/blobs/var/lib/machines/intranet-monitoring/var/lib/prometheus/";
           isReadOnly = false;
         };
         "/var/lib/grafana/" = {
-          hostPath = "/blobs/var/lib/machines/x0-ins/var/lib/grafana/";
+          hostPath = "/blobs/var/lib/machines/intranet-monitoring/var/lib/grafana/";
           isReadOnly = false;
         };
         # This is required so that node exporter
@@ -246,21 +243,21 @@ in {
         };
       };
 
-      config = mkConfig (recursive ./containers/groups/x0/ins);
+      config = mkConfig (recursive ./containers/groups/01-intranet/07-monitoring);
     };
 
-    x0-pgl = mkContainer "x0-pgl" {
+    intranet-database = mkContainer "intranet-database" {
       gateway = "10.255.255.240";
       address = "10.0.0.15";
 
       bindMounts = {
         "/var/lib/postgresql/" = {
-          hostPath = "/blobs/var/lib/machines/x0-pgl/var/lib/postgresql/";
+          hostPath = "/blobs/var/lib/machines/intranet/database/var/lib/postgresql/";
           isReadOnly = false;
         };
       };
 
-      config = mkConfig (recursive ./containers/groups/x0/pgl);
+      config = mkConfig (recursive ./containers/groups/01-intranet/06-database);
     };
 
     x0-pim = mkContainer "x0-pim" {
@@ -270,7 +267,7 @@ in {
       config = mkConfig (recursive ./containers/groups/x0/pim);
     };
 
-    x0-smb = mkContainer "x0-smb" {
+    intranet-storage = mkContainer "intranet-storage" {
       gateway = "10.255.255.248";
       address = "10.0.0.7";
 
@@ -289,20 +286,20 @@ in {
 
       bindMounts = {
         "/var/lib/samba/" = {
-          hostPath = "/blobs/var/lib/machines/x0-smb/var/lib/samba/";
+          hostPath = "/blobs/var/lib/machines/intranet/storage/var/lib/samba/";
           isReadOnly = false;
         };
         "/etc/hashed/alex" = {
-          hostPath = "/state/var/lib/machines/x0-smb/etc/hashed/alex";
+          hostPath = "/state/var/lib/machines/intranet-storage/etc/hashed/alex";
           isReadOnly = false;
         };
         "/usr/alex/password.txt" = {
-          hostPath = "/state/var/lib/machines/x0-smb/usr/alex/password.txt";
+          hostPath = "/state/var/lib/machines/intranet-storage/usr/alex/password.txt";
           isReadOnly = false;
         };
       };
 
-      config = mkConfig (recursive ./containers/groups/x0/smb);
+      config = mkConfig (recursive ./containers/groups/01-intranet/05-storage);
     };
     # ────────────────────────────────────────────────────────────────────────
     #
@@ -455,8 +452,8 @@ in {
     };
   };
 
-  fileSystems."/blobs/var/lib/machines/x0-fin/var/lib/fava" = {
-    device = "/blobs/var/lib/machines/x0-smb/var/lib/samba/private/share/04 Finanzen";
+  fileSystems."/blobs/var/lib/machines/01-intranet/01-accounting/var/lib/fava" = {
+    device = "/blobs/var/lib/machines/intranet/storage/var/lib/samba/private/share/04 Finanzen";
     options = ["bind"];
   };
 }

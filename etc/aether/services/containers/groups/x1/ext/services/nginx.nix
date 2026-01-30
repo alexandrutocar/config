@@ -7,7 +7,7 @@
 #
 # ────────────────────────────────────────────────────────────────────────
 {container, ...}: let
-  inherit (container) self x0-ins x1-nix x1-wkm x2-alk;
+  inherit (container) self intranet-monitoring x1-nix x1-wkm x2-alk;
 in {
   services.nginx = {
     enable = true;
@@ -98,7 +98,7 @@ in {
 
         locations = {
           "/" = {
-            proxyPass = "http://${x0-ins.address}:8080";
+            proxyPass = "http://${intranet-monitoring.address}:8080";
             proxyWebsockets = true;
           };
         };

@@ -7,7 +7,7 @@
 #
 # ────────────────────────────────────────────────────────────────────────
 {container, ...}: let
-  inherit (container) self x0-pgl;
+  inherit (container) self intranet-database;
 in {
   services.davis = {
     enable = true;
@@ -26,7 +26,7 @@ in {
       DATABASE_DRIVER = "pgsql";
       DATABASE_URL = builtins.concatStringsSep "/" [
         "pgsql:/"
-        "davis@${x0-pgl.address}:5432"
+        "davis@${intranet-database.address}:5432"
         "davis?sslmode=disable"
       ];
 

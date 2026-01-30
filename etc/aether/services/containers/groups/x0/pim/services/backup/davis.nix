@@ -15,7 +15,7 @@
   inherit (lib.custom.systemd) mkSetCredentialEncrypted;
   inherit (lib.meta) getExe;
 
-  inherit (container) x0-pgl;
+  inherit (container) intranet-database;
 in {
   systemd.services."backup@davis" = {
     serviceConfig = {
@@ -31,7 +31,7 @@ in {
             RESTIC_REPOSITORY.cred = "restic-repository";
             RESTIC_PASSWORD.cred = "restic-password";
 
-            PGHOST = x0-pgl.address;
+            PGHOST = intranet-database.address;
             PGPORT = "5432";
             PGUSER = "davis";
           };

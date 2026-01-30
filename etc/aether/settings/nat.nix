@@ -63,15 +63,15 @@ _: {
   #         # }
 
   #         iifname ${mkInterface "x0-acm"} oifname ${mkInterface "x0-dns"} tcp dport { 853 } accept
-  #         iifname ${mkInterface "x0-ext"} oifname ${mkInterface "x0-acm"} tcp dport { 443 } accept
-  #         iifname ${mkInterface "x0-ext"} oifname ${mkInterface "x0-dns"} tcp dport { 853 } accept
-  #         iifname ${mkInterface "x0-ext"} oifname ${mkInterface "x0-fin"} tcp dport { 80  } accept
-  #         iifname ${mkInterface "x0-ext"} oifname ${mkInterface "x0-git"} tcp dport { 80  } accept
-  #         iifname ${mkInterface "x0-ext"} oifname ${mkInterface "x0-hit"} tcp dport { 80  } accept
-  #         iifname ${mkInterface "x0-ext"} oifname ${mkInterface "x0-ins"} tcp dport { 80  } accept
-  #         iifname ${mkInterface "x0-ext"} oifname ${mkInterface "x0-llm"} tcp dport { 80  } accept
-  #         iifname ${mkInterface "x0-ext"} oifname ${mkInterface "x0-nbc"} tcp dport { 80  } accept
-  #         iifname ${mkInterface "x0-ext"} oifname ${mkInterface "x0-pim"} tcp dport { 80  } accept
+  #         iifname ${mkInterface "intranet-gateway"} oifname ${mkInterface "x0-acm"} tcp dport { 443 } accept
+  #         iifname ${mkInterface "intranet-gateway"} oifname ${mkInterface "x0-dns"} tcp dport { 853 } accept
+  #         iifname ${mkInterface "intranet-gateway"} oifname ${mkInterface "intranet-accounting"} tcp dport { 80  } accept
+  #         iifname ${mkInterface "intranet-gateway"} oifname ${mkInterface "x0-git"} tcp dport { 80  } accept
+  #         iifname ${mkInterface "intranet-gateway"} oifname ${mkInterface "x0-hit"} tcp dport { 80  } accept
+  #         iifname ${mkInterface "intranet-gateway"} oifname ${mkInterface "intranet-monitoring"} tcp dport { 80  } accept
+  #         iifname ${mkInterface "intranet-gateway"} oifname ${mkInterface "x0-llm"} tcp dport { 80  } accept
+  #         iifname ${mkInterface "intranet-gateway"} oifname ${mkInterface "x0-nbc"} tcp dport { 80  } accept
+  #         iifname ${mkInterface "intranet-gateway"} oifname ${mkInterface "x0-pim"} tcp dport { 80  } accept
   #         iifname ${mkInterface "x0-llm"} oifname ${mkInterface "x0-dns"} tcp dport { 853 } accept
 
   #         iifname ${mkInterface "x0-dns"} oifname ${mkInterface "wan"} tcp dport { 443, 53 } accept
@@ -79,7 +79,7 @@ _: {
   #         iifname ${mkInterface "x0-llm"} oifname ${mkInterface "wan"} tcp dport { 443     } accept
 
   #         iifname ${mkInterface "wan"} oifname ${mkInterface "x0-dns"} tcp dport { 853          } accept
-  #         iifname ${mkInterface "wan"} oifname ${mkInterface "x0-ext"} tcp dport { 443          } accept
+  #         iifname ${mkInterface "wan"} oifname ${mkInterface "intranet-gateway"} tcp dport { 443          } accept
   #         iifname ${mkInterface "wan"} oifname ${mkInterface "x0-pim"} tcp dport { 80, 139, 445 } accept
   #       }
   #     '';

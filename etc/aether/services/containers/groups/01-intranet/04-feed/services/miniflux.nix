@@ -7,7 +7,7 @@
 #
 # ────────────────────────────────────────────────────────────────────────
 {container, ...}: let
-  inherit (container) self x0-pgl;
+  inherit (container) self intranet-database;
 in {
   services.miniflux = {
     enable = true;
@@ -21,7 +21,7 @@ in {
       ADMIN_USERNAME_FILE = "/var/lib/miniflux/admin/username.txt";
 
       LISTEN_ADDR = self.address;
-      DATABASE_URL = "dbname=miniflux user=miniflux host=${x0-pgl.address} sslmode=disable";
+      DATABASE_URL = "dbname=miniflux user=miniflux host=${intranet-database.address} sslmode=disable";
     };
   };
 }

@@ -28,15 +28,9 @@ in {
         enforce_domain = false;
         enable_gzip = true;
         domain = "metrics.ueuie.dev";
-
-        # Alternatively, if you want to serve Grafana from a subpath:
-        # domain = "your.domain";
-        # root_url = "https://your.domain/grafana/";
-        # serve_from_sub_path = true;
       };
 
-      # Prevents Grafana from phoning home
-      #analytics.reporting_enabled = false;
+      analytics.reporting_enabled = false;
     };
 
     provision = {

@@ -17,7 +17,7 @@
   inherit (lib.meta) getExe;
   inherit (lib.modules) mkForce;
 
-  inherit (container) self x0-flx x0-pim;
+  inherit (container) self intranet-feed x0-pim;
 in {
   services.postgresql = {
     enable = true;
@@ -27,7 +27,7 @@ in {
     };
 
     authentication = ''
-      host  miniflux miniflux ${x0-flx.address}/32 trust
+      host  miniflux miniflux ${intranet-feed.address}/32 trust
       host  davis davis ${x0-pim.address}/32 trust
     '';
 

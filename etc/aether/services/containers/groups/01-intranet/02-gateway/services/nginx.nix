@@ -7,7 +7,7 @@
 #
 # ────────────────────────────────────────────────────────────────────────
 {container, ...}: let
-  inherit (container) self x0-fin x0-flx x0-pim x0-ins;
+  inherit (container) self intranet-accounting intranet-feed x0-pim intranet-monitoring;
 in {
   services.nginx = {
     enable = true;
@@ -53,6 +53,26 @@ in {
         };
       };
 
+      "accounting.aether.ip" = {
+        # ────────────────────────────────────────────────────────────────────────
+        # TODO: Compile the right chain.pem.
+        # ────────────────────────────────────────────────────────────────────────
+        # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
+        sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
+        sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
+
+        forceSSL = true;
+        kTLS = true;
+
+        locations = {
+          "/" = {
+            proxyPass = "http://${intranet-accounting.address}:8080";
+            proxyWebsockets = true;
+            recommendedProxySettings = true;
+          };
+        };
+      };
+
       "reader.aether.ip" = {
         # ────────────────────────────────────────────────────────────────────────
         # TODO: Compile the right chain.pem.
@@ -67,12 +87,12 @@ in {
 
         locations = {
           "/" = {
-            proxyPass = "http://${x0-flx.address}:8080";
+            proxyPass = "http://${intranet-feed.address}:8080";
           };
         };
       };
 
-      "metrics.aether.ip" = {
+      "monitoring.aether.ip" = {
         # ────────────────────────────────────────────────────────────────────────
         # TODO: Compile the right chain.pem.
         # ────────────────────────────────────────────────────────────────────────
@@ -85,27 +105,7 @@ in {
 
         locations = {
           "/" = {
-            proxyPass = "http://${x0-ins.address}:8080";
-            proxyWebsockets = true;
-            recommendedProxySettings = true;
-          };
-        };
-      };
-
-      "finances.aether.ip" = {
-        # ────────────────────────────────────────────────────────────────────────
-        # TODO: Compile the right chain.pem.
-        # ────────────────────────────────────────────────────────────────────────
-        # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
-        sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
-        sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
-
-        forceSSL = true;
-        kTLS = true;
-
-        locations = {
-          "/" = {
-            proxyPass = "http://${x0-fin.address}:8080";
+            proxyPass = "http://${intranet-monitoring.address}:8080";
             proxyWebsockets = true;
             recommendedProxySettings = true;
           };
@@ -125,7 +125,7 @@ in {
 
         locations = {
           "/" = {
-            proxyPass = "http://${x0-ins.address}:9090";
+            proxyPass = "http://${intranet-monitoring.address}:9090";
             proxyWebsockets = true;
             recommendedProxySettings = true;
           };
