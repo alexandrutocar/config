@@ -22,26 +22,14 @@ in {
     unbound = {
       enable = true;
 
-      package =
-        (
-          pkgs.unbound.override {
-            withSystemd = true;
-            withDNSTAP = true;
-            withECS = true;
-            withDoH = true;
-            withTFO = true;
-            withRedis = true;
-          }
-        ).overrideAttrs (oldAttrs: let
-          version = "1.24.2";
-        in {
-          src = pkgs.fetchFromGitHub {
-            owner = "NLnetLabs";
-            repo = "unbound";
-            tag = "release-${version}";
-            hash = "sha256-kyTcDmNGKJuOMZ7cxIWh6o7aasRUoAB4M0tIG81BQsE=";
-          };
-        });
+      package = pkgs.unbound.override {
+        withSystemd = true;
+        withDNSTAP = true;
+        withECS = true;
+        withDoH = true;
+        withTFO = true;
+        withRedis = true;
+      };
 
       settings = {
         server = mkMerge [
@@ -90,8 +78,12 @@ in {
             harden-unverified-glue = true;
           }
           {
-            cache-min-ttl = 0;
-            serve-expired-reply-ttl = 0;
+            infra-host-ttl = 60;
+          }
+          {
+            serve-expired = true;
+            prefetch = true;
+            prefetch-key = true;
           }
           {
             # https://nlnetlabs.nl/documentation/unbound/howto-optimise/
@@ -117,6 +109,10 @@ in {
           }
           {
             extended-statistics = true;
+          }
+          {
+            val-clean-additional = true;
+            val-permissive-mode = false;
           }
         ];
 
@@ -236,5 +232,10 @@ in {
         ];
       };
     };
+  };
+
+  boot.kernel.sysctl = {
+    "net.core.rmem_max" = 4194304;
+    "net.core.wmem_max" = 4194304;
   };
 }
