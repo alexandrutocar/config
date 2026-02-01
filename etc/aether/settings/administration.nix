@@ -169,6 +169,7 @@ in {
 
   environment.persistence."/state" = {
     directories = [
+      "/var/lib/git"
       "/etc/hashed"
       "/var/lib/nixos"
     ];

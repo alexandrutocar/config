@@ -1,0 +1,38 @@
+@	IN  	SOA 	aether.ns.aether.ip.	noc.aether.ns.aether.ip. (
+	2026020101
+	3600
+	1800
+	604800
+	86400
+)
+
+
+; ------------
+; Name Servers
+; ------------
+
+@           	IN  	NS    	aether.ns.aether.ip.
+
+aether.ns       IN      A       192.168.0.10
+aether.ns       IN      AAAA    fe80::9ecc:83ff:fec8:1010
+
+
+; -------------
+; Other Records
+; -------------
+
+default.gateway	IN	    A	    192.168.0.1
+default.gateway	IN	    AAAA	fe80::1
+
+@           	IN  	A     	192.168.0.10
+@           	IN  	AAAA  	fe80::9ecc:83ff:fec8:1010
+
+
+monitoring     	IN 	    CNAME	aether.ip.
+exporters       IN	    CNAME	aether.ip.
+finances        IN  	CNAME	aether.ip.
+
+
+feed          	IN  	CNAME	aether.ip.
+
+ml        		IN  	CNAME	aether.ip.

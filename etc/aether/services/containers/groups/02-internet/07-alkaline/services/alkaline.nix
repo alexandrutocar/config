@@ -1,30 +1,17 @@
 # ────────────────────────────────────────────────────────────────────────
 #
-# █▀▀ ▄▀█ █░█ ▄▀█
-# █▀░ █▀█ ▀▄▀ █▀█
+# ▄▀█ █░░ █▄▀ ▄▀█ █░░ █ █▄░█ █▀▀
+# █▀█ █▄▄ █░█ █▀█ █▄▄ █ █░▀█ ██▄
 #
-# fava, beancount, web-interface...
+# alkaline...
 #
 # ────────────────────────────────────────────────────────────────────────
 {container, ...}: let
   inherit (container) self;
 in {
-  users.users.fava0 = {
-    uid = 1000; # Match host UID
-    group = "users";
-    isSystemUser = true;
-  };
-
-  services.fava = {
+  services.alkaline = {
     enable = true;
-    settings = {
-      host = self.localAddress;
-      port = 8080;
-      bean = "transactions.bean";
-    };
-
-    # Needed to match Samba's permissions.
-    user = "fava0";
-    group = "users";
+    host = self.localAddress;
+    port = 8080;
   };
 }

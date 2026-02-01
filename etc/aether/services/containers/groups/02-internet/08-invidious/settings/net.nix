@@ -1,18 +1,13 @@
 # ────────────────────────────────────────────────────────────────────────
 #
-# █▄░█ ▄▀█ ▀█▀
-# █░▀█ █▀█ ░█░
+# █▄░█ █▀▀ ▀█▀
+# █░▀█ ██▄ ░█░
 #
-# nat, network address translation, networking...
+# network, firewall...
 #
 # ────────────────────────────────────────────────────────────────────────
 _: {
-  networking.nat = {
-    enable = true;
-
-    externalInterface = "wlan0";
-    internalInterfaces = [
-      "ve-*"
-    ];
+  networking.firewall = {
+    allowedTCPPorts = [8080];
   };
 }

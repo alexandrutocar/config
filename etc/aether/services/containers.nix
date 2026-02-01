@@ -15,10 +15,11 @@
   ...
 }: let
   inherit (lib.meta) getExe';
+  inherit (lib.modules) mkMerge;
 
   mkContainer = name: spec: let
     inherit (lib.attrsets) mapAttrs' nameValuePair;
-    inherit (lib.modules) mkDefault mkMerge;
+    inherit (lib.modules) mkDefault;
   in
     mkMerge [
       {
@@ -32,27 +33,6 @@
         privateUsers = "no";
 
         privateNetwork = true;
-
-        bindMounts =
-          {
-            # Persistence needed for credential.secret - ideally only credential.secret
-            # would be persisted. But systemd imposes strict checks on the file. So for
-            # now just persist the whole directory.
-            "/var/lib/systemd/" = {
-              hostPath = "/state/var/lib/machines/${name}/var/lib/systemd/";
-              isReadOnly = false;
-            };
-            # Credential are bound by /etc/machine-id.
-            # It is persistence to avoid a mismatch.
-            "/etc/machine-id" = {
-              hostPath = "/state/var/lib/machines/${name}/etc/machine-id";
-              isReadOnly = false;
-            };
-          }
-          // (spec.bindMounts or {});
-
-        localAddress = spec.address or null;
-        hostAddress = spec.gateway or null;
 
         specialArgs = mkMerge [
           {
@@ -70,7 +50,7 @@
           }
         ];
       }
-      (builtins.removeAttrs spec ["localAddress" "hostAddress" "address" "gateway" "bindMounts"])
+      spec
     ];
 
   mkConfig = config: let
@@ -95,9 +75,73 @@ in {
     # private services for personal use (primarily)
     #
     # ────────────────────────────────────────────────────────────────────────
+    intranet-accounting = mkContainer "intranet-accounting" {
+      hostAddress = "10.255.255.239";
+      localAddress = "10.0.0.16";
+
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/01-accounting/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/01-intranet/01-accounting/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+        {
+          "/var/lib/fava" = {
+            hostPath = "/blobs/var/lib/machines/01-intranet/01-accounting/var/lib/fava";
+            isReadOnly = true;
+          };
+        }
+      ];
+
+      config = mkConfig (recursive ./containers/groups/01-intranet/01-accounting);
+    };
+
+    intranet-gateway = mkContainer "intranet-gateway" {
+      hostAddress = "10.255.255.252";
+      localAddress = "10.0.0.3";
+
+      forwardPorts = [
+        {
+          containerPort = 80;
+          hostPort = 80;
+          protocol = "tcp";
+        }
+        {
+          containerPort = 443;
+          hostPort = 443;
+          protocol = "tcp";
+        }
+      ];
+
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/02-gateway/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/01-intranet/02-gateway/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+        {
+          "/var/lib/acme/aether.ip/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/02-gateway/var/lib/acme/aether.ip/";
+          };
+        }
+      ];
+
+      config = mkConfig (recursive ./containers/groups/01-intranet/02-gateway);
+    };
+
     intranet-email = mkContainer "intranet-email" {
-      gateway = "10.255.255.254";
-      address = "10.0.0.1";
+      hostAddress = "10.255.255.254";
+      localAddress = "10.0.0.1";
 
       forwardPorts = [
         {
@@ -112,18 +156,60 @@ in {
         }
       ];
 
-      bindMounts = {
-        "/usr/" = {
-          hostPath = "/state/var/lib/machines/intranet-email/usr/";
-        };
-      };
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/03-email/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/01-intranet/03-email/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+        {
+          "/usr/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/03-email/usr/";
+          };
+        }
+      ];
 
       config = mkConfig (recursive ./containers/groups/01-intranet/03-email);
     };
 
-    x0-dns = mkContainer "x0-dns" {
-      gateway = "10.255.255.253";
-      address = "10.0.0.2";
+    intranet-feed = mkContainer "intranet-feed" {
+      hostAddress = "10.255.255.241";
+      localAddress = "10.0.0.14";
+
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/04-feed/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/01-intranet/04-feed/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+        {
+          "/var/lib/miniflux/admin/username.txt" = {
+            hostPath = "/state/var/lib/machines/01-intranet/04-feed/var/lib/miniflux/admin/username.txt";
+            isReadOnly = false;
+          };
+          "/var/lib/miniflux/admin/password.txt" = {
+            hostPath = "/state/var/lib/machines/01-intranet/04-feed/var/lib/miniflux/admin/password.txt";
+            isReadOnly = false;
+          };
+        }
+      ];
+
+      config = mkConfig (recursive ./containers/groups/01-intranet/04-feed);
+    };
+
+    intranet-dns = mkContainer "intranet-dns" {
+      hostAddress = "10.255.255.253";
+      localAddress = "10.0.0.2";
 
       forwardPorts = [
         {
@@ -143,133 +229,121 @@ in {
         }
       ];
 
-      bindMounts = {
-        "/var/lib/acme/aether.ip/" = {
-          hostPath = "/state/var/lib/machines/x0-dns/var/lib/acme/aether.ip/";
-          isReadOnly = false;
-        };
-      };
-
-      config = mkConfig (recursive ./containers/groups/x0/dns);
-    };
-
-    intranet-gateway = mkContainer "intranet-gateway" {
-      gateway = "10.255.255.252";
-      address = "10.0.0.3";
-
-      forwardPorts = [
+      bindMounts = mkMerge [
         {
-          containerPort = 80;
-          hostPort = 80;
-          protocol = "tcp";
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/05-dns/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/01-intranet/05-dns/etc/machine-id";
+            isReadOnly = false;
+          };
         }
         {
-          containerPort = 443;
-          hostPort = 443;
-          protocol = "tcp";
+          "/var/lib/acme/aether.ip/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/05-dns/var/lib/acme/aether.ip/";
+            isReadOnly = false;
+          };
         }
       ];
 
-      bindMounts = {
-        "/var/lib/acme/aether.ip/" = {
-          hostPath = "/state/var/lib/machines/intranet-gateway/var/lib/acme/aether.ip/";
-        };
-      };
-
-      config = mkConfig (recursive ./containers/groups/01-intranet/02-gateway);
+      config = mkConfig (recursive ./containers/groups/01-intranet/05-dns);
     };
 
-    intranet-accounting = mkContainer "intranet-accounting" {
-      gateway = "10.255.255.239";
-      address = "10.0.0.16";
+    intranet-ml = mkContainer "intranet-ml" {
+      hostAddress = "10.255.255.244";
+      localAddress = "10.0.0.11";
 
-      bindMounts = {
-        "/var/lib/fava" = {
-          hostPath = "/blobs/var/lib/machines/01-intranet/01-accounting/var/lib/fava";
-          isReadOnly = true;
-        };
-      };
+      allowedDevices = [
+        {
+          node = "/dev/nvidia0";
+          modifier = "rw";
+        }
+        {
+          node = "/dev/nvidiactl";
+          modifier = "rw";
+        }
+        {
+          node = "/dev/nvidia-caps*";
+          modifier = "rw";
+        }
+        {
+          node = "/dev/nvidia-modeset";
+          modifier = "rw";
+        }
+        {
+          node = "/dev/nvidia-uvm";
+          modifier = "rw";
+        }
+        {
+          node = "/dev/nvidia-uvm-tools";
+          modifier = "rw";
+        }
+      ];
 
-      config = mkConfig (recursive ./containers/groups/01-intranet/01-accounting);
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/06-ml/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/01-intranet/06-ml/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+        {
+          "/var/lib/models" = {
+            hostPath = "/state/var/lib/machines/01-intranet/06-ml/var/lib/models";
+            isReadOnly = false;
+          };
+        }
+        {
+          "/dev/nvidia0" = {
+            hostPath = "/dev/nvidia0";
+          };
+          "/dev/nvidiactl" = {
+            hostPath = "/dev/nvidiactl";
+          };
+          "/dev/nvidia-modeset" = {
+            hostPath = "/dev/nvidia-modeset";
+          };
+          "/dev/nvidia-uvm" = {
+            hostPath = "/dev/nvidia-uvm";
+          };
+          "/dev/nvidia-uvm-tools" = {
+            hostPath = "/dev/nvidia-uvm-tools";
+          };
+        }
+      ];
+
+      config = mkConfig (recursive ./containers/groups/01-intranet/06-ml);
     };
 
-    intranet-feed = mkContainer "intranet-feed" {
-      gateway = "10.255.255.241";
-      address = "10.0.0.14";
+    intranet-dav = mkContainer "intranet-dav" {
+      hostAddress = "10.255.255.249";
+      localAddress = "10.0.0.6";
 
-      bindMounts = {
-        "/var/lib/miniflux/admin/username.txt" = {
-          hostPath = "/state/var/lib/machines/intranet-feed/var/lib/miniflux/admin/username.txt";
-          isReadOnly = false;
-        };
-        "/var/lib/miniflux/admin/password.txt" = {
-          hostPath = "/state/var/lib/machines/intranet-feed/var/lib/miniflux/admin/password.txt";
-          isReadOnly = false;
-        };
-      };
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/07-dav/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/01-intranet/07-dav/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+      ];
 
-      config = mkConfig (recursive ./containers/groups/01-intranet/04-feed);
-    };
-
-    intranet-monitoring = mkContainer "intranet-monitoring" {
-      gateway = "10.255.255.251";
-      address = "10.0.0.4";
-
-      bindMounts = {
-        # Scrapers Secrets (API Keys)
-        "/etc/prometheus/scrapers/" = {
-          hostPath = "/state/var/lib/machines/intranet-monitoring/etc/prometheus/scrapers/";
-          isReadOnly = false;
-        };
-        # State directories (Databases)
-        "/var/lib/prometheus/" = {
-          hostPath = "/blobs/var/lib/machines/intranet-monitoring/var/lib/prometheus/";
-          isReadOnly = false;
-        };
-        "/var/lib/grafana/" = {
-          hostPath = "/blobs/var/lib/machines/intranet-monitoring/var/lib/grafana/";
-          isReadOnly = false;
-        };
-        # This is required so that node exporter
-        # can collect metrics from the host.
-        "/host/root" = {
-          hostPath = "/";
-        };
-        "/host/sys" = {
-          hostPath = "/sys";
-        };
-        "/host/proc" = {
-          hostPath = "/proc";
-        };
-      };
-
-      config = mkConfig (recursive ./containers/groups/01-intranet/07-monitoring);
-    };
-
-    intranet-database = mkContainer "intranet-database" {
-      gateway = "10.255.255.240";
-      address = "10.0.0.15";
-
-      bindMounts = {
-        "/var/lib/postgresql/" = {
-          hostPath = "/blobs/var/lib/machines/intranet/database/var/lib/postgresql/";
-          isReadOnly = false;
-        };
-      };
-
-      config = mkConfig (recursive ./containers/groups/01-intranet/06-database);
-    };
-
-    x0-pim = mkContainer "x0-pim" {
-      gateway = "10.255.255.249";
-      address = "10.0.0.6";
-
-      config = mkConfig (recursive ./containers/groups/x0/pim);
+      config = mkConfig (recursive ./containers/groups/01-intranet/07-dav);
     };
 
     intranet-storage = mkContainer "intranet-storage" {
-      gateway = "10.255.255.248";
-      address = "10.0.0.7";
+      hostAddress = "10.255.255.248";
+      localAddress = "10.0.0.7";
 
       forwardPorts = [
         {
@@ -284,23 +358,109 @@ in {
         }
       ];
 
-      bindMounts = {
-        "/var/lib/samba/" = {
-          hostPath = "/blobs/var/lib/machines/intranet/storage/var/lib/samba/";
-          isReadOnly = false;
-        };
-        "/etc/hashed/alex" = {
-          hostPath = "/state/var/lib/machines/intranet-storage/etc/hashed/alex";
-          isReadOnly = false;
-        };
-        "/usr/alex/password.txt" = {
-          hostPath = "/state/var/lib/machines/intranet-storage/usr/alex/password.txt";
-          isReadOnly = false;
-        };
-      };
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/09-storage/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/01-intranet/09-storage/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+        {
+          "/var/lib/samba/" = {
+            hostPath = "/blobs/var/lib/machines/01-intranet/09-storage/var/lib/samba/";
+            isReadOnly = false;
+          };
+          "/etc/hashed/alex" = {
+            hostPath = "/state/var/lib/machines/01-intranet/09-storage/etc/hashed/alex";
+            isReadOnly = false;
+          };
+          "/usr/alex/password.txt" = {
+            hostPath = "/state/var/lib/machines/01-intranet/09-storage/usr/alex/password.txt";
+            isReadOnly = false;
+          };
+        }
+      ];
 
-      config = mkConfig (recursive ./containers/groups/01-intranet/05-storage);
+      config = mkConfig (recursive ./containers/groups/01-intranet/09-storage);
     };
+
+    intranet-database = mkContainer "intranet-database" {
+      hostAddress = "10.255.255.240";
+      localAddress = "10.0.0.15";
+
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/10-database/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/01-intranet/10-database/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+        {
+          "/var/lib/postgresql/" = {
+            hostPath = "/blobs/var/lib/machines/01-intranet/10-database/var/lib/postgresql/";
+            isReadOnly = false;
+          };
+        }
+      ];
+
+      config = mkConfig (recursive ./containers/groups/01-intranet/10-database);
+    };
+
+    intranet-monitoring = mkContainer "intranet-monitoring" {
+      hostAddress = "10.255.255.251";
+      localAddress = "10.0.0.4";
+
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/11-monitoring/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/01-intranet/11-monitoring/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+        {
+          # Scrapers Secrets (API Keys)
+          "/etc/prometheus/scrapers/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/11-monitoring/etc/prometheus/scrapers/";
+            isReadOnly = false;
+          };
+          # State directories (Databases)
+          "/var/lib/prometheus/" = {
+            hostPath = "/blobs/var/lib/machines/01-intranet/11-monitoring/var/lib/prometheus/";
+            isReadOnly = false;
+          };
+          "/var/lib/grafana/" = {
+            hostPath = "/blobs/var/lib/machines/01-intranet/11-monitoring/var/lib/grafana/";
+            isReadOnly = false;
+          };
+          # This is required so that node exporter
+          # can collect metrics from the host.
+          "/host/root" = {
+            hostPath = "/";
+          };
+          "/host/sys" = {
+            hostPath = "/sys";
+          };
+          "/host/proc" = {
+            hostPath = "/proc";
+          };
+        }
+      ];
+
+      config = mkConfig (recursive ./containers/groups/01-intranet/11-monitoring);
+    };
+
     # ────────────────────────────────────────────────────────────────────────
     #
     # ▀▄▀ ▄█ ▀   █░█ █▀▀ █░█ █ █▀▀ ░ █▀▄ █▀▀ █░█
@@ -309,9 +469,112 @@ in {
     # services exposed for all to see
     #
     # ────────────────────────────────────────────────────────────────────────
-    x1-com = mkContainer "x1-com" {
-      gateway = "10.255.255.247";
-      address = "10.0.0.8";
+    internet-harmonia = mkContainer "internet-harmonia" {
+      hostAddress = "10.255.255.250";
+      localAddress = "10.0.0.5";
+
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/02-internet/01-harmonia/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/02-internet/01-harmonia/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+        {
+          "/var/lib/harmonia/" = {
+            hostPath = "/state/var/lib/machines/02-internet/01-harmonia/var/lib/harmonia/";
+          };
+
+          "/nix/store" = {};
+
+          "/nix/var/nix/db/db.sqlite" = {
+            isReadOnly = false;
+          };
+        }
+      ];
+
+      config = mkConfig (
+        recursive ./containers/groups/02-internet/01-harmonia
+        ++ [
+          inputs.harmonia.nixosModules.harmonia
+        ]
+      );
+    };
+
+    internet-gateway = mkContainer "internet-gateway" {
+      hostAddress = "10.255.255.245";
+      localAddress = "10.0.0.10";
+
+      forwardPorts = [
+        {
+          containerPort = 443;
+          hostPort = 5000 + 443;
+          protocol = "tcp";
+        }
+        {
+          containerPort = 80;
+          hostPort = 5000 + 80;
+          protocol = "tcp";
+        }
+      ];
+
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/02-internet/02-gateway/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/02-internet/02-gateway/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+        {
+          "/var/lib/acme/ueuie.dev/" = {
+            hostPath = "/state/var/lib/machines/02-internet/02-gateway/var/lib/acme/ueuie.dev/";
+          };
+          "/var/lib/acme/cache.ueuie.dev/" = {
+            hostPath = "/state/var/lib/machines/02-internet/02-gateway/var/lib/acme/cache.ueuie.dev/";
+          };
+        }
+      ];
+
+      config = mkConfig (recursive ./containers/groups/02-internet/02-gateway);
+    };
+
+    internet-uptime = mkContainer "internet-uptime" {
+      hostAddress = "10.255.255.242";
+      localAddress = "10.0.0.13";
+
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/02-internet/03-uptime/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/02-internet/03-uptime/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+        {
+          "/var/lib/uptime-kuma/" = {
+            hostPath = "/blobs/var/lib/machines/02-internet/03-uptime/var/lib/uptime-kuma/";
+            isReadOnly = false;
+          };
+        }
+      ];
+
+      config = mkConfig (recursive ./containers/groups/02-internet/03-uptime);
+    };
+
+    internet-email = mkContainer "internet-email" {
+      hostAddress = "10.255.255.247";
+      localAddress = "10.0.0.8";
 
       forwardPorts = [
         {
@@ -321,12 +584,25 @@ in {
         }
       ];
 
-      config = mkConfig (recursive ./containers/groups/x1/com);
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/02-internet/04-email/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/02-internet/04-email/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+      ];
+
+      config = mkConfig (recursive ./containers/groups/02-internet/04-email);
     };
 
-    x1-dns = mkContainer "x1-dns" {
-      gateway = "10.255.255.246";
-      address = "10.0.0.9";
+    internet-dns = mkContainer "internet-dns" {
+      hostAddress = "10.255.255.246";
+      localAddress = "10.0.0.9";
 
       forwardPorts = [
         {
@@ -346,109 +622,75 @@ in {
         }
       ];
 
-      bindMounts = {
-        "/var/lib/acme/ueuie.dev/" = {
-          hostPath = "/state/var/lib/machines/x1-dns/var/lib/acme/ueuie.dev/";
-          isReadOnly = false;
-        };
-        "/var/lib/nsd/certs/" = {
-          hostPath = "/state/var/lib/machines/x1-dns/var/lib/nsd/certs/";
-        };
-      };
-
-      config = mkConfig (recursive ./containers/groups/x1/dns);
-    };
-
-    x1-ext = mkContainer "x1-ext" {
-      gateway = "10.255.255.245";
-      address = "10.0.0.10";
-
-      forwardPorts = [
+      bindMounts = mkMerge [
         {
-          containerPort = 443;
-          hostPort = 5000 + 443;
-          protocol = "tcp";
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/02-internet/06-dns/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/02-internet/06-dns/etc/machine-id";
+            isReadOnly = false;
+          };
         }
         {
-          containerPort = 80;
-          hostPort = 5000 + 80;
-          protocol = "tcp";
+          "/var/lib/acme/ueuie.dev/" = {
+            hostPath = "/state/var/lib/machines/02-internet/06-dns/var/lib/acme/ueuie.dev/";
+            isReadOnly = false;
+          };
+          "/var/lib/nsd/certs/" = {
+            hostPath = "/state/var/lib/machines/02-internet/06-dns/var/lib/nsd/certs/";
+          };
         }
       ];
 
-      bindMounts = {
-        "/usr/alex/blog/pages/" = {
-          hostPath = "/state/var/lib/machines/x1-pwb/usr/alex/blog/pages/";
-        };
-        "/var/lib/acme/ueuie.dev/" = {
-          hostPath = "/state/var/lib/machines/x1-ext/var/lib/acme/ueuie.dev/";
-        };
-        "/var/lib/acme/cache.ueuie.dev/" = {
-          hostPath = "/state/var/lib/machines/x1-ext/var/lib/acme/cache.ueuie.dev/";
-        };
-      };
-
-      config = mkConfig (recursive ./containers/groups/x1/ext);
+      config = mkConfig (recursive ./containers/groups/02-internet/06-dns);
     };
 
-    x1-nix = mkContainer "x1-nix" {
-      gateway = "10.255.255.250";
-      address = "10.0.0.5";
+    internet-alkaline = mkContainer "internet-alkaline" {
+      hostAddress = "10.255.255.238";
+      localAddress = "10.0.0.17";
 
-      bindMounts = {
-        "/var/lib/harmonia/" = {
-          hostPath = "/state/var/lib/machines/x1-nix/var/lib/harmonia/";
-        };
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/02-internet/07-alkaline/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/02-internet/07-alkaline/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+      ];
 
-        "/nix/store" = {};
-
-        "/nix/var/nix/db/db.sqlite" = {
-          isReadOnly = false;
-        };
-      };
-
-      config = mkConfig (
-        recursive ./containers/groups/x1/nix
-        ++ [
-          inputs.harmonia.nixosModules.harmonia
-        ]
-      );
+      config = mkConfig (recursive ./containers/groups/02-internet/07-alkaline);
     };
 
-    x1-pwb = mkContainer "x1-pwb" {
-      gateway = "10.255.255.243";
-      address = "10.0.0.12";
+    internet-invidious = mkContainer "internet-invidious" {
+      hostAddress = "10.255.255.237";
+      localAddress = "10.0.0.18";
 
-      config = mkConfig (recursive ./containers/groups/x1/pwb);
-    };
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/02-internet/08-invidious/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/02-internet/08-invidious/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+        {
+          "/var/lib/postgresql/" = {
+            hostPath = "/blobs/var/lib/machines/02-internet/08-invidious/var/lib/postgresql/";
+            isReadOnly = false;
+          };
+        }
+      ];
 
-    x1-wkm = mkContainer "x1-wkm" {
-      gateway = "10.255.255.242";
-      address = "10.0.0.13";
-
-      bindMounts = {
-        "/var/lib/uptime-kuma/" = {
-          hostPath = "/blobs/var/lib/machines/x1-wkm/var/lib/uptime-kuma/";
-          isReadOnly = false;
-        };
-      };
-
-      config = mkConfig (recursive ./containers/groups/x1/wkm);
-    };
-
-    # ────────────────────────────────────────────────────────────────────────
-    #
-    # ▀▄▀ ▀█ ▀   ▀█▀ ░ █░█ █▀▀ █░█ █ █▀▀ ░ █▀▄ █▀▀ █░█
-    # █░█ █▄ ▄   ░█░ ▄ █▄█ ██▄ █▄█ █ ██▄ ▄ █▄▀ ██▄ ▀▄▀
-    #
-    # services for projects in case their primary provider goes down
-    #
-    # ────────────────────────────────────────────────────────────────────────
-    x2-alk = mkContainer "x2-alk" {
-      gateway = "10.255.255.238";
-      address = "10.0.0.17";
-
-      config = mkConfig (recursive ./containers/groups/x2/alk);
+      config = mkConfig (recursive ./containers/groups/02-internet/08-invidious);
     };
   };
 
