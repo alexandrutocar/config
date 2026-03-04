@@ -23,6 +23,7 @@
 
       pyproject = true;
 
+      __structuredAttrs = true;
       strictDeps = true;
 
       build-system = with python3Packages; [
@@ -59,6 +60,7 @@
 
               pyproject = true;
 
+              __structuredAttrs = true;
               strictDeps = true;
 
               build-system = [python3Packages.setuptools];
@@ -83,6 +85,7 @@
 
           pyproject = true;
 
+          __structuredAttrs = true;
           strictDeps = true;
 
           build-system = [python3Packages.hatchling];
@@ -114,6 +117,7 @@
 
           pyproject = true;
 
+          __structuredAttrs = true;
           strictDeps = true;
 
           build-system = [python3Packages.setuptools];
@@ -136,6 +140,7 @@
 
       pyproject = true;
 
+      __structuredAttrs = true;
       strictDeps = true;
 
       build-system = [python3Packages.hatchling];
@@ -199,6 +204,7 @@
 
       pyproject = true;
 
+      __structuredAttrs = true;
       strictDeps = true;
 
       build-system = [python3Packages.uv-build];
@@ -215,7 +221,7 @@
 in
   python3Packages.buildPythonApplication {
     inherit pname version;
-    
+
     src = fetchPypi {
       inherit pname version;
       hash = "sha256-aEb9yu3mupui5rwQ8WlbQMTO4D1VAXl37QO3QaPEKMU=";
@@ -223,6 +229,7 @@ in
 
     pyproject = true;
 
+    __structuredAttrs = true;
     strictDeps = true;
 
     build-system = [python3Packages.hatchling];

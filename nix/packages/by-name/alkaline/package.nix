@@ -13,6 +13,7 @@ stdenv.mkDerivation (finalAttrs: {
     rev = "7f447a118284f05af3027de59a8720e226601bd8";
   };
 
+  __structuredAttrs = true;
   strictDeps = true;
 
   nativeBuildInputs = [

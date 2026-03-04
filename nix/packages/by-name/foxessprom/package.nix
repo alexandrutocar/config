@@ -16,9 +16,10 @@ in
       tag = "v${version}";
       hash = "sha256-+7YLOGb7msMhRLN8EAmxe5sCApsUHH8T6b8oofYbTtA=";
     };
-    
+
     pyproject = true;
 
+    __structuredAttrs = true;
     strictDeps = true;
 
     build-system = [python3Packages.setuptools];

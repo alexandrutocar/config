@@ -40,6 +40,7 @@ php.buildComposerProject (finalAttrs: {
     hash = "sha256-YLVfcoC8cIcCfi7R2zWXNxD4P+KIXOCL+MqFEt2Z7Tc=";
   };
 
+  __structuredAttrs = true;
   strictDeps = true;
 
   vendorHash = "sha256-RpvqgFvs1Yra7Z2vUWhAIIe8vJwUtp2FVtPBva9g90U=";

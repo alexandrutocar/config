@@ -40,6 +40,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     hash = "sha256-XWnYaUBwXDJwy4n37WKW3DEKkUdUEOFvR/8v5ibF96k=";
   };
 
+  __structuredAttrs = true;
   strictDeps = true;
 
   installPhase = ''
