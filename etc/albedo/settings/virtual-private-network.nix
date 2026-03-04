@@ -15,114 +15,140 @@
   lib,
   ...
 }: let
+  inherit (lib.attrsets) listToAttrs;
   inherit (lib.custom.net) mkHost;
+  inherit (lib.modules) mkMerge;
+  inherit (lib.meta) getExe';
 in {
-  systemd.network = {
-    netdevs."25-wg0" = {
-      # [NetDev]
-      netdevConfig = {
-        Kind = "wireguard";
-        Name = "wg0";
-      };
+  systemd = let
+    mkVPN = definitions:
+      mkMerge (builtins.map ({
+          name,
+          marker,
+          endpoint,
+        }: {
+          netdevs = {
+            "25-${name}" = {
+              netdevConfig = {
+                Kind = "wireguard";
+                Name = name;
+              };
 
-      # [WireGuard]
-      wireguardConfig = {
-        PrivateKeyFile = "/var/lib/wg/_x0/p1.key";
+              wireguardConfig = {
+                PrivateKeyFile = "/var/lib/wg/x0/p1.key";
+                FirewallMark = marker;
+                RouteTable = "off";
+              };
 
-        FirewallMark = 2370;
-        RouteTable = "off";
-      };
-      wireguardPeers = [
-        # [Peer]
-        {
-          PublicKeyFile = "/var/lib/wg/_x0/p0.pub";
-          PresharedKeyFile = "/var/lib/wg/_x0/p0.pre";
+              wireguardPeers = [
+                {
+                  PresharedKeyFile = "/var/lib/wg/x0/p0.pre";
 
-          Endpoint = mkHost "aether.ns.ueuie.dev" 53280;
+                  PublicKeyFile = "/var/lib/wg/x0/p0.pub";
 
-          AllowedIPs = ["192.168.0.0/24"];
-          RouteTable = "off";
+                  Endpoint = endpoint;
 
-          PersistentKeepalive = 21;
-        }
-      ];
-    };
+                  AllowedIPs = [
+                    "192.168.1.1/32"
+                    "fd31::100:1/128"
+                  ];
 
-    networks."25-wg0" = {
-      # [Match]
-      matchConfig = {
-        Name = "wg0";
-      };
+                  RouteTable = "off";
 
-      address = [
-        "10.200.200.2/24"
-      ];
+                  PersistentKeepalive = 25;
+                }
+              ];
+            };
+          };
 
-      # [Network]
-      networkConfig = {
-        DNSDefaultRoute = true;
+          networks = {
+            "25-${name}" = {
+              matchConfig = {
+                Name = name;
+              };
 
-        DNS = [
-          "192.168.0.10"
-          # ────────────────────────────────────────────────────────────────────────
-          # TODO: Enable IPv6.
-          # ────────────────────────────────────────────────────────────────────────
-          # "fd31::100:10"
-        ];
+              address = [
+                "192.168.1.2/32"
+              ];
 
-        Domains = ["~aether.ip" "~."];
+              networkConfig = {
+                DNSDefaultRoute = true;
 
-        DNSOverTLS = "yes";
-      };
+                DNSOverTLS = "yes";
 
-      routingPolicyRules = [
-        # [RoutingPolicyRule]
-        {
-          Family = "both";
-          Table = "main";
-          SuppressPrefixLength = 0;
-          Priority = 10;
-        }
-        # [RoutingPolicyRule]
-        {
-          Family = "both";
-          InvertRule = true;
-          FirewallMark = 2370;
-          Table = 2370;
-          Priority = 11;
-        }
-      ];
+                DNS = [
+                  "192.168.1.1"
+                  # ────────────────────────────────────────────────────────────────────────
+                  # TODO: Enable IPv6.
+                  # ────────────────────────────────────────────────────────────────────────
+                  # "fd31::100:1"
+                ];
 
-      # [Route]
-      routes = [
-        {
-          Destination = "192.168.0.0/24";
-          Table = 2370;
-          Scope = "link";
-        }
-      ];
+                Domains = ["~aether.ip" "~."];
+              };
 
-      # [Link]
-      linkConfig = {
-        ActivationPolicy = "manual";
-        RequiredForOnline = false;
-      };
-    };
+              routingPolicyRules = [
+                {
+                  Family = "both";
+                  Table = "main";
+                  SuppressPrefixLength = 0;
+                  Priority = 10;
+                }
+                {
+                  Family = "both";
+                  InvertRule = true;
+                  FirewallMark = marker;
+                  Table = marker;
+                  Priority = 11;
+                }
+              ];
+
+              routes = [
+                {
+                  Destination = "192.168.1.1/32";
+                  Table = marker;
+                  Scope = "link";
+                }
+              ];
+
+              linkConfig = {
+                ActivationPolicy = "manual";
+                RequiredForOnline = false;
+              };
+            };
+          };
+        })
+        definitions);
+  in {
+    network = mkVPN [
+      {
+        name = "wg-intranet";
+        marker = 1010;
+        endpoint = mkHost "192.168.0.10" 51820;
+      }
+      {
+        name = "wg-internet";
+        marker = 1020;
+        endpoint = mkHost "79.237.213.131" 51820;
+      }
+    ];
   };
 
   services.networkd-dispatcher = {
     enable = true;
     rules = {
-      wg0-bring-up-on-demand = {
+      vpn-on-demand = {
         onState = ["routable" "carrier"];
         script = ''
           #!${pkgs.runtimeShell}
           if [[ $IFACE == wlan0 ]]; then
-              if [[ $ESSID == ${config.systemd.network.networks."25-wlan0".matchConfig.SSID} ]]; then
-                ${pkgs.systemd}/bin/networkctl down ${config.systemd.network.netdevs."25-wg0".netdevConfig.Name}
-                exit 0
+              if [[ $ESSID == "heim" ]]; then
+                ${getExe' pkgs.systemd "networkctl"} up ${config.systemd.network.netdevs."25-wg-intranet".netdevConfig.Name}
+                ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-internet".netdevConfig.Name}
+              else
+                ${getExe' pkgs.systemd "networkctl"} up ${config.systemd.network.netdevs."25-wg-internet".netdevConfig.Name}
+                ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-intranet".netdevConfig.Name}
               fi
-              ${pkgs.systemd}/bin/networkctl up ${config.systemd.network.netdevs."25-wg0".netdevConfig.Name}
             fi
         '';
       };

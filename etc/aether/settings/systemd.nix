@@ -17,11 +17,16 @@
   # allow entering emergency shell (helps with debugging)
   boot.initrd.systemd.emergencyAccess = "$y$j9T$/wz/tR9.fA4bxAhxqDwtU1$F88.5ajoPgSryf8FUODs.nu1kNwyin3pTUruSE.ahI6";
 
-  environment.persistence."/state".directories = [
-    "/var/lib/systemd"
+  environment.persistence."/state" = {
+    directories = [
+      "/var/lib/systemd"
 
-    # journal should stay between reboots
-    # for auditing purposes
-    "/var/log/journal"
-  ];
+      # journal should stay between reboots
+      # for auditing purposes
+      "/var/log/journal"
+    ];
+    files = [
+      "/etc/machine-id"
+    ];
+  };
 }

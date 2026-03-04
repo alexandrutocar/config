@@ -10,61 +10,57 @@
 #
 # ────────────────────────────────────────────────────────────────────────
 _: {
+  # WIREGUARD
+  # ---------
   systemd.network = {
     netdevs."25-wg0" = {
-      # [NetDev]
       netdevConfig = {
         Kind = "wireguard";
         Name = "wg0";
       };
 
-      # [WireGuard]
       wireguardConfig = {
         ListenPort = 51820;
 
-        # ensure file is readable by `systemd-network` user
         PrivateKeyFile = "/var/lib/wg/x0/p0.key";
-
-        RouteTable = "main";
-
-        FirewallMark = 2370;
       };
 
       wireguardPeers = [
-        # [Peer]
         {
-          PublicKeyFile = "/var/lib/wg/x0/p1.pub";
+          PersistentKeepalive = 25;
+
           PresharedKeyFile = "/var/lib/wg/x0/p1.pre";
+
+          PublicKeyFile = "/var/lib/wg/x0/p1.pub";
 
           AllowedIPs = [
             "fd31::100:2/128"
             "192.168.1.2/32"
           ];
-
-          RouteTable = "main";
-
-          PersistentKeepalive = 25;
         }
         {
-          PublicKeyFile = "/var/lib/wg/x0/p2.pub";
+          PersistentKeepalive = 25;
+
           PresharedKeyFile = "/var/lib/wg/x0/p2.pre";
+
+          PublicKeyFile = "/var/lib/wg/x0/p2.pub";
 
           AllowedIPs = [
             "fd31::100:3/128"
             "192.168.1.3/32"
           ];
-
-          RouteTable = "main";
-
-          PersistentKeepalive = 25;
         }
       ];
     };
 
     networks."25-wg0" = {
-      # [Match]
       matchConfig = {
         Name = "wg0";
+      };
+
+      networkConfig = {
+        IPv4Forwarding = true;
+        IPv6Forwarding = true;
       };
 
       address = [
@@ -73,14 +69,25 @@ _: {
         "fd31::100:1/128"
         "192.168.1.1/32"
       ];
+
+      routes = [
+        {Destination = "192.168.1.2/32";}
+        {Destination = "192.168.1.3/32";}
+        {Destination = "fd31::100:2/128";}
+        {Destination = "fd31::100:3/128";}
+      ];
     };
+  };
+
+  networking.firewall = {
+    allowedUDPPorts = [
+      51820
+    ];
   };
 
   # PERSISTENCE
   # -----------
   environment.persistence."/state".directories = [
-    # iwd takes full control of network configuration and
-    # does not allow it to be read-only (or symlinked).
     "/var/lib/wg"
   ];
 }

@@ -5,7 +5,6 @@
   inputs = {
     unstable.url = "github:nixos/nixpkgs?ref=nixpkgs-unstable";
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    stable.url = "github:nixos/nixpkgs/?ref=nixos-25.11";
 
     nixos-facter-modules = {
       url = "github:nix-community/nixos-facter-modules";
@@ -59,10 +58,17 @@
     mkPackages = system: pkgs:
       import pkgs {
         inherit system;
-        config.allowUnfreePredicate = pkg:
-          builtins.elem (getName pkg) [
-            "fcitx5-black-simplicity"
-          ];
+
+        config = {
+          allowUnfreePredicate = pkg:
+            builtins.elem (getName pkg) [
+              "fcitx5-black-simplicity"
+            ];
+
+          # strictDepsByDefault = true;
+          # structuredAttrsByDefault = true;
+        };
+
         overlays = (attrValues self.overlays) ++ [inputs.bun2nix.overlays.default];
       };
 

@@ -25,6 +25,7 @@ in {
 
       signKeyPaths = [
         "/var/lib/harmonia/cache.ueuie.dev.key"
+        "/var/lib/harmonia/cache.aether.ip.key"
       ];
     };
 

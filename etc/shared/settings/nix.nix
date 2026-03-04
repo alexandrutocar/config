@@ -7,7 +7,7 @@
 #
 # ────────────────────────────────────────────────────────────────────────
 {lib, ...}: let
-  inherit (lib.modules) mkDefault;
+  inherit (lib.modules) mkDefault mkForce;
 in {
   # NIX
   # ---
@@ -19,13 +19,6 @@ in {
     optimise = {
       automatic = mkDefault true;
       dates = mkDefault ["03:15"];
-    };
-
-    # nix-collect-garbage --delete-older-than 365d
-    gc = {
-      automatic = true;
-      dates = mkDefault "03:15";
-      options = mkDefault "--delete-older-than 14d";
     };
 
     settings = {
@@ -45,12 +38,12 @@ in {
       # removes ~/.nix-profile and ~/.nix-defexpr
       use-xdg-base-directories = mkDefault true;
 
-      substituters = mkDefault [
-        "https://cache.ueuie.dev"
+      substituters = mkForce [
+        "https://cache.aether.ip"
       ];
 
-      trusted-public-keys = mkDefault [
-        "cache.ueuie.dev:yx2Q390VKtD/H/8FdgBBwky6yj18sMxtufAGlUAkSSs="
+      trusted-public-keys = mkForce [
+        "cache.aether.ip:yx2Q390VKtD/H/8FdgBBwky6yj18sMxtufAGlUAkSSs="
       ];
     };
 

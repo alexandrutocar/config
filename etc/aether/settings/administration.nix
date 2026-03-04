@@ -14,31 +14,69 @@
 }: let
   inherit (lib.lists) singleton;
   inherit (lib.meta) getExe';
+  inherit (lib.modules) mkMerge;
 in {
   imports = singleton (self + /etc/shared/settings/administration.nix);
 
-  users.users = {
-    root = {
-      openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE0Hozax7+poMyiZ/CNOalddizu6x/mhMZd/TThnCFQ4 alex"
-      ];
-
-      hashedPasswordFile = "/etc/hashed/root";
-    };
-
-    git = {
-      isSystemUser = true;
-      group = "git";
-      home = "/var/lib/git";
-      createHome = true;
-      shell = getExe' pkgs.git "git-shell";
-      openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFoDa2D88CGPbiMvQ1SCsEffhLIFGbOtINHpQjXi+vNX alex"
-      ];
-    };
+  users.groups = {
+    builder = {};
+    cache = {};
+    git = {};
   };
 
-  users.groups.git = {};
+  users.users = mkMerge [
+    {
+      builder = {
+        group = "builder";
+
+        isNormalUser = true;
+
+        openssh = {
+          authorizedKeys.keys = [
+            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIItoIVV/KQYI9MUdJpnLxVT9wRsxSjpAg2gQUxmfJCak alex@albedo"
+          ];
+        };
+      };
+
+      cache = {
+        group = "cache";
+
+        isNormalUser = true;
+
+        openssh = {
+          authorizedKeys.keys = [
+            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHUn9Mp/Jj1cPjZuc/PuLOJN8Kcu8QybIzWeC4KcxaMQ alex@albedo"
+          ];
+        };
+      };
+
+      git = {
+        home = "/var/lib/git";
+        group = "git";
+
+        isSystemUser = true;
+
+        openssh = {
+          authorizedKeys.keys = [
+            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO+Hv86vvA3XpfouF6a2w84MRIjTZVHfGZsOzbpEG6K5 alex@albedo"
+          ];
+        };
+
+        shell = getExe' pkgs.git "git-shell";
+      };
+    }
+    {
+      root = {
+        openssh = {
+          authorizedKeys.keys = [
+            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE0Hozax7+poMyiZ/CNOalddizu6x/mhMZd/TThnCFQ4 alex@albedo"
+          ];
+        };
+
+        hashedPasswordFile = "/etc/hashed/root";
+      };
+    }
+  ];
 
   services = {
     # SECURE SHELL ACCESS
@@ -109,6 +147,13 @@ in {
         HostKeyAlgorithms ${builtins.concatStringsSep "," algorithms.key}
 
         Match user git
+          AllowTcpForwarding no
+          AllowAgentForwarding no
+          PasswordAuthentication no
+          PermitTTY no
+          X11Forwarding no
+
+        Match user cache
           AllowTcpForwarding no
           AllowAgentForwarding no
           PasswordAuthentication no

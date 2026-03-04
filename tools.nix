@@ -4,11 +4,11 @@
     shell.enable = true;
   };
 
-  git-hooks.hooks = {
-    flake-checker = {
-      enable = true;
-    };
+  packages = with pkgs; [
+    alejandra
+  ];
 
+  git-hooks.hooks = {
     alejandra = {
       enable = true;
       settings = {
@@ -48,23 +48,6 @@
 
     trufflehog = {
       enable = true;
-
-      # ERROR:  > trufflehog --version
-      #         trufflehog 3.91.2
-      # package = with pkgs; (trufflehog.overrideAttrs (_: let
-      #   version = "3.92.3";
-
-      #   src = fetchFromGitHub {
-      #     owner = "trufflesecurity";
-      #     repo = "trufflehog";
-      #     tag = "v${version}";
-      #     hash = "sha256-vSJncJzHxiZqDG0BQrLUjU7mFvZ6PnoE2FkITRvKmes=";
-      #   };
-      # in {
-      #   inherit src version;
-      #   vendorHash = "sha256-Qz0tKqqT3PlZFCiYxLBmHeICIx2ogOUW7rfXHadcVPg=";
-      #   doInstallCheck = false;
-      # }));
     };
   };
 }

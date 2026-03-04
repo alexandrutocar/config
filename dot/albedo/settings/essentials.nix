@@ -23,7 +23,11 @@ in {
 
     # LEARNING
     # --------
-    anki
+    (
+      anki.overrideAttrs (finalAttrs: superAttrs: {
+        builtInputs = superAttrs.buildInputs ++ [pkgs.qt6.qtwebengine];
+      })
+    )
 
     # IMAGE
     # -----
@@ -79,7 +83,12 @@ in {
 
     # UTILITIES
     # ---------
+    caligula
     pass
+
+    # LLM & ML
+    # --------
+    custom.tlm
   ];
 
   wayland.windowManager.river.settings = {

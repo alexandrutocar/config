@@ -31,9 +31,6 @@ in {
         };
       };
     };
-
-    useNetworkd = true;
-    enableIPv6 = false;
   };
 
   # SYSTEMD NETWORK
@@ -58,6 +55,19 @@ in {
         networkConfig = {
           Address = ["192.168.0.10/24" "fe80::9ecc:83ff:fec8:1010/64"];
           Gateway = ["192.168.0.1" "fe80::9ecc:83ff:fec8:46aa"];
+
+          DNSDefaultRoute = true;
+          DNSOverTLS = "yes";
+
+          DNS = [
+            "10.0.0.6" # intranet-dns container
+            # ────────────────────────────────────────────────────────────────────────
+            # TODO: Enable IPv6.
+            # ────────────────────────────────────────────────────────────────────────
+            # "fd31::100:1"
+          ];
+
+          Domains = ["~aether.ip" "~."];
         };
       };
     };

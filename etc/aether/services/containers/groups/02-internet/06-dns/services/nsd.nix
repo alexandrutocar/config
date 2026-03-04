@@ -66,7 +66,7 @@ in {
       zone = [
         {
           name = ''"ueuie.dev"'';
-          zonefile = ''"${./zones/ueuie.dev.zone}"'';
+          zonefile = ''"${../etcetera/zones/ueuie.dev.zone}"'';
         }
       ];
     };

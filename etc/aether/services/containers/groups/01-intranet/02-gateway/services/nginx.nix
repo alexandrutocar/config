@@ -6,150 +6,297 @@
 # nginx, reverse proxy, prometheus exporter...
 #
 # ────────────────────────────────────────────────────────────────────────
-{container, ...}: let
-  inherit (container) self intranet-ml intranet-accounting intranet-feed intranet-dav intranet-monitoring;
+{
+  container,
+  pkgs,
+  lib,
+  ...
+}: let
+  inherit (lib.modules) mkMerge;
+  inherit (container) self intranet-accounting intranet-alkaline intranet-feed intranet-ml intranet-dav intranet-coder intranet-monitoring internet-harmonia;
 in {
   services.nginx = {
     enable = true;
 
+    recommendedBrotliSettings = true;
     recommendedProxySettings = true;
     recommendedOptimisation = true;
     recommendedTlsSettings = true;
 
     statusPage = true;
 
-    virtualHosts = {
-      _ = {
-        default = true;
-        extraConfig = ''
-          return 444;
-        '';
-      };
-
-      "aether.ip" = {
-        # ────────────────────────────────────────────────────────────────────────
-        # TODO: Compile the right chain.pem.
-        # ────────────────────────────────────────────────────────────────────────
-        # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
-
-        sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
-        sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
-
-        forceSSL = true;
-        kTLS = true;
-
-        locations = {
-          "/" = {
-            proxyPass = "http://${intranet-dav.localAddress}:8080";
-          };
-
-          "/.well-known/" = {
-            alias = "/usr/share/html/.well-known/";
-            tryFiles = "$uri =404";
-            extraConfig = ''
-              default_type application/x-apple-aspen-config;
-            '';
-          };
+    virtualHosts = mkMerge [
+      {
+        _ = {
+          default = true;
+          extraConfig = ''
+            return 444;
+          '';
         };
-      };
+      }
+      {
+        "aether.ip/ml" = {
+          extraConfig = ''
+            access_log /var/log/nginx/aether.ip.access.log analytics;
+            error_log /var/log/nginx/aether.ip.error.log;
+          '';
 
-      "ml.aether.ip" = {
-        # ────────────────────────────────────────────────────────────────────────
-        # TODO: Compile the right chain.pem.
-        # ────────────────────────────────────────────────────────────────────────
-        # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
-        sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
-        sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
+          kTLS = true;
 
-        forceSSL = true;
-        kTLS = true;
+          listen = [
+            {
+              addr = self.localAddress;
+              port = 11434;
+              ssl = true;
+            }
+          ];
 
-        locations = {
-          "/" = {
-            proxyPass = "http://${intranet-ml.localAddress}:8080";
+          onlySSL = true;
+
+          locations = {
+            "/" = {
+              proxyPass = "http://${intranet-ml.localAddress}:8080";
+            };
           };
+
+          serverName = "aether.ip";
+
+          sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
+          sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
+
+          # ────────────────────────────────────────────────────────────────────────
+          # TODO: Compile the right chain.pem.
+          # ────────────────────────────────────────────────────────────────────────
+          # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
         };
-      };
+        "aether.ip/dav" = {
+          extraConfig = ''
+            access_log /var/log/nginx/aether.ip.access.log analytics;
+            error_log /var/log/nginx/aether.ip.error.log;
+          '';
 
-      "finances.aether.ip" = {
-        # ────────────────────────────────────────────────────────────────────────
-        # TODO: Compile the right chain.pem.
-        # ────────────────────────────────────────────────────────────────────────
-        # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
-        sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
-        sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
+          kTLS = true;
 
-        forceSSL = true;
-        kTLS = true;
+          listen = [
+            {
+              addr = self.localAddress;
+              port = 443;
+              ssl = true;
+            }
+          ];
 
-        locations = {
-          "/" = {
-            proxyPass = "http://${intranet-accounting.localAddress}:8080";
-            proxyWebsockets = true;
-            recommendedProxySettings = true;
+          onlySSL = true;
+
+          locations = {
+            "/" = {
+              proxyPass = "http://${intranet-dav.localAddress}:8080";
+            };
+
+            "/.well-known/" = {
+              alias = "/usr/share/html/.well-known/";
+              tryFiles = "$uri =404";
+              extraConfig = ''
+                default_type application/x-apple-aspen-config;
+              '';
+            };
           };
+
+          serverName = "aether.ip";
+
+          sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
+          sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
+
+          # ────────────────────────────────────────────────────────────────────────
+          # TODO: Compile the right chain.pem.
+          # ────────────────────────────────────────────────────────────────────────
+          # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
         };
-      };
+      }
+      {
+        "monitoring.aether.ip/monitoring" = {
+          extraConfig = ''
+            access_log /var/log/nginx/monitoring.aether.ip.access.log analytics;
+            error_log /var/log/nginx/monitoring.aether.ip.error.log;
+          '';
 
-      "feed.aether.ip" = {
-        # ────────────────────────────────────────────────────────────────────────
-        # TODO: Compile the right chain.pem.
-        # ────────────────────────────────────────────────────────────────────────
-        # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
+          kTLS = true;
 
-        sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
-        sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
+          listen = [
+            {
+              addr = self.localAddress;
+              port = 443;
+              ssl = true;
+            }
+          ];
 
-        forceSSL = true;
-        kTLS = true;
+          onlySSL = true;
 
-        locations = {
-          "/" = {
-            proxyPass = "http://${intranet-feed.localAddress}:8080";
+          locations = {
+            "/" = {
+              proxyPass = "http://${intranet-monitoring.localAddress}:8080";
+              proxyWebsockets = true;
+              recommendedProxySettings = true;
+            };
           };
+
+          serverName = "monitoring.aether.ip";
+
+          sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
+          sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
+
+          # ────────────────────────────────────────────────────────────────────────
+          # TODO: Compile the right chain.pem.
+          # ────────────────────────────────────────────────────────────────────────
+          # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
         };
-      };
 
-      "monitoring.aether.ip" = {
-        # ────────────────────────────────────────────────────────────────────────
-        # TODO: Compile the right chain.pem.
-        # ────────────────────────────────────────────────────────────────────────
-        # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
-        sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
-        sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
+        "alkaline.aether.ip/alkaline" = {
+          extraConfig = ''
+            access_log /var/log/nginx/feed.aether.ip.access.log analytics;
+            error_log /var/log/nginx/feed.aether.ip.error.log;
+          '';
 
-        forceSSL = true;
-        kTLS = true;
+          kTLS = true;
 
-        locations = {
-          "/" = {
-            proxyPass = "http://${intranet-monitoring.localAddress}:8080";
-            proxyWebsockets = true;
-            recommendedProxySettings = true;
+          listen = [
+            {
+              addr = self.localAddress;
+              port = 443;
+              ssl = true;
+            }
+          ];
+
+          onlySSL = true;
+
+          locations = {
+            "/" = {
+              proxyPass = "http://${intranet-alkaline.localAddress}:8080";
+              proxyWebsockets = true;
+              recommendedProxySettings = true;
+            };
           };
+
+          serverName = "alkaline.aether.ip";
+
+          sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
+          sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
+
+          # ────────────────────────────────────────────────────────────────────────
+          # TODO: Compile the right chain.pem.
+          # ────────────────────────────────────────────────────────────────────────
+          # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
         };
-      };
+        "cache.aether.ip/harmonia" = {
+          extraConfig = ''
+            access_log  /var/log/nginx/cache.aether.ip.access.log analytics;
+            error_log              /var/log/nginx/cache.aether.ip.error.log;
+            proxy_buffering                                             off;
+            proxy_request_buffering                                     off;
+          '';
 
-      "exporters.aether.ip" = {
-        # ────────────────────────────────────────────────────────────────────────
-        # TODO: Compile the right chain.pem.
-        # ────────────────────────────────────────────────────────────────────────
-        # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
-        sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
-        sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
+          kTLS = true;
 
-        forceSSL = true;
-        kTLS = true;
+          listen = [
+            {
+              addr = self.localAddress;
+              port = 443;
+              ssl = true;
+            }
+          ];
 
-        locations = {
-          "/" = {
-            proxyPass = "http://${intranet-monitoring.localAddress}:9090";
-            proxyWebsockets = true;
-            recommendedProxySettings = true;
+          onlySSL = true;
+
+          locations = {
+            "/" = {
+              proxyPass = "http://${internet-harmonia.localAddress}:8080";
+            };
           };
+
+          serverName = "cache.aether.ip";
+
+          sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
+          sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
+
+          # ────────────────────────────────────────────────────────────────────────
+          # TODO: Compile the right chain.pem.
+          # ────────────────────────────────────────────────────────────────────────
+          # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
         };
-      };
-    };
+        "coder.aether.ip/coder" = {
+          extraConfig = ''
+            access_log /var/log/nginx/coder.aether.ip.access.log analytics;
+            error_log /var/log/nginx/coder.aether.ip.error.log;
+          '';
+
+          kTLS = true;
+
+          listen = [
+            {
+              addr = self.localAddress;
+              port = 443;
+              ssl = true;
+            }
+          ];
+
+          onlySSL = true;
+
+          locations = {
+            "/" = {
+              extraConfig = ''
+                add_header X-Frame-Options SAMEORIGIN always;
+              '';
+              proxyPass = "http://${intranet-coder.localAddress}:8080";
+              proxyWebsockets = true;
+            };
+          };
+
+          serverName = "coder.aether.ip";
+
+          sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
+          sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
+
+          # ────────────────────────────────────────────────────────────────────────
+          # TODO: Compile the right chain.pem.
+          # ────────────────────────────────────────────────────────────────────────
+          # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
+        };
+
+        "feed.aether.ip/feed" = {
+          extraConfig = ''
+            access_log /var/log/nginx/feed.aether.ip.access.log analytics;
+            error_log /var/log/nginx/feed.aether.ip.error.log;
+          '';
+
+          kTLS = true;
+
+          listen = [
+            {
+              addr = self.localAddress;
+              port = 443;
+              ssl = true;
+            }
+          ];
+
+          onlySSL = true;
+
+          locations = {
+            "/" = {
+              proxyPass = "http://${intranet-feed.localAddress}:8080";
+            };
+          };
+
+          serverName = "feed.aether.ip";
+
+          sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
+          sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
+
+          # ────────────────────────────────────────────────────────────────────────
+          # TODO: Compile the right chain.pem.
+          # ────────────────────────────────────────────────────────────────────────
+          # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
+        };
+      }
+    ];
   };
 
   services.prometheus.exporters.nginx = {
