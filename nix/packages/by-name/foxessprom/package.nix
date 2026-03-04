@@ -5,7 +5,7 @@
   ...
 }: let
   pname = "foxessprom";
-  version = "2.0.4";
+  version = "2.1.0";
 in
   python3Packages.buildPythonApplication {
     inherit pname version;
@@ -14,7 +14,7 @@ in
       owner = "andrewjw";
       repo = "foxessprom";
       tag = "v${version}";
-      hash = "sha256-ImoUEprNv1KW5ou9LaVkzDuHcsKpNYW2kQEVENgBFsY=";
+      hash = "sha256-+7YLOGb7msMhRLN8EAmxe5sCApsUHH8T6b8oofYbTtA=";
     };
     
     pyproject = true;
