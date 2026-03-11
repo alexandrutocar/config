@@ -24,27 +24,11 @@ in {
     type = "fcitx5";
 
     fcitx5 = {
-      addons =
-        (
-          with pkgs; [
-            fcitx5-table-extra
-            fcitx5-rime
-            fcitx5-gtk
-            rime-data
-            fcitx5-m17n
-            fcitx5-table-other
-          ]
-        )
-        ++ (
-          with pkgs.kdePackages; [
-            fcitx5-chinese-addons
-          ]
-        )
-        ++ (
-          with pkgs.custom; [
-            fcitx5-black-simplicity
-          ]
-        );
+      addons = with (pkgs // pkgs.kdePackages); [
+        # fcitx5-black-simplicity
+        fcitx5-chinese-addons
+        fcitx5-table-other
+      ];
     };
   };
 

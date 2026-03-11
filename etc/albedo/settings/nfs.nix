@@ -9,8 +9,8 @@ _: {
       mountConfig = {
         Options = "noatime";
       };
-      what = "aether.ip:/share";
-      where = "/mnt/share";
+      what = "aether.ip:/archive";
+      where = "/mnt/aether/archive";
     }
   ];
 
@@ -20,7 +20,7 @@ _: {
       automountConfig = {
         TimeoutIdleSec = "600";
       };
-      where = "/mnt/share";
+      where = "/mnt/aether/archive";
     }
   ];
 }

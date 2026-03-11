@@ -264,6 +264,7 @@ in {
     lsof # standard for listing open files
 
     # Disk & Filesystem
+    caligula # burning tool
     ncdu # efficient disk usage analyzer
     parted # disk partitioning
     gptfdisk # comfortable disk partitioning
@@ -274,9 +275,6 @@ in {
 
     # Version Control
     git-annex
-
-    # Databases
-    sqlitebrowser
 
     # Encryption & Keys
     openssl

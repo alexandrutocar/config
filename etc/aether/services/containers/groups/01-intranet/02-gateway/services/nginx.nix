@@ -13,7 +13,7 @@
   ...
 }: let
   inherit (lib.modules) mkMerge;
-  inherit (container) self intranet-accounting intranet-alkaline intranet-feed intranet-ml intranet-dav intranet-coder intranet-monitoring internet-harmonia;
+  inherit (container) self intranet-harmonia intranet-reader intranet-ml intranet-dav intranet-coder intranet-monitoring;
 in {
   services.nginx = {
     enable = true;
@@ -150,42 +150,6 @@ in {
           # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
         };
 
-        "alkaline.aether.ip/alkaline" = {
-          extraConfig = ''
-            access_log /var/log/nginx/feed.aether.ip.access.log analytics;
-            error_log /var/log/nginx/feed.aether.ip.error.log;
-          '';
-
-          kTLS = true;
-
-          listen = [
-            {
-              addr = self.localAddress;
-              port = 443;
-              ssl = true;
-            }
-          ];
-
-          onlySSL = true;
-
-          locations = {
-            "/" = {
-              proxyPass = "http://${intranet-alkaline.localAddress}:8080";
-              proxyWebsockets = true;
-              recommendedProxySettings = true;
-            };
-          };
-
-          serverName = "alkaline.aether.ip";
-
-          sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
-          sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
-
-          # ────────────────────────────────────────────────────────────────────────
-          # TODO: Compile the right chain.pem.
-          # ────────────────────────────────────────────────────────────────────────
-          # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
-        };
         "cache.aether.ip/harmonia" = {
           extraConfig = ''
             access_log  /var/log/nginx/cache.aether.ip.access.log analytics;
@@ -208,7 +172,7 @@ in {
 
           locations = {
             "/" = {
-              proxyPass = "http://${internet-harmonia.localAddress}:8080";
+              proxyPass = "http://${intranet-harmonia.localAddress}:8080";
             };
           };
 
@@ -261,10 +225,10 @@ in {
           # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
         };
 
-        "feed.aether.ip/feed" = {
+        "reader.aether.ip/reader" = {
           extraConfig = ''
-            access_log /var/log/nginx/feed.aether.ip.access.log analytics;
-            error_log /var/log/nginx/feed.aether.ip.error.log;
+            access_log /var/log/nginx/reader.aether.ip.access.log analytics;
+            error_log /var/log/nginx/reader.aether.ip.error.log;
           '';
 
           kTLS = true;
@@ -281,11 +245,11 @@ in {
 
           locations = {
             "/" = {
-              proxyPass = "http://${intranet-feed.localAddress}:8080";
+              proxyPass = "http://${intranet-reader.localAddress}:8080";
             };
           };
 
-          serverName = "feed.aether.ip";
+          serverName = "reader.aether.ip";
 
           sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
           sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";

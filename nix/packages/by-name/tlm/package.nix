@@ -44,7 +44,7 @@ buildGoModule (finalAttrs: {
     changelog = "https://github.com/yusufcanb/tlm/releases/tag/${finalAttrs.version}";
     mainProgram = "tlm";
     longDescription = ''
-      tlm is your CLI companion which requires nothing except your workstation.
+      tlm is your CLI companion qwhich requires nothing except your workstation.
       It uses most efficient and powerful open-source models like Llama 3.3,
       Phi4, DeepSeek-R1, Qwen of your choice in your local environment
       to provide you the best possible command line assistance.

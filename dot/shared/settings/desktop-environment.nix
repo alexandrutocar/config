@@ -59,10 +59,12 @@ in {
 
     # SYSTEM FONT
     # -----------
-    tamsyn # Tamsyn
+    tamsyn
   ];
 
   home.sessionVariables = {
+    # SYSTEM TERMINAL
+    # ---------------
     TERMINAL = "foot";
   };
 
@@ -338,8 +340,8 @@ in {
   };
 
   programs = {
-    # TERMINAL
-    # --------
+    # SYSTEM TERMINAL
+    # ---------------
     foot = {
       enable = true;
       settings = {
@@ -347,8 +349,8 @@ in {
       };
     };
 
-    # MENU
-    # ----
+    # SYSTEM MENU
+    # -----------
     tofi = {
       enable = true;
       settings = {
@@ -402,8 +404,8 @@ in {
   };
 
   services = {
-    # STATUS
-    # ------
+    # STATUS DISPLAY
+    # --------------
     creek = {
       enable = true;
 

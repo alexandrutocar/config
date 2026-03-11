@@ -1,18 +1,43 @@
-# https://nix.dev/manual/nix/2.24/command-ref/new-cli/nix3-flake.html#flake-format
 {
-  description = "Configuration Files";
+  description = ''
+    Systems configuration files.
+  '';
 
   inputs = {
-    unstable.url = "github:nixos/nixpkgs?ref=nixpkgs-unstable";
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    # ────────────────────────────────────────────────────────────────────────
+    # I am using determinate Nix because of its optimized evaluation
+    # algorithm, faster standard library and attested security guarantees.
+    # ────────────────────────────────────────────────────────────────────────
+    determinate = {
+      url = "github:determinatesystems/determinate";
+    };
 
+    # ────────────────────────────────────────────────────────────────────────
+    # This package set is pinned to a commit of a patched `unstable-small`
+    # branch of [nixpkgs](https://github.com/nixos/nixpkgs). It is rebased
+    # regularly to keep up with the upstream - usually weekly, sometimes in
+    # longer intervals.
+    # ────────────────────────────────────────────────────────────────────────
+    packages = {
+      url = "git+https://codeberg.org/alexandrutocar/packages?rev=63527c28712c6ff8475e31fe952394844989e0f3";
+    };
+
+    # ────────────────────────────────────────────────────────────────────────
+    # These are additional modules simplifying:
+    # - hardware configuration management
+    # - generation of bootable systems (including virtual machines)
+    # - symlinking of files and directories for the purpose of persistence
+    # - utility for signing generations and managing keys for the secure boot
+    # - binary cache server
+    # - user configuration management (.dotfiles)
+    # ────────────────────────────────────────────────────────────────────────
     nixos-facter-modules = {
       url = "github:nix-community/nixos-facter-modules";
     };
 
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "packages";
     };
 
     impermanence = {
@@ -21,27 +46,17 @@
 
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "packages";
     };
 
     harmonia = {
       url = "github:nix-community/harmonia";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    bun2nix = {
-      url = "github:nix-community/bun2nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    devenv = {
-      url = "github:cachix/devenv";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "packages";
     };
 
     home-manager = {
       url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "packages";
     };
   };
 
@@ -58,24 +73,12 @@
     mkPackages = system: pkgs:
       import pkgs {
         inherit system;
-
-        config = {
-          allowUnfreePredicate = pkg:
-            builtins.elem (getName pkg) [
-              "fcitx5-black-simplicity"
-            ];
-
-          # strictDepsByDefault = true;
-          # structuredAttrsByDefault = true;
-        };
-
-        overlays = (attrValues self.overlays) ++ [inputs.bun2nix.overlays.default];
+        overlays = attrValues self.overlays;
       };
 
-    lib = inputs.nixpkgs.lib.extend (final: super: ((import (self + /nix/lib) final super) // inputs.home-manager.lib));
+    lib = inputs.packages.lib.extend (final: super: ((import (self + /nix/lib) final super) // inputs.home-manager.lib));
 
-    mkSystem = {
-      hostname,
+    mkSystem = hostname: {
       nixpkgs,
       modules,
     }:
@@ -84,6 +87,7 @@
           [
             inputs.nixos-facter-modules.nixosModules.facter
             inputs.impermanence.nixosModules.impermanence
+            inputs.determinate.nixosModules.default
             inputs.lanzaboote.nixosModules.lanzaboote
 
             # Custom options.
@@ -92,7 +96,7 @@
             # Make `nix run nixpkgs#nixpkgs` use the same
             # package repository as the one used here.
             {
-              nix.registry.nixpkgs.flake = nixpkgs;
+              nix.registry.nixpkgs.flake = lib.mkForce nixpkgs;
             }
 
             # Ensure relevant system parts have
@@ -104,7 +108,10 @@
 
             # Cross-system package overlays and prefixes of allowed unfree packages.
             {
-              nixpkgs.overlays = (attrValues self.overlays) ++ [inputs.bun2nix.overlays.default];
+              nixpkgs.overlays = attrValues self.overlays;
+            }
+
+            {
               system.stateVersion = "25.11";
             }
           ]
@@ -140,19 +147,38 @@
       })
     ];
   in {
-    # `nix develop --no-pure-eval` (https://devenv.sh)
+    # `nix develop --no-pure-eval` (https://direnv.sh)
     devShells = forSystems (system: let
-      pkgs = mkPackages system inputs.unstable;
+      pkgs = mkPackages system inputs.packages;
     in {
-      default = inputs.devenv.lib.mkShell {
-        inherit inputs pkgs;
-        modules = [./tools.nix];
+      default = pkgs.mkShell {
+        buildInputs = with pkgs; [
+          alejandra
+          nil
+          (
+            statix.overrideAttrs (_: let
+              src = fetchFromGitHub {
+                owner = "oppiliappan";
+                repo = "statix";
+                rev = "e9df54ce918457f151d2e71993edeca1a7af0132";
+                hash = "sha256-duH6Il124g+CdYX+HCqOGnpJxyxOCgWYcrcK0CBnA2M=";
+              };
+            in {
+              inherit src;
+
+              cargoDeps = rustPlatform.importCargoLock {
+                lockFile = "${src}/Cargo.lock";
+                allowBuiltinFetchGit = true;
+              };
+            })
+          )
+        ];
       };
     });
 
     # `nix fmt` (https://kamadorueda.com/alejandra)
     formatter = forSystems (
-      system: (mkPackages system inputs.unstable).alejandra
+      system: (mkPackages system inputs.packages).alejandra
     );
 
     overlays = let
@@ -162,8 +188,6 @@
         aliases = import (./nix + "/fixes?/aliases.nix");
 
         custom = final: super: {
-          # PACKAGE ADDITIONS
-          # -----------------
           custom =
             {
               scripts = {
@@ -181,41 +205,45 @@
 
     # https://wiki.nixos.org/wiki/NixOS_system_configuration
     nixosConfigurations = {
-      aether = mkSystem {
-        inherit (inputs) nixpkgs;
-        hostname = "aether";
-        modules =
-          [
-            ./etc/aether
-          ]
-          ++ (mkHome {
-            user = "git";
-            spec = [
-              ./dot/aether
-            ];
-          });
-      };
+      aether = let
+        nixpkgs = inputs.packages;
+      in
+        mkSystem "aether" {
+          inherit nixpkgs;
+          modules =
+            [
+              ./etc/aether
+            ]
+            ++ (mkHome {
+              user = "git";
+              spec = [
+                ./dot/aether
+              ];
+            });
+        };
 
-      albedo = mkSystem {
-        inherit (inputs) nixpkgs;
-        hostname = "albedo";
-        modules =
-          [
-            ./etc/albedo
-          ]
-          ++ (mkHome {
-            user = "alex";
-            spec = [
-              ./dot/albedo
-            ];
-          });
-      };
+      albedo = let
+        nixpkgs = inputs.packages;
+      in
+        mkSystem "albedo" {
+          inherit nixpkgs;
+          modules =
+            [
+              ./etc/albedo
+            ]
+            ++ (mkHome {
+              user = "alex";
+              spec = [
+                ./dot/albedo
+              ];
+            });
+        };
     };
 
     # https://wiki.nixos.org/wiki/Creating_a_NixOS_live_CD
     packages = forSystems (
       system: let
-        pkgs = mkPackages system inputs.unstable;
+        pkgs = mkPackages system inputs.packages;
       in
         mergeAttrsList [
           (
@@ -226,23 +254,25 @@
           )
           {
             beidou = let
-              _system = mkSystem {
-                inherit (inputs) nixpkgs;
-                hostname = "beidou";
-                modules =
-                  [
-                    {
-                      nixpkgs.hostPlatform = system;
-                    }
-                    ./etc/beidou
-                  ]
-                  ++ (mkHome {
-                    user = "alex";
-                    spec = [
-                      ./dot/beidou
-                    ];
-                  });
-              };
+              _system = let
+                nixpkgs = inputs.packages;
+              in
+                mkSystem "beidou" {
+                  inherit nixpkgs;
+                  modules =
+                    [
+                      {
+                        nixpkgs.hostPlatform = system;
+                      }
+                      ./etc/beidou
+                    ]
+                    ++ (mkHome {
+                      user = "alex";
+                      spec = [
+                        ./dot/beidou
+                      ];
+                    });
+                };
             in
               inputs.nixos-generators.nixosGenerate {
                 inherit system;

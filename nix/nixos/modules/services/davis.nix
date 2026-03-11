@@ -273,7 +273,7 @@ in {
           wantedBy = ["multi-user.target"];
 
           serviceConfig = {
-            ReadWritePaths = "${cfg.dataDir}";
+            ReadWritePaths = ["${cfg.dataDir}"];
             User = cfg.user;
             UMask = 77;
             DeviceAllow = "";

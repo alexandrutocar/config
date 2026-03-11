@@ -26,7 +26,7 @@ in {
       auto-optimise-store = mkDefault true;
 
       # flake.nix & `$ nix command`
-      experimental-features = mkDefault ["nix-command" "flakes" "pipe-operators"];
+      experimental-features = mkDefault ["ca-derivations" "flakes" "nix-command" "pipe-operators"];
 
       # Only allow root to build
       trusted-users = mkDefault ["root"];
@@ -38,11 +38,11 @@ in {
       # removes ~/.nix-profile and ~/.nix-defexpr
       use-xdg-base-directories = mkDefault true;
 
-      substituters = mkForce [
+      substituters = [
         "https://cache.aether.ip"
       ];
 
-      trusted-public-keys = mkForce [
+      trusted-public-keys = [
         "cache.aether.ip:yx2Q390VKtD/H/8FdgBBwky6yj18sMxtufAGlUAkSSs="
       ];
     };

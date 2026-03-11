@@ -129,7 +129,7 @@ in {
       {
         name = "wg-internet";
         marker = 1020;
-        endpoint = mkHost "79.237.213.131" 51820;
+        endpoint = mkHost "91.13.175.84" 51820;
       }
     ];
   };

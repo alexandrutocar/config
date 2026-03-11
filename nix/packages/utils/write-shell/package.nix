@@ -67,8 +67,8 @@ in
       export PATH="${makeBinPath paths}:$PATH"
 
       # (0.2) External Libraries
-      ${builtins.readFile ./lib/logs.sh}
-      ${builtins.readFile ./lib/cred.sh}
+      ${builtins.readFile ./lib/logs.bash}
+      ${builtins.readFile ./lib/cred.bash}
 
       # (0.3) Environment Variables (Credentials)
       ${optionalString (env != null) (

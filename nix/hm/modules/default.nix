@@ -1,5 +1,5 @@
 {lib, ...}: let
   inherit (lib.custom.files.list) recursive;
 in {
-  imports = recursive ./services;
+  imports = recursive ./programs ++ recursive ./services;
 }

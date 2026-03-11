@@ -1,4 +1,4 @@
-_: {
+{lib, ...}: {
   home = {
     homeDirectory = "/home/alex";
     stateVersion = "25.11";

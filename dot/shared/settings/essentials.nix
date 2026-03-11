@@ -7,15 +7,9 @@
 #
 # ────────────────────────────────────────────────────────────────────────
 {pkgs, ...}: {
-  home.packages = with pkgs; [
-    # PDF/EPUB READER
-    # ---------------
-    zathura
-
-    # MARKDOWN READER
-    # ---------------
-    glow
-  ];
+  # DOCUMENT/MEDIA VIEWERS
+  # ----------------------
+  home.packages = with pkgs; [feh mpv zathura];
 
   # GNU PRIVACY GUARD
   # -----------------
@@ -76,12 +70,9 @@
     };
   };
 
-  # DISPLAY RULES
-  # -------------
-  wayland.windowManager.river.settings = {
-    rule-add."-app-id" = {
-      # Zathura
-      "'org.pwmt.zathura'" = ["ssd" "float"];
-    };
+  # SSH AGENT
+  # ---------
+  services.ssh-agent = {
+    enable = true;
   };
 }
