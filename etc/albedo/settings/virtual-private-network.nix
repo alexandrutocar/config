@@ -16,7 +16,7 @@
   ...
 }: let
   inherit (lib.attrsets) listToAttrs;
-  inherit (lib.custom.net) mkHost;
+  inherit (lib.extra.net) mkHost;
   inherit (lib.modules) mkMerge;
   inherit (lib.meta) getExe';
 in {
@@ -129,7 +129,7 @@ in {
       {
         name = "wg-internet";
         marker = 1020;
-        endpoint = mkHost "91.13.175.84" 51820;
+        endpoint = mkHost "91.42.230.73" 51820;
       }
     ];
   };

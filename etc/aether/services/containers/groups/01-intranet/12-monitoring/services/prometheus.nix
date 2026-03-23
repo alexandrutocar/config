@@ -108,7 +108,7 @@ in {
   };
 
   systemd.services.prometheus-foxess-exporter = let
-    inherit (lib.custom.systemd) mkSetCredentialEncrypted;
+    inherit (lib.extra.systemd) mkSetCredentialEncrypted;
     inherit (lib.meta) getExe;
   in {
     wantedBy = ["multi-user.target"];

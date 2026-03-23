@@ -74,8 +74,8 @@ in {
   # DYNAMIC TILING COMPOSITOR
   # -------------------------
   wayland.windowManager.river = let
-    inherit (lib.custom.colors) hexToBin;
-    inherit (lib.custom.math) pow seq;
+    inherit (lib.extra.colors) hexToBin;
+    inherit (lib.extra.math) pow seq;
     inherit (lib.attrsets) recursiveUpdate;
     inherit (lib.lists) foldl';
     inherit (lib.meta) getExe;

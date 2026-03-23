@@ -10,7 +10,7 @@ in {
     inherit (lib.options) mkEnableOption mkOption mkPackageOption;
     inherit (lib.strings) literalExpression;
 
-    inherit (lib.custom.types.colors) hex;
+    inherit (lib.extra.types.colors) hex;
     inherit (lib.types) nullOr int str submodule;
   in {
     services.creek = {
@@ -91,7 +91,7 @@ in {
   };
 
   config = let
-    inherit (lib.custom.colors) hexToBin;
+    inherit (lib.extra.colors) hexToBin;
     inherit (lib.lists) singleton;
     inherit (lib.meta) getExe;
     inherit (lib.modules) mkIf;
@@ -99,7 +99,6 @@ in {
   in
     mkIf cfg.enable {
       systemd.user.services.creek = {
-        # [Unit]
         Unit = {
           Description = "Malleable and minimalist status bar for the River compositor";
 
@@ -110,7 +109,6 @@ in {
           ConditionEnvironment = "WAYLAND_DISPLAY";
         };
 
-        # [Service]
         Service = {
           ExecStart = let
             args =
@@ -144,7 +142,6 @@ in {
           Slice = ["session-graphical.slice"];
         };
 
-        # [Install]
         Install = {
           WantedBy = ["graphical-session.target"];
         };

@@ -4,19 +4,26 @@
   lib,
   ...
 }: let
-  cfg = config.custom.services.restic;
+  cfg = config.services.restic;
 in {
   options = let
     inherit (lib.options) mkEnableOption mkOption mkPackageOption;
     inherit (lib.types) attrsOf listOf path str submodule;
   in {
-    custom.services.restic = {
-      enable = mkEnableOption "Automatic backup with Restic";
+    services.restic = {
+      enable = mkEnableOption "Restic";
       package = mkPackageOption pkgs "restic" {};
       periodic = mkOption {
         type = attrsOf (submodule [
           ({name, ...}: {
             options = {
+              # repository = mkOption {
+              #   type = nullOr str;
+              #   description = ''
+              #     Backup repository.
+              #     If unspecified, a credential
+              #   '';
+              # };
               target = mkOption {
                 type = path;
                 description = ''
@@ -44,7 +51,7 @@ in {
                   details on syntax.
                 '';
               };
-              # -DEVELOPERS ONLY-
+              # + INTERNAL +
               name = mkOption {
                 type = str;
                 internal = true;
@@ -59,7 +66,7 @@ in {
               serviceUnitName = mkOption {
                 type = str;
                 internal = true;
-                default = "backup@${name}";
+                default = "restic@${name}";
                 visible = false;
                 readOnly = true;
                 description = ''
@@ -67,6 +74,7 @@ in {
                   when providing credentials or setting environment.
                 '';
               };
+              # - INTERNAL -
             };
           })
         ]);
@@ -80,7 +88,7 @@ in {
     inherit (lib.attrsets) mapAttrs' mapAttrsToList nameValuePair;
     inherit (lib.meta) getExe;
     inherit (lib.modules) mkIf mkMerge;
-    inherit (lib.strings) concatStringsSep escapeShellArg;
+    inherit (lib.strings) concatStringsSep escapeShellArg hasPrefix;
   in
     mkIf cfg.enable (mkMerge [
       {
@@ -88,11 +96,11 @@ in {
           cfg.periodic
           |> mapAttrsToList (name: backupConfig: {
             assertion = backupConfig.target != null;
-            message = "services.restic.backups.target: backup must have a target";
+            message = "services.restic.periodic.<name>.target: backup must have a target";
           });
       }
       {
-        systemd.user.services."backup@" = {};
+        systemd.user.services."restic@" = {};
       }
       {
         systemd.user.services =
@@ -101,7 +109,7 @@ in {
             identifier: settings:
               nameValuePair settings.serviceUnitName {
                 Unit = {
-                  Description = "Restic Backup for '${identifier}'";
+                  Description = "Backup (with Restic) for '${identifier}'";
                   Wants = ["network-online.target"];
                   After = ["network-online.target"];
                 };
@@ -110,19 +118,25 @@ in {
                   Type = "oneshot";
 
                   X-RestartIfChanged = true;
-                  RuntimeDirectory = "backup/${identifier}";
-                  CacheDirectory = "backup/${identifier}";
+                  RuntimeDirectory = "restic/${identifier}";
+                  CacheDirectory = "restic/${identifier}";
                   CacheDirectoryMode = "0700";
                   PrivateTmp = true;
 
                   ExecStart = getExe (
-                    pkgs.custom.writeShell "backup@${identifier}.bash" {
-                      env = {
-                        AWS_ACCESS_KEY_ID.cred = "aws-access-key-id";
-                        AWS_SECRET_ACCESS_KEY.cred = "aws-secret-access-key";
-                        RESTIC_PASSWORD.cred = "restic-password";
+                    pkgs.custom.writeShell "${settings.serviceUnitName}.bash" {
+                      env = mkMerge [
+                        {
+                          RESTIC_PASSWORD.cred = "restic-password";
+                        }
+                        (mkIf (settings.repository != null && hasPrefix settings.repository "s3:") {
+                          AWS_ACCESS_KEY_ID.cred = "aws-access-key-id";
+                          AWS_SECRET_ACCESS_KEY.cred = "aws-secret-access-key";
+                        }) 
+                        (mkIf settings.repository == null ({
                         RESTIC_REPOSITORY.cred = "restic-repository";
-                      };
+                        }))
+                      ];
                       text = ''
                         restic backup ${escapeShellArg settings.target} ${concatStringsSep " " settings.flags}
                       '';
@@ -139,7 +153,13 @@ in {
           |> mapAttrs' (
             identifier: settings:
               nameValuePair settings.serviceUnitName {
-                Unit.Description = "Restic Backup for '${identifier}'";
+                Unit.Description = "Backup (with Restic) for '${identifier}'";
+                Timer = {
+                  # + DEFAULT +
+                  OnCalendar = "daily";
+                  Persistent = true;
+                  # - DEFAULT -
+                };
                 Install.WantedBy = ["timers.target"];
               }
           );

@@ -34,47 +34,57 @@ in {
   ];
 
   options = let
-    inherit (lib.options) mkEnableOption;
+    inherit (lib.options) mkEnableOption mkPackageOption;
   in {
     services.ssh-agent = {
       enable = mkEnableOption "OpenSSH private key agent";
+      
+      package = mkPackageOption pkgs "openssh" { };
     };
   };
 
   config = let
     inherit (lib.meta) getExe';
-    inherit (lib.modules) mkIf;
+    inherit (lib.modules) mkIf mkMerge;
   in
-    mkIf cfg.enable {
-      assertions = [
-        (lib.hm.assertions.assertPlatform "services.ssh-agent" pkgs lib.platforms.linux)
-      ];
+    mkIf cfg.enable (mkMerge [
+      {
+        assertions = [
+          (lib.hm.assertions.assertPlatform "services.ssh-agent" pkgs lib.platforms.linux)
+        ];
+      }
+      {
+        home.sessionVariablesExtra = let 
+          socketPath = "$XDG_RUNTIME_DIR/ssh-agent.socket";
+        in ''
+          if [ -z "$SSH_AUTH_SOCK" -o -z "$SSH_CONNECTION" ]; then
+            export SSH_AUTH_SOCK=${socketPath}
+          fi
+        '';
+      }
+      {
+        systemd.user = {
+          services.ssh-agent = {
+            Unit = {
+              ConditionEnvironment = ["!SSH_AGENT_PID"];
+              Description = "SSH Key Agent";
+              Documentation = "man:ssh-agent(1) man:ssh-add(1) man:ssh(1)";
+              Requires = ["ssh-agent.socket"];
+            };
 
-      home.sessionVariablesExtra = ''
-        if [ -z "$SSH_AUTH_SOCK" ]; then
-          export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
-        fi
-      '';
+            Service = {
+              ExecStart = "${getExe' cfg.package "ssh-agent"} -D";
+              SuccessExitStatus = [2];
+            };
 
-      systemd.user = {
-        services.ssh-agent = {
-          Unit = {
-            ConditionEnvironment = ["!SSH_AGENT_PID"];
-            Description = "SSH Key Agent";
-            Documentation = "man:ssh-agent(1) man:ssh-add(1) man:ssh(1)";
-            Requires = ["ssh-agent.socket"];
-          };
-
-          Service = {
-            ExecStart = "${getExe' pkgs.openssh "ssh-agent"} -D";
-            SuccessExitStatus = [2];
-          };
-
-          Install = {
-            Also = ["ssh-agent.socket"];
+            Install = {
+              Also = ["ssh-agent.socket"];
+            };
           };
         };
-        sockets.ssh-agent = {
+      }
+      {
+        systemd.user.sockets.ssh-agent = {
           Unit = {
             ConditionEnvironment = ["!SSH_AGENT_PID"];
             Description = "Socket for the SSH Key Agent";
@@ -90,6 +100,7 @@ in {
             WantedBy = ["sockets.target"];
           };
         };
-      };
-    };
+      }
+    ]
+  );
 }

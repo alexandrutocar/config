@@ -31,7 +31,7 @@ in
     dependencies = with python3Packages; [
       requests
       paho-mqtt
-      pymodbus
+      # pymodbus
       sentry-sdk
     ];
 

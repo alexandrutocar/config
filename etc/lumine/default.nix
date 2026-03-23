@@ -5,7 +5,7 @@
 #
 # ────────────────────────────────────────────────────────────────────────
 {lib, ...}: let
-  inherit (lib.custom.files.list) recursive;
+  inherit (lib.extra.files.list) recursive;
 in {
   imports = recursive ./settings;
 }

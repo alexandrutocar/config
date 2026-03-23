@@ -4,13 +4,13 @@
   lib,
   ...
 }: let
-  cfg = config.custom.services.glue;
+  cfg = config.services.glue;
 in {
   options = let
     inherit (lib.options) mkEnableOption mkOption mkPackageOption;
     inherit (lib.types) attrsOf str submodule;
   in {
-    custom.services.glue = {
+    services.glue = {
       enable = mkEnableOption "glue";
       package = mkPackageOption pkgs.custom.scripts.extras "glue" {};
       settings = mkOption {
@@ -145,7 +145,7 @@ in {
             identifier: settings:
               nameValuePair settings.serviceUnitName {
                 wantedBy = ["timers.target"];
-                description = "Glue Record Update for '${identifier}'";
+                description = "Glue record update for '${identifier}'";
               }
           );
       }

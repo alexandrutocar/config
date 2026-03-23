@@ -5,11 +5,11 @@
 #
 # ────────────────────────────────────────────────────────────────────────
 {lib, ...}: let
-  inherit (lib.custom.files.list) recursive;
+  inherit (lib.extra.files.list) recursive;
 in {
   imports = recursive ./services ++ recursive ./settings;
 
   # HARDWARE CONFIGURATION
   # ----------------------
-  config.facter.reportPath = ./facter.json;
+  hardware.facter.reportPath = ./facter.json;
 }

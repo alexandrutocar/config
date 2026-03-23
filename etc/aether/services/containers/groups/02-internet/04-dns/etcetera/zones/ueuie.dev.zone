@@ -1,11 +1,10 @@
 @	IN 	    SOA  	aether.ns.ueuie.dev.    noc.aether.ns.ueuie.dev. 	(
-	2026031101
+	2026032301
 	300
 	60
 	86400
 	60
 )
-
 
 ; ------------
 ; Name Servers
@@ -13,7 +12,7 @@
 
 @           			    	IN 	NS	    aether.ns.ueuie.dev.
 
-aether.ns   			    	IN 	A       91.13.175.84
+aether.ns   			    	IN 	A       91.42.230.73
 
 
 ; ------------
@@ -61,7 +60,7 @@ link.relay					1	IN	CNAME	track.smtp2go.net.
 ; Publicly Available
 ; ------------------
 
-@                               IN	A		91.13.175.84
+@                               IN	A		91.42.230.73
 
 blog							IN	CNAME	ueuie.dev.
 www				            	IN 	CNAME	ueuie.dev.

@@ -5,36 +5,23 @@
 
   inputs = {
     # ────────────────────────────────────────────────────────────────────────
-    # I am using determinate Nix because of its optimized evaluation
-    # algorithm, faster standard library and attested security guarantees.
-    # ────────────────────────────────────────────────────────────────────────
-    determinate = {
-      url = "github:determinatesystems/determinate";
-    };
-
-    # ────────────────────────────────────────────────────────────────────────
     # This package set is pinned to a commit of a patched `unstable-small`
     # branch of [nixpkgs](https://github.com/nixos/nixpkgs). It is rebased
     # regularly to keep up with the upstream - usually weekly, sometimes in
     # longer intervals.
     # ────────────────────────────────────────────────────────────────────────
     packages = {
-      url = "git+https://codeberg.org/alexandrutocar/packages?rev=63527c28712c6ff8475e31fe952394844989e0f3";
+      url = "path:/home/alex/.tracked/packages?rev=5ba249aa104c36c3542e3017d85cf55196732b7b"; # (core packages) 
     };
 
     # ────────────────────────────────────────────────────────────────────────
     # These are additional modules simplifying:
-    # - hardware configuration management
     # - generation of bootable systems (including virtual machines)
     # - symlinking of files and directories for the purpose of persistence
     # - utility for signing generations and managing keys for the secure boot
     # - binary cache server
     # - user configuration management (.dotfiles)
     # ────────────────────────────────────────────────────────────────────────
-    nixos-facter-modules = {
-      url = "github:nix-community/nixos-facter-modules";
-    };
-
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "packages";
@@ -63,7 +50,7 @@
   outputs = {self, ...} @ inputs: let
     inherit (lib.filesystem) packagesFromDirectoryRecursive;
     inherit (lib.attrsets) attrValues genAttrs;
-    inherit (lib.custom.attrsets) mergeAttrsList;
+    inherit (lib.extra.attrsets) mergeAttrsList;
     inherit (lib.strings) getName;
 
     forSystems = genAttrs [
@@ -73,6 +60,7 @@
     mkPackages = system: pkgs:
       import pkgs {
         inherit system;
+
         overlays = attrValues self.overlays;
       };
 
@@ -85,9 +73,7 @@
       lib.nixosSystem {
         modules =
           [
-            inputs.nixos-facter-modules.nixosModules.facter
             inputs.impermanence.nixosModules.impermanence
-            inputs.determinate.nixosModules.default
             inputs.lanzaboote.nixosModules.lanzaboote
 
             # Custom options.
@@ -151,29 +137,7 @@
     devShells = forSystems (system: let
       pkgs = mkPackages system inputs.packages;
     in {
-      default = pkgs.mkShell {
-        buildInputs = with pkgs; [
-          alejandra
-          nil
-          (
-            statix.overrideAttrs (_: let
-              src = fetchFromGitHub {
-                owner = "oppiliappan";
-                repo = "statix";
-                rev = "e9df54ce918457f151d2e71993edeca1a7af0132";
-                hash = "sha256-duH6Il124g+CdYX+HCqOGnpJxyxOCgWYcrcK0CBnA2M=";
-              };
-            in {
-              inherit src;
-
-              cargoDeps = rustPlatform.importCargoLock {
-                lockFile = "${src}/Cargo.lock";
-                allowBuiltinFetchGit = true;
-              };
-            })
-          )
-        ];
-      };
+      default = import ./nix/dev-shell/default.nix pkgs;
     });
 
     # `nix fmt` (https://kamadorueda.com/alejandra)
@@ -182,7 +146,7 @@
     );
 
     overlays = let
-      inherit (lib.custom.files.special) patches scripts;
+      inherit (lib.extra.files.special) patches scripts;
     in
       {
         aliases = import (./nix + "/fixes?/aliases.nix");

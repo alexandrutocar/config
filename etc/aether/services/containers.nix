@@ -54,7 +54,7 @@
     ];
 
   mkConfig = config: let
-    inherit (lib.custom.files.list) recursive;
+    inherit (lib.extra.files.list) recursive;
   in
     _: {
       imports =
@@ -65,7 +65,7 @@ in {
   # TODO: This is a mess...
   # ────────────────────────────────────────────────────────────────────────
   containers = let
-    inherit (lib.custom.files.list) recursive;
+    inherit (lib.extra.files.list) recursive;
   in {
     # ────────────────────────────────────────────────────────────────────────
     #

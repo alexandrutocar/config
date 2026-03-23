@@ -1,14 +1,4 @@
 final: super: let
-  /*
-  * Lists all files (non-directories) in a given directory.
-  *
-  * Example:
-  *   lib.filesystem.listFilesOnly ./configs
-  *
-  * Notes:
-  * - Non-recursive: only lists files in the top-level of `dir`.
-  * - Returns a flat list of file paths as strings.
-  */
   _list = directory: {
     filter ? (_: _: true),
     mapper ? (name: _: name),
@@ -20,15 +10,6 @@ final: super: let
         )
       ) (builtins.readDir directory)
     );
-
-  #        super.mapAttrsToList (
-  #         _name: _type: let
-  #           _next = _directory + "/${_name}";
-  #         in
-  #           if _type == "directory"
-  #           then _inner _next
-  #           else (super.optional (filter _next _type) (mapper _next _type))
-  #       ) (builtins.readDir _directory)
 
   _list_recursive = directory: {
     filter ? (_: _: true),
@@ -48,11 +29,22 @@ final: super: let
     _inner directory;
 in {
   list = {
+    /*
+    * Lists all files (non-directories) in a given directory.
+    *
+    * Example:
+    *   lib.extra.files.list.shallow ./configs
+    *
+    * Notes:
+    * - Non-recursive: only lists files in the top-level of `dir`.
+    * - Returns a flat list of file paths as strings.
+    */
     shallow = directory:
       _list directory {
         filter = name: type: (super.strings.hasSuffix ".nix" name) && (type != "directory");
         mapper = name: type: (builtins.concatStringsSep "/" [directory name]);
       };
+      
     recursive = directory:
       _list_recursive directory {
         filter = name: type: (super.strings.hasSuffix ".nix" name);

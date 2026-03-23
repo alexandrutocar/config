@@ -12,7 +12,7 @@
   lib,
   ...
 }: let
-  inherit (lib.custom.systemd) mkSetCredentialEncrypted;
+  inherit (lib.extra.systemd) mkSetCredentialEncrypted;
   inherit (lib.meta) getExe;
 
   inherit (container) intranet-database;

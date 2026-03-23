@@ -10,7 +10,7 @@ in {
     inherit (lib.options) mkEnableOption mkOption mkPackageOption;
     inherit (lib.strings) literalExpression;
 
-    inherit (lib.custom.types.colors) hex;
+    inherit (lib.extra.types.colors) hex;
     inherit (lib.types) nullOr int str submodule;
   in {
     programs.lite = {
@@ -21,7 +21,7 @@ in {
   };
 
   config = let
-    inherit (lib.custom.colors) hexToBin;
+    inherit (lib.extra.colors) hexToBin;
     inherit (lib.lists) singleton;
     inherit (lib.meta) getExe;
     inherit (lib.modules) mkIf;

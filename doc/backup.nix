@@ -3,7 +3,7 @@
   lib,
   ...
 }: let
-  inherit (lib.custom.systemd) mkSetCredentialEncrypted;
+  inherit (lib.extra.systemd) mkSetCredentialEncrypted;
 in {
   custom.services.backup = {
     enable = true;

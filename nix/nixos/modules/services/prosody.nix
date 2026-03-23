@@ -50,7 +50,7 @@ in {
   ];
 
   options = let
-    inherit (lib.custom.attrsets) mergeAttrsList;
+    inherit (lib.extra.attrsets) mergeAttrsList;
     inherit (lib.options) mkEnableOption mkOption mkPackageOption;
     inherit (lib.types) attrs attrsOf bool enum int lines listOf nullOr oneOf path port str submodule;
   in {

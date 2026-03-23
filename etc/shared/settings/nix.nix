@@ -26,7 +26,7 @@ in {
       auto-optimise-store = mkDefault true;
 
       # flake.nix & `$ nix command`
-      experimental-features = mkDefault ["ca-derivations" "flakes" "nix-command" "pipe-operators"];
+      experimental-features = mkDefault ["ca-derivations" "flakes" "nix-command" "no-url-literals" "parse-toml-timestamps" "pipe-operators"];
 
       # Only allow root to build
       trusted-users = mkDefault ["root"];
@@ -34,7 +34,7 @@ in {
       # re-evaluate on every rebuild instead of "cached failure of attribute" error
       eval-cache = mkDefault false;
       warn-dirty = mkDefault false;
-
+ 
       # removes ~/.nix-profile and ~/.nix-defexpr
       use-xdg-base-directories = mkDefault true;
 
@@ -43,7 +43,7 @@ in {
       ];
 
       trusted-public-keys = [
-        "cache.aether.ip:yx2Q390VKtD/H/8FdgBBwky6yj18sMxtufAGlUAkSSs="
+        "cache.aether.ip:YJj654vefxddqk3R5eEyDzFQXw6hDmVkJKVvxAqHnj4="
       ];
     };
 

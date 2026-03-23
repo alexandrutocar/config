@@ -94,7 +94,7 @@ in {
 
   config = let
     inherit (lib.attrsets) concatMapAttrs nameValuePair;
-    inherit (lib.custom.systemd) mkSetCredentialEncrypted;
+    inherit (lib.extra.systemd) mkSetCredentialEncrypted;
     inherit (lib.lists) singleton;
     inherit (lib.meta) getExe;
     inherit (lib.modules) mkDefault mkForce mkIf mkMerge;
