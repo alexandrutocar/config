@@ -8,12 +8,11 @@
 # ────────────────────────────────────────────────────────────────────────
 {
   container,
-  pkgs,
   lib,
   ...
 }: let
   inherit (lib.modules) mkMerge;
-  inherit (container) self intranet-harmonia intranet-reader intranet-ml intranet-dav intranet-coder intranet-monitoring;
+  inherit (container) self intranet-automation intranet-harmonia intranet-reader intranet-ml intranet-dav intranet-sync intranet-coder intranet-monitoring;
 in {
   services.nginx = {
     enable = true;
@@ -150,6 +149,44 @@ in {
           # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
         };
 
+        
+        "workflows.aether.ip/n8n" = {
+          extraConfig = ''
+            access_log /var/log/nginx/workflows.aether.ip.access.log analytics;
+            error_log /var/log/nginx/workflows.aether.ip.error.log;
+          '';
+
+          kTLS = true;
+
+          listen = [
+            {
+              addr = self.localAddress;
+              port = 443;
+              ssl = true;
+            }
+          ];
+
+          onlySSL = true;
+
+          locations = {
+            "/" = {
+              proxyPass = "http://${intranet-automation.localAddress}:8080";
+              proxyWebsockets = true;
+              recommendedProxySettings = true;
+            };
+          };
+
+          serverName = "workflows.aether.ip";
+
+          sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
+          sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
+
+          # ────────────────────────────────────────────────────────────────────────
+          # TODO: Compile the right chain.pem.
+          # ────────────────────────────────────────────────────────────────────────
+          # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
+        };
+
         "cache.aether.ip/harmonia" = {
           extraConfig = ''
             access_log  /var/log/nginx/cache.aether.ip.access.log analytics;
@@ -250,6 +287,41 @@ in {
           };
 
           serverName = "reader.aether.ip";
+
+          sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
+          sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
+
+          # ────────────────────────────────────────────────────────────────────────
+          # TODO: Compile the right chain.pem.
+          # ────────────────────────────────────────────────────────────────────────
+          # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
+        };
+
+        "sync.aether.ip/anki" = {
+          extraConfig = ''
+            access_log /var/log/nginx/sync.aether.ip.access.log analytics;
+            error_log /var/log/nginx/sync.aether.ip.error.log;
+          '';
+
+          kTLS = true;
+
+          listen = [
+            {
+              addr = self.localAddress;
+              port = 443;
+              ssl = true;
+            }
+          ];
+
+          onlySSL = true;
+
+          locations = {
+            "/" = {
+              proxyPass = "http://${intranet-sync.localAddress}:8080";
+            };
+          };
+
+          serverName = "sync.aether.ip";
 
           sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
           sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";

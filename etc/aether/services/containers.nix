@@ -75,6 +75,39 @@ in {
     # for personal use
     #
     # ────────────────────────────────────────────────────────────────────────
+    intranet-automation = mkContainer "intranet-automation" {
+      hostAddress = "10.255.255.236";
+      localAddress = "10.0.0.19";
+      
+      ephemeral = false;
+
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/00-automation/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/01-intranet/00-automation/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+        {
+          "/etc/secrets/n8n/encryption.key.txt" = {
+            hostPath = "/state/var/lib/machines/01-intranet/00-automation/etc/secrets/n8n/encryption.key.txt";
+          };
+        }
+        {
+          "/etc/nsd/zones/ueuie.dev.n8n.zone" = {
+            hostPath = "/state/var/lib/machines/02-internet/04-dns/etc/nsd/zones/ueuie.dev.n8n.zone";
+            isReadOnly = false;
+          };
+        }
+      ];
+
+      config = mkConfig (recursive ./containers/groups/01-intranet/00-automation);
+    };
+
     intranet-harmonia = mkContainer "intranet-harmonia" {
       hostAddress = "10.255.255.254";
       localAddress = "10.0.0.1";
@@ -364,6 +397,28 @@ in {
       config = mkConfig (recursive ./containers/groups/01-intranet/07-dav);
     };
 
+    intranet-sync = mkContainer "intranet-sync" {
+      hostAddress = "10.255.255.242";
+      localAddress = "10.0.0.13";
+
+      ephemeral = false;
+
+      bindMounts = mkMerge [
+        {
+          "/var/lib/systemd/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/08-sync/var/lib/systemd/";
+            isReadOnly = false;
+          };
+          "/etc/machine-id" = {
+            hostPath = "/state/var/lib/machines/01-intranet/08-sync/etc/machine-id";
+            isReadOnly = false;
+          };
+        }
+      ];
+
+      config = mkConfig (recursive ./containers/groups/01-intranet/08-sync);
+    };
+
     intranet-coder = mkContainer "intranet-coder" {
       hostAddress = "10.255.255.246";
       localAddress = "10.0.0.9";
@@ -628,6 +683,11 @@ in {
           };
           "/var/lib/nsd/certs/" = {
             hostPath = "/state/var/lib/machines/02-internet/04-dns/var/lib/nsd/certs/";
+          };
+        }
+        {
+          "/etc/nsd/zones/ueuie.dev.n8n.zone" = {
+            hostPath = "/state/var/lib/machines/02-internet/04-dns/etc/nsd/zones/ueuie.dev.n8n.zone";
           };
         }
       ];

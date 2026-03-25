@@ -34,7 +34,7 @@ in {
 
   # TILING COMPOSITOR
   # -----------------
-  programs.river = {
+  programs.river-classic = {
     enable = true;
   };
 

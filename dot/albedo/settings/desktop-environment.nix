@@ -47,9 +47,6 @@ in {
       };
 
       map.normal = {
-        # Super+B to start a  guide
-        "Super B" = "spawn '${getExe backup}'";
-
         # Super+P to start a new connection to the computer pool
         "Super P" = "spawn '${getExe pools}'";
       };

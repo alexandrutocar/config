@@ -25,7 +25,7 @@ in {
 
     fcitx5 = {
       addons = with (pkgs // pkgs.kdePackages); [
-        # fcitx5-black-simplicity
+        fcitx5-black-simplicity
         fcitx5-chinese-addons
         fcitx5-table-other
       ];
@@ -34,7 +34,7 @@ in {
 
   # TILING COMPOSITOR
   # -----------------
-  programs.river = {
+  programs.river-classic = {
     enable = true;
   };
 
@@ -103,4 +103,8 @@ in {
       };
     };
   };
+
+  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+    "fcitx5-black-simplicity"
+  ];
 }

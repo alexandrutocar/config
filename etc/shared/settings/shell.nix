@@ -304,6 +304,7 @@ in {
     # Scripting
     gnused # stream editor
     bc # basic calculator
+    pwgen # password generator
 
     # Text
     jq # JSON processor

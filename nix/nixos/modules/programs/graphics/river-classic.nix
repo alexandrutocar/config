@@ -31,7 +31,7 @@
   lib,
   ...
 }: let
-  cfg = config.programs.river;
+  cfg = config.programs.river-classic;
 in {
   # Disabled the upstream module,
   # This is a simplified rewrite.
@@ -39,12 +39,12 @@ in {
     "programs/wayland/river.nix"
   ];
 
-  options.programs.river = let
+  options.programs.river-classic= let
     inherit (lib.options) mkEnableOption mkPackageOption;
   in {
     enable = mkEnableOption "river";
 
-    package = mkPackageOption pkgs "river" {};
+    package = mkPackageOption pkgs "river-classic" {};
   };
 
   config = let

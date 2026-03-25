@@ -26,7 +26,7 @@ in
 
     pythonRelaxDeps = true;
 
-    pythonRemoveDeps = ["python-semantic-release"];
+    pythonRemoveDeps = ["python-semantic-release" "pymodbus"];
 
     dependencies = with python3Packages; [
       requests

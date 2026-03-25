@@ -1,5 +1,5 @@
 @	IN  	SOA 	aether.ns.aether.ip.	noc.aether.ns.aether.ip. (
-	2026030701
+	2026032401
 	3600
 	1800
 	604800
@@ -25,6 +25,9 @@ aether.ns       	IN      AAAA    fd31::100:1
 @           		IN  	AAAA  	fd31::100:1
 
 monitoring     		IN 	    CNAME	aether.ip.
+workflows			IN		CNAME	aether.ip.
+
 
 reader          	IN  	CNAME	aether.ip.
 cache				IN		CNAME	aether.ip.
+sync				IN		CNAME	aether.ip.
