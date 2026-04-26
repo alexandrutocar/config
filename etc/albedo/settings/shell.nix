@@ -78,16 +78,4 @@ in {
         ProxyCommand ${pkgs.socat}/bin/socat - SOCKS4A:localhost:%h:%p,socksport=9050
     '';
   };
-
-  # DIRECTORY ENVIRONMENT
-  # ---------------------
-  programs.direnv = {
-    enable = true;
-
-    settings = {
-      global = {
-        hide_env_diff = true;
-      };
-    };
-  };
 }

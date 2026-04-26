@@ -1,0 +1,28 @@
+diff --git a/etc/aether/services/containers/groups/01-intranet/02-gateway/services/promtail.nix b/etc/aether/services/containers/groups/01-intranet/02-gateway/services/promtail.nix
+index 82073ec..893c042 100644
+--- a/etc/aether/services/containers/groups/01-intranet/02-gateway/services/promtail.nix
++++ b/etc/aether/services/containers/groups/01-intranet/02-gateway/services/promtail.nix
+@@ -1,12 +1,17 @@
+ {container, ...}: let
+   inherit (container) self intranet-monitoring;
+ in {
+-  users.groups.promtail = {};
+-  users.groups.nginx = {};
+-  users.users.promtail = {
+-    isSystemUser = true;
+-    group = "promtail";
+-    extraGroups = ["nginx"];
++  users = {
++    groups = {
++      promtail = {};
++      nginx = {};
++    };
++
++    users.promtail = {
++      isSystemUser = true;
++      group = "promtail";
++      extraGroups = ["nginx"];
++    };
+   };
+ 
+   # PROMTAIL

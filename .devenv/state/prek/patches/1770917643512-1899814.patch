@@ -1,0 +1,467 @@
+diff --git a/etc/aether/services/containers/groups/01-intranet/02-gateway/services/nginx.nix b/etc/aether/services/containers/groups/01-intranet/02-gateway/services/nginx.nix
+index 5d03d89..b91c8f6 100644
+--- a/etc/aether/services/containers/groups/01-intranet/02-gateway/services/nginx.nix
++++ b/etc/aether/services/containers/groups/01-intranet/02-gateway/services/nginx.nix
+@@ -40,7 +40,8 @@ in {
+       {
+         "aether.ip/ml" = {
+           extraConfig = ''
+-            access_log /var/log/nginx/aether.ip-ml-access.log json_analytics;
++            access_log /var/log/nginx/aether.ip.access.log analytics;
++            error_log /var/log/nginx/aether.ip.error.log analytics;
+           '';
+ 
+           kTLS = true;
+@@ -73,7 +74,8 @@ in {
+         };
+         "aether.ip/dav" = {
+           extraConfig = ''
+-            access_log /var/log/nginx/aether.ip-dav-access.log json_analytics;
++            access_log /var/log/nginx/aether.ip.access.log analytics;
++            error_log /var/log/nginx/aether.ip.error.log analytics;
+           '';
+ 
+           kTLS = true;
+@@ -116,8 +118,9 @@ in {
+       {
+         "monitoring.aether.ip/monitoring" = {
+           extraConfig = ''
+-            access_log /var/log/nginx/monitoring.aether.ip-access.log json_analytics;
+-          '';
++            access_log /var/log/nginx/monitoring.aether.ip.access.log analytics;
++            error_log /var/log/nginx/monitoring.aether.ip.error.log analytics;
++'';
+ 
+           kTLS = true;
+ 
+@@ -152,7 +155,8 @@ in {
+ 
+         "alkaline.aether.ip/alkaline" = {
+           extraConfig = ''
+-            access_log /var/log/nginx/alkaline.aether.ip-access.log json_analytics;
++            access_log /var/log/nginx/feed.aether.ip.access.log analytics;
++            error_log /var/log/nginx/feed.aether.ip.error.log analytics;
+           '';
+ 
+           kTLS = true;
+@@ -187,7 +191,8 @@ in {
+         };
+         "coder.aether.ip/coder" = {
+           extraConfig = ''
+-            access_log /var/log/nginx/coder.aether.ip-access.log json_analytics;
++            access_log /var/log/nginx/coder.aether.ip.access.log analytics;
++            error_log /var/log/nginx/coder.aether.ip.error.log analytics;
+           '';
+ 
+           kTLS = true;
+@@ -225,7 +230,8 @@ in {
+ 
+         "feed.aether.ip/feed" = {
+           extraConfig = ''
+-            access_log /var/log/nginx/feed-aether.ip-access.log json_analytics;
++            access_log /var/log/nginx/feed.aether.ip.access.log analytics;
++            error_log /var/log/nginx/feed.aether.ip.error.log analytics;
+           '';
+ 
+           kTLS = true;
+diff --git a/etc/aether/services/containers/groups/01-intranet/02-gateway/services/promtail.nix b/etc/aether/services/containers/groups/01-intranet/02-gateway/services/promtail.nix
+index 529abd4..82073ec 100644
+--- a/etc/aether/services/containers/groups/01-intranet/02-gateway/services/promtail.nix
++++ b/etc/aether/services/containers/groups/01-intranet/02-gateway/services/promtail.nix
+@@ -47,45 +47,43 @@ in {
+   };
+ 
+   services.nginx.commonHttpConfig = ''
+-    log_format json_analytics escape=json '{'
+-                            '"msec": "$msec", ' # request unixtime in seconds with a milliseconds resolution
+-                            '"connection": "$connection", ' # connection serial number
+-                            '"connection_requests": "$connection_requests", ' # number of requests made in connection
+-                    '"pid": "$pid", ' # process pid
+-                    '"request_id": "$request_id", ' # the unique request id
+-                    '"request_length": "$request_length", ' # request length (including headers and body)
+-                    '"remote_addr": "$remote_addr", ' # client IP
+-                    '"remote_user": "$remote_user", ' # client HTTP username
+-                    '"remote_port": "$remote_port", ' # client port
+-                    '"time_local": "$time_local", '
+-                    '"time_iso8601": "$time_iso8601", ' # local time in the ISO 8601 standard format
+-                    '"request": "$request", ' # full path no arguments if the request
+-                    '"request_uri": "$request_uri", ' # full path and arguments if the request
+-                    '"args": "$args", ' # args
+-                    '"status": "$status", ' # response status code
+-                    '"body_bytes_sent": "$body_bytes_sent", ' # the number of body bytes exclude headers sent to a client
+-                    '"bytes_sent": "$bytes_sent", ' # the number of bytes sent to a client
+-                    '"http_referer": "$http_referer", ' # HTTP referer
+-                    '"http_user_agent": "$http_user_agent", ' # user agent
+-                    '"http_x_forwarded_for": "$http_x_forwarded_for", ' # http_x_forwarded_for
+-                    '"http_host": "$http_host", ' # the request Host: header
+-                    '"server_name": "$server_name", ' # the name of the vhost serving the request
+-                    '"request_time": "$request_time", ' # request processing time in seconds with msec resolution
+-                    '"upstream": "$upstream_addr", ' # upstream backend server for proxied requests
+-                    '"upstream_connect_time": "$upstream_connect_time", ' # upstream handshake time incl. TLS
+-                    '"upstream_header_time": "$upstream_header_time", ' # time spent receiving upstream headers
+-                    '"upstream_response_time": "$upstream_response_time", ' # time spend receiving upstream body
+-                    '"upstream_response_length": "$upstream_response_length", ' # upstream response length
+-                    '"upstream_cache_status": "$upstream_cache_status", ' # cache HIT/MISS where applicable
+-                    '"ssl_protocol": "$ssl_protocol", ' # TLS protocol
+-                    '"ssl_cipher": "$ssl_cipher", ' # TLS cipher
+-                    '"scheme": "$scheme", ' # http or https
+-                    '"request_method": "$request_method", ' # request method
+-                    '"server_protocol": "$server_protocol", ' # request protocol, like HTTP/1.1 or HTTP/2.0
+-                    '"pipe": "$pipe", ' # "p" if request was pipelined, "." otherwise
+-                    '"gzip_ratio": "$gzip_ratio", '
+-                    '"http_cf_ray": "$http_cf_ray",'
+-                    '"geoip_country_code": "$geoip_country_code"'
+-                    '}';
++    log_format analytics escape=json '{'
++      '"msec":                      "$msec", '                        # request unixtime in seconds with a milliseconds resolution
++      '"connection":                "$connection", '                  # connection serial number
++      '"connection_requests":       "$connection_requests", '         # number of requests made in connection
++      '"pid":                       "$pid", '                         # process pid
++      '"request_id":                "$request_id", '                  # the unique request id
++      '"request_length":            "$request_length", '              # request length (including headers and body)
++      '"remote_addr":               "$remote_addr", '                 # client IP
++      '"remote_user":               "$remote_user", '                 # client HTTP username
++      '"remote_port":               "$remote_port", '                 # client port
++      '"time_local":                "$time_local", '
++      '"time_iso8601":              "$time_iso8601", '                # local time in the ISO 8601 standard format
++      '"request":                   "$request", '                     # full path no arguments if the request
++      '"request_uri":               "$request_uri", '                 # full path and arguments if the request
++      '"args":                      "$args", '                        # args
++      '"status":                    "$status", '                      # response status code
++      '"body_bytes_sent":           "$body_bytes_sent", '             # the number of body bytes exclude headers sent to a client
++      '"bytes_sent":                "$bytes_sent", '                  # the number of bytes sent to a client
++      '"http_referer":              "$http_referer", '                # HTTP referer
++      '"http_user_agent":           "$http_user_agent", '             # user agent
++      '"http_x_forwarded_for":      "$http_x_forwarded_for", '        # http_x_forwarded_for
++      '"http_host":                 "$http_host", '                   # the request Host: header
++      '"server_name":               "$server_name", '                 # the name of the vhost serving the request
++      '"request_time":              "$request_time", '                # request processing time in seconds with msec resolution
++      '"upstream":                  "$upstream_addr", '               # upstream backend server for proxied requests
++      '"upstream_connect_time":     "$upstream_connect_time", '       # upstream handshake time incl. TLS
++      '"upstream_header_time":      "$upstream_header_time", '        # time spent receiving upstream headers
++      '"upstream_response_time":    "$upstream_response_time", '      # time spend receiving upstream body
++      '"upstream_response_length":  "$upstream_response_length", '    # upstream response length
++      '"upstream_cache_status":     "$upstream_cache_status", '       # cache HIT/MISS where applicable
++      '"ssl_protocol":              "$ssl_protocol", '                # TLS protocol
++      '"ssl_cipher":                "$ssl_cipher", '                  # TLS cipher
++      '"scheme":                    "$scheme", '                      # http or https
++      '"request_method":            "$request_method", '              # request method
++      '"server_protocol":           "$server_protocol", '             # request protocol, like HTTP/1.1 or HTTP/2.0
++      '"pipe":                      "$pipe", '                        # "p" if request was pipelined, "." otherwise
++      '"gzip_ratio":                "$gzip_ratio", '
++    '}';
+   '';
+ }
+diff --git a/etc/aether/services/containers/groups/01-intranet/02-gateway/settings/net.nix b/etc/aether/services/containers/groups/01-intranet/02-gateway/settings/net.nix
+index 4b9178d..de11a88 100644
+--- a/etc/aether/services/containers/groups/01-intranet/02-gateway/settings/net.nix
++++ b/etc/aether/services/containers/groups/01-intranet/02-gateway/settings/net.nix
+@@ -8,6 +8,6 @@
+ # ────────────────────────────────────────────────────────────────────────
+ _: {
+   networking.firewall = {
+-    allowedTCPPorts = [443] ++ [11434] ++ [9080 9090];
++    allowedTCPPorts = [443] ++ [11434] ++ [9090];
+   };
+ }
+diff --git a/etc/aether/services/containers/groups/02-internet/02-gateway/services/nginx.nix b/etc/aether/services/containers/groups/02-internet/02-gateway/services/nginx.nix
+index a5e0f9b..7eafaa9 100644
+--- a/etc/aether/services/containers/groups/02-internet/02-gateway/services/nginx.nix
++++ b/etc/aether/services/containers/groups/02-internet/02-gateway/services/nginx.nix
+@@ -8,16 +8,39 @@
+ # ────────────────────────────────────────────────────────────────────────
+ {
+   container,
++  pkgs,
+   lib,
+   ...
+ }: let
+   inherit (lib.modules) mkMerge;
+ 
+   inherit (container) self internet-harmonia internet-uptime;
++
++  ngx_http_geoip2_module = pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
++    pname = "ngx_http_geoip2_module";
++    version = "3.4"; 
++
++    src = pkgs.fetchFromGitHub {
++      owner = "leev";
++      repo = finalAttrs.pname;
++      tag = "v${finalAttrs.version}";
++      hash = lib.fakeHash;
++    };
++
++    installPhase = ''
++      mkdir $out
++      cp *.c config $out/
++    '';
++  });
+ in {
+   services.nginx = {
+     enable = true;
+ 
++    package = pkgs.nginx.overrideAttrs (oldAttrs: rec {
++      configureFlags = oldAttrs.configureFlags ++ [ "--add-module=${ngx_http_geoip2_module}" ];
++        buildInputs = oldAttrs.buildInputs ++ [ pkgs.libmaxminddb ];
++    });
++
+     recommendedProxySettings = true;
+     recommendedOptimisation = true;
+     recommendedTlsSettings = true;
+@@ -28,25 +51,64 @@ in {
+       {
+         _ = {
+           default = true;
++
+           extraConfig = ''
++            access_log /var/log/nginx/default.access.log analytics;
++            error_log /var/log/nginx/default.error.log analytics;
++
+             return 444;
+           '';
++
++          listen = [
++            {
++              addr = self.localAddress;
++              port = 80;
++            }
++            {
++              addr = self.localAddress;
++              port = 443;
++              ssl = true;
++            }
++          ];
+         };
+       }
+       {
+         "ueuie.dev" = {
+           extraConfig = ''
++            access_log /var/log/nginx/ueuie.dev.access.log analytics;
++            error_log /var/log/nginx/ueuie.dev.error.log analytics;
++
+             return 301 $scheme://www.ueuie.dev$request_uri;
+-            access_log /var/log/nginx/ueuie.dev-access.log json_analytics;
+           '';
++
++          forceSSL = true;
++
++          listen = [
++            {
++              addr = self.localAddress;
++              port = 80;
++            }
++            {
++              addr = self.localAddress;
++              port = 443;
++              ssl = true;
++            }
++          ];
++
++          sslCertificate = "/var/lib/acme/ueuie.dev/fullchain.pem";
++          sslCertificateKey = "/var/lib/acme/ueuie.dev/key.pem";
++          sslTrustedCertificate = "/var/lib/acme/ueuie.dev/chain.pem";
+         };
+       }
+       {
+         "status.ueuie.dev/uptime" = {
+           extraConfig = ''
+-            access_log /var/log/nginx/status.ueuie.dev-access.log json_analytics;
++            access_log /var/log/nginx/status.ueuie.dev.access.log analytics;
++            error_log /var/log/nginx/status.ueuie.dev.error.log analytics;
+           '';
+ 
++          forceSSL = true;
++
+           kTLS = true;
+ 
+           listen = [
+@@ -61,8 +123,6 @@ in {
+             }
+           ];
+ 
+-          forceSSL = true;
+-
+           locations = {
+             "/" = {
+               proxyPass = "http://${internet-uptime.localAddress}:8080";
+@@ -78,9 +138,12 @@ in {
+         };
+         "cache.ueuie.dev/harmonia" = {
+           extraConfig = ''
+-            access_log /var/log/nginx/cache.ueuie.dev-access.log json_analytics;
++            access_log /var/log/nginx/cache.ueuie.dev.access.log analytics;
++            error_log /var/log/nginx/cache.ueuie.dev.error.log analytics;
+           '';
+ 
++          forceSSL = true;
++
+           kTLS = true;
+ 
+           listen = [
+@@ -95,7 +158,6 @@ in {
+             }
+           ];
+ 
+-          forceSSL = true;
+ 
+           locations = {
+             "/" = {
+@@ -111,9 +173,14 @@ in {
+         };
+         "blog.ueuie.dev/static" = {
+           extraConfig = ''
+-            access_log /var/log/nginx/blog.ueuie.dev-access.log json_analytics;
++            access_log /var/log/nginx/blog.ueuie.dev.access.log analytics;
++            error_log /var/log/nginx/blog.ueuie.dev.error.log analytics;
++
++            error_page    404    /404.html;
+           '';
+ 
++          forceSSL = true;
++
+           kTLS = true;
+ 
+           listen = [
+@@ -128,18 +195,12 @@ in {
+             }
+           ];
+ 
+-          forceSSL = true;
+-
+           locations = {
+             "/" = {
+               root = "${../etcetera/static/blog}";
+             };
+           };
+ 
+-          extraConfig = ''
+-            error_page    404    /404.html;
+-          '';
+-
+           serverName = "blog.ueuie.dev";
+ 
+           sslCertificate = "/var/lib/acme/ueuie.dev/fullchain.pem";
+@@ -148,9 +209,14 @@ in {
+         };
+         "www.ueuie.dev/static" = {
+           extraConfig = ''
+-            access_log /var/log/nginx/www.ueuie.dev-access.log json_analytics;
++            access_log /var/log/nginx/www.ueuie.dev.access.log analytics;
++            error_log /var/log/nginx/www.ueuie.dev.error.log analytics;
++
++            error_page    404    /404.html;
+           '';
+ 
++          forceSSL = true;
++
+           kTLS = true;
+ 
+           listen = [
+@@ -165,7 +231,6 @@ in {
+             }
+           ];
+ 
+-          forceSSL = true;
+ 
+           locations = {
+             "/" = {
+@@ -173,10 +238,6 @@ in {
+             };
+           };
+ 
+-          extraConfig = ''
+-            error_page    404    /404.html;
+-          '';
+-
+           serverName = "www.ueuie.dev";
+ 
+           sslCertificate = "/var/lib/acme/ueuie.dev/fullchain.pem";
+diff --git a/etc/aether/services/containers/groups/02-internet/02-gateway/services/promtail.nix b/etc/aether/services/containers/groups/02-internet/02-gateway/services/promtail.nix
+index 8196cfc..efd18ea 100644
+--- a/etc/aether/services/containers/groups/02-internet/02-gateway/services/promtail.nix
++++ b/etc/aether/services/containers/groups/02-internet/02-gateway/services/promtail.nix
+@@ -47,45 +47,44 @@ in {
+   };
+ 
+   services.nginx.commonHttpConfig = ''
+-    log_format json_analytics escape=json '{'
+-                            '"msec": "$msec", ' # request unixtime in seconds with a milliseconds resolution
+-                            '"connection": "$connection", ' # connection serial number
+-                            '"connection_requests": "$connection_requests", ' # number of requests made in connection
+-                    '"pid": "$pid", ' # process pid
+-                    '"request_id": "$request_id", ' # the unique request id
+-                    '"request_length": "$request_length", ' # request length (including headers and body)
+-                    '"remote_addr": "$remote_addr", ' # client IP
+-                    '"remote_user": "$remote_user", ' # client HTTP username
+-                    '"remote_port": "$remote_port", ' # client port
+-                    '"time_local": "$time_local", '
+-                    '"time_iso8601": "$time_iso8601", ' # local time in the ISO 8601 standard format
+-                    '"request": "$request", ' # full path no arguments if the request
+-                    '"request_uri": "$request_uri", ' # full path and arguments if the request
+-                    '"args": "$args", ' # args
+-                    '"status": "$status", ' # response status code
+-                    '"body_bytes_sent": "$body_bytes_sent", ' # the number of body bytes exclude headers sent to a client
+-                    '"bytes_sent": "$bytes_sent", ' # the number of bytes sent to a client
+-                    '"http_referer": "$http_referer", ' # HTTP referer
+-                    '"http_user_agent": "$http_user_agent", ' # user agent
+-                    '"http_x_forwarded_for": "$http_x_forwarded_for", ' # http_x_forwarded_for
+-                    '"http_host": "$http_host", ' # the request Host: header
+-                    '"server_name": "$server_name", ' # the name of the vhost serving the request
+-                    '"request_time": "$request_time", ' # request processing time in seconds with msec resolution
+-                    '"upstream": "$upstream_addr", ' # upstream backend server for proxied requests
+-                    '"upstream_connect_time": "$upstream_connect_time", ' # upstream handshake time incl. TLS
+-                    '"upstream_header_time": "$upstream_header_time", ' # time spent receiving upstream headers
+-                    '"upstream_response_time": "$upstream_response_time", ' # time spend receiving upstream body
+-                    '"upstream_response_length": "$upstream_response_length", ' # upstream response length
+-                    '"upstream_cache_status": "$upstream_cache_status", ' # cache HIT/MISS where applicable
+-                    '"ssl_protocol": "$ssl_protocol", ' # TLS protocol
+-                    '"ssl_cipher": "$ssl_cipher", ' # TLS cipher
+-                    '"scheme": "$scheme", ' # http or https
+-                    '"request_method": "$request_method", ' # request method
+-                    '"server_protocol": "$server_protocol", ' # request protocol, like HTTP/1.1 or HTTP/2.0
+-                    '"pipe": "$pipe", ' # "p" if request was pipelined, "." otherwise
+-                    '"gzip_ratio": "$gzip_ratio", '
+-                    '"http_cf_ray": "$http_cf_ray",'
+-                    '"geoip_country_code": "$geoip_country_code"'
+-                    '}';
++    log_format analytics escape=json '{'
++      '"msec":                      "$msec", '                        # request unixtime in seconds with a milliseconds resolution
++      '"connection":                "$connection", '                  # connection serial number
++      '"connection_requests":       "$connection_requests", '         # number of requests made in connection
++      '"pid":                       "$pid", '                         # process pid
++      '"request_id":                "$request_id", '                  # the unique request id
++      '"request_length":            "$request_length", '              # request length (including headers and body)
++      '"remote_addr":               "$remote_addr", '                 # client IP
++      '"remote_user":               "$remote_user", '                 # client HTTP username
++      '"remote_port":               "$remote_port", '                 # client port
++      '"time_local":                "$time_local", '
++      '"time_iso8601":              "$time_iso8601", '                # local time in the ISO 8601 standard format
++      '"request":                   "$request", '                     # full path no arguments if the request
++      '"request_uri":               "$request_uri", '                 # full path and arguments if the request
++      '"args":                      "$args", '                        # args
++      '"status":                    "$status", '                      # response status code
++      '"body_bytes_sent":           "$body_bytes_sent", '             # the number of body bytes exclude headers sent to a client
++      '"bytes_sent":                "$bytes_sent", '                  # the number of bytes sent to a client
++      '"http_referer":              "$http_referer", '                # HTTP referer
++      '"http_user_agent":           "$http_user_agent", '             # user agent
++      '"http_x_forwarded_for":      "$http_x_forwarded_for", '        # http_x_forwarded_for
++      '"http_host":                 "$http_host", '                   # the request Host: header
++      '"server_name":               "$server_name", '                 # the name of the vhost serving the request
++      '"request_time":              "$request_time", '                # request processing time in seconds with msec resolution
++      '"upstream":                  "$upstream_addr", '               # upstream backend server for proxied requests
++      '"upstream_connect_time":     "$upstream_connect_time", '       # upstream handshake time incl. TLS
++      '"upstream_header_time":      "$upstream_header_time", '        # time spent receiving upstream headers
++      '"upstream_response_time":    "$upstream_response_time", '      # time spend receiving upstream body
++      '"upstream_response_length":  "$upstream_response_length", '    # upstream response length
++      '"upstream_cache_status":     "$upstream_cache_status", '       # cache HIT/MISS where applicable
++      '"ssl_protocol":              "$ssl_protocol", '                # TLS protocol
++      '"ssl_cipher":                "$ssl_cipher", '                  # TLS cipher
++      '"scheme":                    "$scheme", '                      # http or https
++      '"request_method":            "$request_method", '              # request method
++      '"server_protocol":           "$server_protocol", '             # request protocol, like HTTP/1.1 or HTTP/2.0
++      '"pipe":                      "$pipe", '                        # "p" if request was pipelined, "." otherwise
++      '"gzip_ratio":                "$gzip_ratio", '
++      '"geoip_country_code":        "$geoip_country_code"'
++    '}';
+   '';
+ }

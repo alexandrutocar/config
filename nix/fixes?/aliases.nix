@@ -1,3 +1,3 @@
 final: _: {
-  signal = final.signal-desktop;
+  zpix = final.zpix-pixel-font;
 }

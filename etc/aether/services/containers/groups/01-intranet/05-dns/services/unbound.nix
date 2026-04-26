@@ -55,8 +55,11 @@ in {
               "169.254.0.0/16"
 
               # Virtual Private Network
-              "192.168.1.2/32"
-              "192.168.1.3/32"
+              "172.16.1.2/32"
+              "172.16.1.3/32"
+
+              "fd31::1:2/128"
+              "fd31::1:3/128"
             ];
           }
           {
@@ -117,6 +120,19 @@ in {
           }
         ];
 
+        forward-zone = [
+          {
+            name = ".";
+
+            forward-tls-upstream = true;
+
+            forward-addr = [
+              "1.1.1.1@853#cloudflare-dns.com"
+              "1.0.0.1@853#cloudflare-dns.com"
+            ];
+          }
+        ];
+
         auth-zone = [
           {
             name = "aether.ip";
@@ -130,80 +146,6 @@ in {
           control-enable = true;
           control-interface = "/var/run/unbound/unbound.sock";
         };
-      };
-    };
-
-    # PROMTAIL
-    # --------
-    promtail = {
-      enable = true;
-
-      configuration = {
-        server = {
-          http_listen_port = 9080;
-          grpc_listen_port = 0;
-          log_level = "warn";
-        };
-
-        positions.filename = "/tmp/positions.yaml";
-
-        clients = [
-          {
-            url = "http://${intranet-monitoring.localAddress}:3100/loki/api/v1/push";
-          }
-        ];
-
-        scrape_configs = [
-          {
-            job_name = "unbound";
-            static_configs = [
-              {
-                targets = [
-                  "localhost"
-                ];
-
-                labels = {
-                  job = "unbound";
-                  __path__ = "/var/log/unbound/unbound.log";
-                };
-              }
-            ];
-
-            pipeline_stages = [
-              {
-                labeldrop = [
-                  "filename"
-                ];
-              }
-              {
-                match = {
-                  selector = ''{job="unbound"} |~ " start | stopped |.*in-addr.arpa."'';
-                  action = "drop";
-                };
-              }
-              {
-                match = {
-                  selector = ''{job="unbound"} |= "reply:"'';
-                  stages = [
-                    {
-                      static_labels.dns = "reply";
-                    }
-                  ];
-                };
-              }
-              {
-                match = {
-                  selector = ''{job="unbound"} |~ "always_null|redirect |always_nxdomain"'';
-                  stages = [
-                    {
-                      static_labels.dns = "block";
-                    }
-                  ];
-                };
-              }
-            ];
-          }
-        ];
       };
     };
 
@@ -223,18 +165,6 @@ in {
           '';
           endscript = true;
         };
-      };
-    };
-
-    # PROMETHEUS
-    # ----------
-    prometheus = {
-      exporters.unbound = {
-        enable = true;
-        port = 9090;
-        listenAddress = self.localAddress;
-
-        unbound.host = "unix:///var/run/unbound/unbound.sock";
       };
     };
   };

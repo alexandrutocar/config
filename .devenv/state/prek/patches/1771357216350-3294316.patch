@@ -1,0 +1,88 @@
+diff --git a/etc/aether/services/containers/groups/02-internet/02-gateway/services/crowdsec.nix b/etc/aether/services/containers/groups/02-internet/02-gateway/services/crowdsec.nix
+index ec85aa7..5245233 100644
+--- a/etc/aether/services/containers/groups/02-internet/02-gateway/services/crowdsec.nix
++++ b/etc/aether/services/containers/groups/02-internet/02-gateway/services/crowdsec.nix
+@@ -7,4 +7,4 @@ _: {
+   #     };
+   #   };
+   # };
+-}
+\ No newline at end of file
++}
+diff --git a/etc/aether/services/containers/groups/02-internet/02-gateway/services/nginx.nix b/etc/aether/services/containers/groups/02-internet/02-gateway/services/nginx.nix
+index 29cd2b5..10f3153 100644
+--- a/etc/aether/services/containers/groups/02-internet/02-gateway/services/nginx.nix
++++ b/etc/aether/services/containers/groups/02-internet/02-gateway/services/nginx.nix
+@@ -36,12 +36,13 @@ in {
+   services.nginx = {
+     enable = true;
+ 
+-    package = (pkgs.nginx.overrideAttrs (oldAttrs: rec {
+-      configureFlags = oldAttrs.configureFlags ++ ["--add-module=${ngx_http_geoip2_module}"];
+-      buildInputs = oldAttrs.buildInputs ++ [pkgs.libmaxminddb];
+-    })).override {
+-      withGeoIP = true;
+-    };
++    package =
++      (pkgs.nginx.overrideAttrs (oldAttrs: rec {
++        configureFlags = oldAttrs.configureFlags ++ ["--add-module=${ngx_http_geoip2_module}"];
++        buildInputs = oldAttrs.buildInputs ++ [pkgs.libmaxminddb];
++      })).override {
++        withGeoIP = true;
++      };
+ 
+     recommendedBrotliSettings = true;
+     recommendedProxySettings = true;
+diff --git a/etc/aether/settings/administration.nix b/etc/aether/settings/administration.nix
+index 97983fd..ce5a8c2 100644
+--- a/etc/aether/settings/administration.nix
++++ b/etc/aether/settings/administration.nix
+@@ -26,7 +26,7 @@ in {
+     {
+       builder = {
+         group = "builder";
+-        
++
+         isNormalUser = true;
+ 
+         openssh = {
+@@ -53,7 +53,7 @@ in {
+         group = "git";
+ 
+         isSystemUser = true;
+-        
++
+         openssh = {
+           authorizedKeys.keys = [
+             "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO+Hv86vvA3XpfouF6a2w84MRIjTZVHfGZsOzbpEG6K5 alex@albedo"
+diff --git a/etc/albedo/settings/nix.nix b/etc/albedo/settings/nix.nix
+index 62f56dc..9b07988 100644
+--- a/etc/albedo/settings/nix.nix
++++ b/etc/albedo/settings/nix.nix
+@@ -26,7 +26,7 @@ in {
+ 
+       secret-key-files = [
+         "/state/secrets/cache.aether.ip.key"
+-        "/state/secrets/cache.ueuie.dev.key" 
++        "/state/secrets/cache.ueuie.dev.key"
+       ];
+ 
+       post-build-hook = getExe (
+@@ -38,7 +38,7 @@ in {
+             export IFS=' '
+ 
+             echo "Uploading paths" "$OUT_PATHS"
+-            exec nix copy --to "ssh://cache@aether.ip" "$OUT_PATHS" 
++            exec nix copy --to "ssh://cache@aether.ip" "$OUT_PATHS"
+           '';
+         }
+       );
+@@ -47,7 +47,7 @@ in {
+     buildMachines = [
+       {
+         hostName = "aether.ip";
+-        
++
+         speedFactor = 5800;
+ 
+         sshUser = "builder";

@@ -25,30 +25,30 @@
   lib,
   ...
 }: let
-  cfg = config.services.swww;
+  cfg = config.services.awww;
 in {
   # Disabled the upstream module,
   # This is a simplified rewrite.
   disabledModules = [
-    "services/swww.nix"
+    "services/awww.nix"
   ];
 
   options = let
     inherit (lib.options) mkEnableOption mkPackageOption;
   in {
-    services.swww = {
-      enable = mkEnableOption "swww";
-      package = mkPackageOption pkgs "swww" {};
+    services.awww = {
+      enable = mkEnableOption "awww";
+      package = mkPackageOption pkgs "awww" {};
     };
   };
 
   config = let
-    inherit (lib.meta) getExe;
+    inherit (lib.meta) getExe';
     inherit (lib.modules) mkIf;
   in
     mkIf cfg.enable {
       systemd.user.services = {
-        swww = {
+        awww = {
           Unit = {
             After = ["graphical-session.target"];
             PartOf = ["graphical-session.target"];
@@ -58,11 +58,8 @@ in {
           };
 
           Service = {
-            ExecStart = "${getExe cfg.package}/bin/swww-daemon";
+            ExecStart = getExe' cfg.package "awww-daemon";
             Type = "simple";
-            #            # IMPORTANT: Must be set to user's home directory!
-            #            WorkingDirectory = "/home/alex";
-
             Restart = "on-failure";
             Slice = ["session-graphical.slice"];
           };

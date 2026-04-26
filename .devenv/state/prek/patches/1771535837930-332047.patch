@@ -1,0 +1,36 @@
+diff --git a/nix/nixos/modules/services/prosody.nix b/nix/nixos/modules/services/prosody.nix
+index 3457c71..0be53b4 100644
+--- a/nix/nixos/modules/services/prosody.nix
++++ b/nix/nixos/modules/services/prosody.nix
+@@ -44,6 +44,7 @@ in {
+   # This is a simplified rewrite.
+   disabledModules = [
+     "services/networking/prosody.nix"
++    "services/web-apps/jitsi-meet.nix"
+   ];
+ 
+   options = let
+@@ -398,8 +399,9 @@ in {
+             '';
+           };
+         };
+-      in {
++      in mkMerge [{
+         inherit (host) modules_enabled modules_disabled;
++
+         # ────────────────────────────────────────────────────────────────────────
+         # GENERAL SERVER SETTINGS
+         # ────────────────────────────────────────────────────────────────────────
+@@ -687,7 +689,11 @@ in {
+             In effect any incoming messages to the user’s bare JID will be broadcast to all of the user’s connected resources instead of the one(s) with the highest priority.
+           '';
+         };
+-      };
++      }
++      
++              modules.mod_register
++
++      ];
+ 
+       # TODO: Remove
+       configFile = mkOption {

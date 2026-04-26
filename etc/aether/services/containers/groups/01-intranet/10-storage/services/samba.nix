@@ -39,7 +39,7 @@ in {
           "workgroup" = "AETHER";
 
           # Network
-          "hosts allow" = "192.168.1.2 192.168.1.3 aether.ip"; # vpn
+          "hosts allow" = "172.16.1.3 aether.ip"; # vpn
           "hosts deny" = "ALL";
           "interfaces" = "${self.localAddress}";
           "bind interfaces only" = "yes";

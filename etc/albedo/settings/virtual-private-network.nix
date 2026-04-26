@@ -15,14 +15,13 @@
   lib,
   ...
 }: let
-  inherit (lib.attrsets) listToAttrs;
   inherit (lib.extra.net) mkHost;
   inherit (lib.modules) mkMerge;
   inherit (lib.meta) getExe';
 in {
   systemd = let
     mkVPN = definitions:
-      mkMerge (builtins.map ({
+      mkMerge (map ({
           name,
           marker,
           endpoint,
@@ -49,8 +48,8 @@ in {
                   Endpoint = endpoint;
 
                   AllowedIPs = [
-                    "192.168.1.1/32"
-                    "fd31::100:1/128"
+                    "172.16.1.1/32"
+                    "fd31::1:1/128"
                   ];
 
                   RouteTable = "off";
@@ -68,7 +67,7 @@ in {
               };
 
               address = [
-                "192.168.1.2/32"
+                "172.16.1.2/32"
               ];
 
               networkConfig = {
@@ -77,7 +76,7 @@ in {
                 DNSOverTLS = "yes";
 
                 DNS = [
-                  "192.168.1.1"
+                  "172.16.1.1"
                   # ────────────────────────────────────────────────────────────────────────
                   # TODO: Enable IPv6.
                   # ────────────────────────────────────────────────────────────────────────
@@ -105,7 +104,7 @@ in {
 
               routes = [
                 {
-                  Destination = "192.168.1.1/32";
+                  Destination = "172.16.1.1/32";
                   Table = marker;
                   Scope = "link";
                 }
@@ -124,12 +123,12 @@ in {
       {
         name = "wg-intranet";
         marker = 1010;
-        endpoint = mkHost "192.168.0.10" 51820;
+        endpoint = mkHost "[fd4b:ad02:1b77:1:0020:61fc:3462:bf01]" 50010;
       }
       {
         name = "wg-internet";
         marker = 1020;
-        endpoint = mkHost "91.13.165.218" 51820;
+        endpoint = mkHost "212.201.71.75" 50010;
       }
     ];
   };
@@ -142,14 +141,14 @@ in {
         script = ''
           #!${pkgs.runtimeShell}
           if [[ $IFACE == wlan0 ]]; then
-              if [[ $ESSID == "heim" ]]; then
-                ${getExe' pkgs.systemd "networkctl"} up ${config.systemd.network.netdevs."25-wg-intranet".netdevConfig.Name}
-                ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-internet".netdevConfig.Name}
-              else
-                ${getExe' pkgs.systemd "networkctl"} up ${config.systemd.network.netdevs."25-wg-internet".netdevConfig.Name}
-                ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-intranet".netdevConfig.Name}
-              fi
+            if [[ $ESSID == "Specht" ]]; then
+              ${getExe' pkgs.systemd "networkctl"} up ${config.systemd.network.netdevs."25-wg-intranet".netdevConfig.Name}
+              ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-internet".netdevConfig.Name}
+            else
+              ${getExe' pkgs.systemd "networkctl"} up ${config.systemd.network.netdevs."25-wg-internet".netdevConfig.Name}
+              ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-intranet".netdevConfig.Name}
             fi
+          fi
         '';
       };
     };

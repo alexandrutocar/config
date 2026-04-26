@@ -42,7 +42,7 @@ in {
   options.programs.river-classic= let
     inherit (lib.options) mkEnableOption mkPackageOption;
   in {
-    enable = mkEnableOption "river";
+    enable = mkEnableOption "river-classic";
 
     package = mkPackageOption pkgs "river-classic" {};
   };

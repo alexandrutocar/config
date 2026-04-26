@@ -13,9 +13,9 @@ touch "$nid_file"
 
 # Read previous notification ID (if any)
 if [ -s "$nid_file" ]; then
-    replace_flag="--replace-id=$(cat "$nid_file")"
+    replace_flag=("--replace-id=$(cat "$nid_file")")
 else
-    replace_flag=""
+    replace_flag=()
 fi
 
 if [ "$1" = "+" ] || [ "$1" = "-" ]; then
@@ -39,8 +39,8 @@ nid=$(
         --hint string:synchronous:volume \
         --hint "int:value:$level" \
         --print-id \
-        "$replace_flag" \
-        "Lautstärke $([ "$state" == "muted" ] && echo "[\]")"
+        "${replace_flag[@]}" \
+        "Lautstärke $([ "$state" == "muted" ] && echo "[m]")"
 )
 
 echo "$nid" > "$nid_file"

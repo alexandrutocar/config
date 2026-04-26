@@ -13,7 +13,7 @@ _: {
     enable = true;
     enableIPv6 = true;
 
-    externalInterface = "wlan0";
+    externalInterface = "enp0s20f0u2";
     internalInterfaces = [
       "ve-*"
       "wg0"

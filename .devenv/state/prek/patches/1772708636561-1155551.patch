@@ -1,0 +1,92 @@
+diff --git a/etc/aether/services/containers.nix b/etc/aether/services/containers.nix
+index 304c910..f8ccccc 100644
+--- a/etc/aether/services/containers.nix
++++ b/etc/aether/services/containers.nix
+@@ -424,7 +424,7 @@ in {
+         }
+         {
+           "/var/lib/samba/private/share/" = {
+-            hostPath = "/archive/share/";
++            hostPath = "/archive/";
+             isReadOnly = false;
+           };
+           "/var/lib/samba/" = {
+diff --git a/etc/aether/settings/nfs.nix b/etc/aether/settings/nfs.nix
+index 7f9a511..42d34f6 100644
+--- a/etc/aether/settings/nfs.nix
++++ b/etc/aether/settings/nfs.nix
+@@ -1,7 +1,7 @@
+ _: {
+   fileSystems = {
+-    "/export/share" = {
+-      device = "/archive/share";
++    "/export/archive" = {
++      device = "/archive";
+       options = ["bind"];
+     };
+   };
+@@ -10,7 +10,7 @@ _: {
+ 
+   services.nfs.server.exports = ''
+     /export           192.168.1.2(rw,fsid=0,no_subtree_check)
+-    /export/share     192.168.1.2(rw,nohide,insecure,no_subtree_check)
++    /export/archive   192.168.1.2(rw,nohide,insecure,no_subtree_check)
+   '';
+ 
+   networking.firewall.allowedTCPPorts = [2049];
+diff --git a/etc/albedo/settings/nfs.nix b/etc/albedo/settings/nfs.nix
+index f728805..66f94b1 100644
+--- a/etc/albedo/settings/nfs.nix
++++ b/etc/albedo/settings/nfs.nix
+@@ -9,8 +9,8 @@ _: {
+       mountConfig = {
+         Options = "noatime";
+       };
+-      what = "aether.ip:/share";
+-      where = "/mnt/share";
++      what = "aether.ip:/archive";
++      where = "/mnt/aether/archive";
+     }
+   ];
+ 
+@@ -20,7 +20,7 @@ _: {
+       automountConfig = {
+         TimeoutIdleSec = "600";
+       };
+-      where = "/mnt/share";
++      where = "/mnt/aether/archive";
+     }
+   ];
+ }
+diff --git a/flake.nix b/flake.nix
+index ba5f707..1a06657 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -64,9 +64,9 @@
+             builtins.elem (getName pkg) [
+               "fcitx5-black-simplicity"
+             ];
+-
+-          # strictDepsByDefault = true;
+-          # structuredAttrsByDefault = true;
++          
++          strictDepsByDefault = true;
++          structuredAttrsByDefault = true;
+         };
+ 
+         overlays = (attrValues self.overlays) ++ [inputs.bun2nix.overlays.default];
+diff --git a/nix/packages/utils/write-shell/package.nix b/nix/packages/utils/write-shell/package.nix
+index 8d9b09d..caf8c17 100644
+--- a/nix/packages/utils/write-shell/package.nix
++++ b/nix/packages/utils/write-shell/package.nix
+@@ -67,8 +67,8 @@ in
+       export PATH="${makeBinPath paths}:$PATH"
+ 
+       # (0.2) External Libraries
+-      ${builtins.readFile ./lib/logs.sh}
+-      ${builtins.readFile ./lib/cred.sh}
++      ${builtins.readFile ./lib/logs.bash}
++      ${builtins.readFile ./lib/cred.bash}
+ 
+       # (0.3) Environment Variables (Credentials)
+       ${optionalString (env != null) (

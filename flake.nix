@@ -1,30 +1,18 @@
 {
   description = ''
-    Systems configuration files.
+    Nix Systems' Configuration
   '';
 
   inputs = {
-    # ────────────────────────────────────────────────────────────────────────
-    # This package set is pinned to a commit of a patched `unstable-small`
-    # branch of [nixpkgs](https://github.com/nixos/nixpkgs). It is rebased
-    # regularly to keep up with the upstream - usually weekly, sometimes in
-    # longer intervals.
-    # ────────────────────────────────────────────────────────────────────────
-    packages = {
-      url = "path:/home/alex/.tracked/packages?rev=5ba249aa104c36c3542e3017d85cf55196732b7b"; # (core packages) 
+    nixpkgs = {
+      url = "github:nixos/nixpkgs?rev=7e728862960bcb3e21520807bd6db5f968ee4079"; # nixos-unstable-small
     };
 
     # ────────────────────────────────────────────────────────────────────────
-    # These are additional modules simplifying:
-    # - generation of bootable systems (including virtual machines)
-    # - symlinking of files and directories for the purpose of persistence
-    # - utility for signing generations and managing keys for the secure boot
-    # - binary cache server
-    # - user configuration management (.dotfiles)
-    # ────────────────────────────────────────────────────────────────────────
+
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
-      inputs.nixpkgs.follows = "packages";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     impermanence = {
@@ -33,17 +21,17 @@
 
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
-      inputs.nixpkgs.follows = "packages";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     harmonia = {
       url = "github:nix-community/harmonia";
-      inputs.nixpkgs.follows = "packages";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     home-manager = {
       url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "packages";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
@@ -51,7 +39,6 @@
     inherit (lib.filesystem) packagesFromDirectoryRecursive;
     inherit (lib.attrsets) attrValues genAttrs;
     inherit (lib.extra.attrsets) mergeAttrsList;
-    inherit (lib.strings) getName;
 
     forSystems = genAttrs [
       "x86_64-linux"
@@ -64,7 +51,7 @@
         overlays = attrValues self.overlays;
       };
 
-    lib = inputs.packages.lib.extend (final: super: ((import (self + /nix/lib) final super) // inputs.home-manager.lib));
+    lib = inputs.nixpkgs.lib.extend (final: super: ((import (self + /nix/lib) final super) // inputs.home-manager.lib));
 
     mkSystem = hostname: {
       nixpkgs,
@@ -85,14 +72,13 @@
               nix.registry.nixpkgs.flake = lib.mkForce nixpkgs;
             }
 
-            # Ensure relevant system parts have
-            # the specified name.
+            # Ensure device has expected name in wireless, wired and bluetooth networks.
             {
               networking.hostName = hostname;
               hardware.bluetooth.settings.General.Name = hostname;
             }
 
-            # Cross-system package overlays and prefixes of allowed unfree packages.
+            # Cross-system package overlays.
             {
               nixpkgs.overlays = attrValues self.overlays;
             }
@@ -133,16 +119,16 @@
       })
     ];
   in {
-    # `nix develop --no-pure-eval` (https://direnv.sh)
+    # `nix develop`
     devShells = forSystems (system: let
-      pkgs = mkPackages system inputs.packages;
+      pkgs = mkPackages system inputs.nixpkgs;
     in {
       default = import ./nix/dev-shell/default.nix pkgs;
     });
 
-    # `nix fmt` (https://kamadorueda.com/alejandra)
+    # `nix fmt`
     formatter = forSystems (
-      system: (mkPackages system inputs.packages).alejandra
+      system: (mkPackages system inputs.nixpkgs).alejandra
     );
 
     overlays = let
@@ -167,10 +153,9 @@
       }
       // (patches (./nix + "/fixes?"));
 
-    # https://wiki.nixos.org/wiki/NixOS_system_configuration
     nixosConfigurations = {
       aether = let
-        nixpkgs = inputs.packages;
+        inherit (inputs) nixpkgs;
       in
         mkSystem "aether" {
           inherit nixpkgs;
@@ -181,13 +166,13 @@
             ++ (mkHome {
               user = "git";
               spec = [
-                ./dot/aether
+                ./dot/aether/git
               ];
             });
         };
 
       albedo = let
-        nixpkgs = inputs.packages;
+        inherit (inputs) nixpkgs;
       in
         mkSystem "albedo" {
           inherit nixpkgs;
@@ -198,16 +183,15 @@
             ++ (mkHome {
               user = "alex";
               spec = [
-                ./dot/albedo
+                ./dot/albedo/alex
               ];
             });
         };
     };
 
-    # https://wiki.nixos.org/wiki/Creating_a_NixOS_live_CD
     packages = forSystems (
       system: let
-        pkgs = mkPackages system inputs.packages;
+        pkgs = mkPackages system inputs.nixpkgs;
       in
         mergeAttrsList [
           (
@@ -219,7 +203,7 @@
           {
             beidou = let
               _system = let
-                nixpkgs = inputs.packages;
+                inherit (inputs) nixpkgs;
               in
                 mkSystem "beidou" {
                   inherit nixpkgs;
@@ -231,9 +215,9 @@
                       ./etc/beidou
                     ]
                     ++ (mkHome {
-                      user = "alex";
+                      user = "yelan";
                       spec = [
-                        ./dot/beidou
+                        ./dot/beidou/yelan
                       ];
                     });
                 };

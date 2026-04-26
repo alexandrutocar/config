@@ -33,15 +33,4 @@
       cups-browsed
     ];
   };
-
-  hardware.printers = {
-    ensureDefaultPrinter = "Drucker";
-    ensurePrinters = [
-      {
-        name = "Drucker";
-        model = "everywhere";
-        deviceUri = "ipp://192.168.0.5/ipp";
-      }
-    ];
-  };
 }

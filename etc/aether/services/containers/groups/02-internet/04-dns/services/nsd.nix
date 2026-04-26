@@ -8,11 +8,13 @@
 # ────────────────────────────────────────────────────────────────────────
 {
   container,
+  pkgs,
   lib,
   ...
 }: let
   inherit (container) self;
 
+  inherit (lib.meta) getExe';
   inherit (lib.modules) mkForce;
 in {
   services.nsd = {
@@ -69,6 +71,19 @@ in {
           zonefile = ''"${../etcetera/zones/ueuie.dev.zone}"'';
         }
       ];
+    };
+  };
+
+  systemd.paths.nsd-n8n-reload = {
+    wantedBy = [ "multi-user.target" ];
+    pathConfig.PathModified = "/etc/nsd/zones/ueuie.dev.soa.zone";
+  };
+
+  systemd.services.nsd-n8n-reload = {
+    description = "Reload NSD when n8n zone file changes";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${getExe' pkgs.nsd "nsd-control"} reload \"ueuie.dev\"";
     };
   };
 }

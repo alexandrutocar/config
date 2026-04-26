@@ -8,16 +8,12 @@
 # ────────────────────────────────────────────────────────────────────────
 {
   container,
-  config,
-  pkgs,
   lib,
   ...
 }: let
-  inherit (lib.lists) singleton;
-  inherit (lib.meta) getExe;
   inherit (lib.modules) mkForce;
 
-  inherit (container) self intranet-reader intranet-dav intranet-coder;
+  inherit (container) self intranet-dav;
 in {
   services.postgresql = {
     enable = true;
@@ -27,55 +23,18 @@ in {
     };
 
     authentication = ''
-      host  miniflux miniflux ${intranet-reader.localAddress}/32 trust
       host  davis davis ${intranet-dav.localAddress}/32 trust
-      host  coder coder ${intranet-coder.localAddress}/32 trust
     '';
 
     ensureUsers = [
       {
-        name = "miniflux";
-        ensureDBOwnership = true;
-      }
-      {
         name = "davis";
-        ensureDBOwnership = true;
-      }
-      {
-        name = "coder";
         ensureDBOwnership = true;
       }
     ];
     ensureDatabases = [
-      "miniflux"
       "davis"
-      "coder"
     ];
-  };
-
-  # DATABASE SET-UP
-  # ---------------
-  systemd.services = {
-    "database-setup@miniflux" = {
-      description = "Database Setup for 'miniflux'";
-      requires = ["postgresql.target"];
-      after = [
-        "network.target"
-        "postgresql.target"
-      ];
-      serviceConfig = {
-        Type = "oneshot";
-        User = config.services.postgresql.superUser;
-        ExecStart = getExe (
-          pkgs.custom.writeShell "database-setup@miniflux.bash" {
-            inputs = singleton config.services.postgresql.package;
-            text = ''
-              psql "miniflux" -c "DROP EXTENSION IF EXISTS hstore"
-            '';
-          }
-        );
-      };
-    };
   };
 
   # systemd.services."postgresql-fix-collation" = {
@@ -100,7 +59,6 @@ in {
   #           # Fix existing databases if they exist
   #           psql -d postgres -c "ALTER DATABASE miniflux REFRESH COLLATION VERSION;" 2>/dev/null || true
   #           psql -d postgres -c "ALTER DATABASE davis REFRESH COLLATION VERSION;" 2>/dev/null || true
-  #           psql -d postgres -c "ALTER DATABASE coder REFRESH COLLATION VERSION;" 2>/dev/null || true
   #         '';
   #       }
   #     );

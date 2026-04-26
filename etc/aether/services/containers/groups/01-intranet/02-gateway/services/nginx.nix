@@ -3,7 +3,7 @@
 # █▄░█ █▀▀ █ █▄░█ ▀▄▀
 # █░▀█ █▄█ █ █░▀█ █░█
 #
-# nginx, reverse proxy, prometheus exporter...
+# nginx, reverse proxy...
 #
 # ────────────────────────────────────────────────────────────────────────
 {
@@ -12,7 +12,7 @@
   ...
 }: let
   inherit (lib.modules) mkMerge;
-  inherit (container) self intranet-automation intranet-harmonia intranet-reader intranet-ml intranet-dav intranet-sync intranet-coder intranet-monitoring;
+  inherit (container) self intranet-harmonia intranet-ml intranet-dav intranet-sync intranet-monitoring;
 in {
   services.nginx = {
     enable = true;
@@ -25,12 +25,32 @@ in {
     statusPage = true;
 
     virtualHosts = mkMerge [
+      # ────────────────────────────────────────────────────────────────────────
+      # NOTE: Reject requests not matched against any of the explicitly
+      #       specified server names.
+      # ────────────────────────────────────────────────────────────────────────
       {
         _ = {
           default = true;
+
           extraConfig = ''
+            access_log /var/log/nginx/default.access.log analytics;
+            error_log /var/log/nginx/default.error.log;
+            ssl_reject_handshake on;
             return 444;
           '';
+
+          listen = [
+            {
+              addr = self.localAddress;
+              port = 80;
+            }
+            {
+              addr = self.localAddress;
+              port = 443;
+              ssl = true;
+            }
+          ];
         };
       }
       {
@@ -149,44 +169,6 @@ in {
           # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
         };
 
-        
-        "workflows.aether.ip/n8n" = {
-          extraConfig = ''
-            access_log /var/log/nginx/workflows.aether.ip.access.log analytics;
-            error_log /var/log/nginx/workflows.aether.ip.error.log;
-          '';
-
-          kTLS = true;
-
-          listen = [
-            {
-              addr = self.localAddress;
-              port = 443;
-              ssl = true;
-            }
-          ];
-
-          onlySSL = true;
-
-          locations = {
-            "/" = {
-              proxyPass = "http://${intranet-automation.localAddress}:8080";
-              proxyWebsockets = true;
-              recommendedProxySettings = true;
-            };
-          };
-
-          serverName = "workflows.aether.ip";
-
-          sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
-          sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
-
-          # ────────────────────────────────────────────────────────────────────────
-          # TODO: Compile the right chain.pem.
-          # ────────────────────────────────────────────────────────────────────────
-          # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
-        };
-
         "cache.aether.ip/harmonia" = {
           extraConfig = ''
             access_log  /var/log/nginx/cache.aether.ip.access.log analytics;
@@ -214,79 +196,6 @@ in {
           };
 
           serverName = "cache.aether.ip";
-
-          sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
-          sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
-
-          # ────────────────────────────────────────────────────────────────────────
-          # TODO: Compile the right chain.pem.
-          # ────────────────────────────────────────────────────────────────────────
-          # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
-        };
-        "coder.aether.ip/coder" = {
-          extraConfig = ''
-            access_log /var/log/nginx/coder.aether.ip.access.log analytics;
-            error_log /var/log/nginx/coder.aether.ip.error.log;
-          '';
-
-          kTLS = true;
-
-          listen = [
-            {
-              addr = self.localAddress;
-              port = 443;
-              ssl = true;
-            }
-          ];
-
-          onlySSL = true;
-
-          locations = {
-            "/" = {
-              extraConfig = ''
-                add_header X-Frame-Options SAMEORIGIN always;
-              '';
-              proxyPass = "http://${intranet-coder.localAddress}:8080";
-              proxyWebsockets = true;
-            };
-          };
-
-          serverName = "coder.aether.ip";
-
-          sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
-          sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
-
-          # ────────────────────────────────────────────────────────────────────────
-          # TODO: Compile the right chain.pem.
-          # ────────────────────────────────────────────────────────────────────────
-          # sslTrustedCertificate = "/var/lib/acme/aether.ip/chain.pem";
-        };
-
-        "reader.aether.ip/reader" = {
-          extraConfig = ''
-            access_log /var/log/nginx/reader.aether.ip.access.log analytics;
-            error_log /var/log/nginx/reader.aether.ip.error.log;
-          '';
-
-          kTLS = true;
-
-          listen = [
-            {
-              addr = self.localAddress;
-              port = 443;
-              ssl = true;
-            }
-          ];
-
-          onlySSL = true;
-
-          locations = {
-            "/" = {
-              proxyPass = "http://${intranet-reader.localAddress}:8080";
-            };
-          };
-
-          serverName = "reader.aether.ip";
 
           sslCertificate = "/var/lib/acme/aether.ip/fullchain.pem";
           sslCertificateKey = "/var/lib/acme/aether.ip/key.pem";
@@ -333,11 +242,5 @@ in {
         };
       }
     ];
-  };
-
-  services.prometheus.exporters.nginx = {
-    enable = true;
-    port = 9090;
-    listenAddress = self.localAddress;
   };
 }

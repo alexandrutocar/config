@@ -26,10 +26,12 @@ in {
       auto-optimise-store = mkDefault true;
 
       # flake.nix & `$ nix command`
-      experimental-features = mkDefault ["ca-derivations" "flakes" "nix-command" "no-url-literals" "parse-toml-timestamps" "pipe-operators"];
+      experimental-features = mkDefault ["ca-derivations" "flakes" "nix-command" "parse-toml-timestamps" "pipe-operators"];
 
       # Only allow root to build
       trusted-users = mkDefault ["root"];
+
+      lint-url-literals = "fatal";
 
       # re-evaluate on every rebuild instead of "cached failure of attribute" error
       eval-cache = mkDefault false;

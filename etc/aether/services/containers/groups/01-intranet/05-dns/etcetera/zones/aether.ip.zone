@@ -13,21 +13,19 @@
 
 @           		IN  	NS    	aether.ns.aether.ip.
 
-aether.ns       	IN      A       192.168.1.1
-aether.ns       	IN      AAAA    fd31::100:1
+aether.ns       	IN      A       172.16.1.1
+aether.ns       	IN      AAAA     fd31::1:1
 
 
 ; -------------
 ; Other Records
 ; -------------
 
-@           		IN  	A     	192.168.1.1
-@           		IN  	AAAA  	fd31::100:1
+@           		IN  	A     	172.16.1.1
+@           		IN  	AAAA  	 fd31::1:1
 
 monitoring     		IN 	    CNAME	aether.ip.
-workflows			IN		CNAME	aether.ip.
 
 
-reader          	IN  	CNAME	aether.ip.
 cache				IN		CNAME	aether.ip.
 sync				IN		CNAME	aether.ip.

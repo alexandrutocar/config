@@ -4,50 +4,6 @@ in {
   users = {
     groups = {
       nginx = {};
-      promtail = {};
-    };
-
-    users.promtail = {
-      isSystemUser = true;
-      group = "promtail";
-      extraGroups = ["nginx"];
-    };
-  };
-
-  # PROMTAIL
-  # --------
-  services.promtail = {
-    enable = true;
-    configuration = {
-      server = {
-        http_listen_port = 9080;
-        grpc_listen_port = 0;
-      };
-
-      positions.filename = "/tmp/positions.yaml";
-
-      clients = [
-        {
-          url = "http://${intranet-monitoring.localAddress}:3100/loki/api/v1/push";
-        }
-      ];
-
-      scrape_configs = [
-        {
-          job_name = "nginx";
-          static_configs = [
-            {
-              targets = ["${self.localAddress}"];
-              labels = {
-                job = "nginx";
-                __path__ = "/var/log/nginx/*.log";
-                host = "intranet";
-                instance = "${self.localAddress}";
-              };
-            }
-          ];
-        }
-      ];
     };
   };
 

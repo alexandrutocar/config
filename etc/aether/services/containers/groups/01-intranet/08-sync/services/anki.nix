@@ -3,7 +3,7 @@
 in {
   services.anki-sync-server = {
     enable = true;
-    
+
     port = 8080;
 
     address = self.localAddress;

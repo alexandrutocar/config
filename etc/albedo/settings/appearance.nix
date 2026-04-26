@@ -81,7 +81,7 @@ in {
       desktopName = "river";
       comment = "dynamic tiling compositor";
       name = "river";
-      exec = "${getExe pkgs.uwsm} start -F -N river -C \"dynamic tiling compositor\" ${getExe pkgs.river}";
+      exec = "${getExe pkgs.uwsm} start -F -N river -C \"dynamic tiling compositor\" ${getExe pkgs.river-classic}";
       destination = "/share/wayland-session";
     };
   in {
@@ -104,7 +104,9 @@ in {
     };
   };
 
-  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-    "fcitx5-black-simplicity"
-  ];
+  nixpkgs.config.allowUnfreePredicate = pkg:
+    builtins.elem (lib.getName pkg) [
+      "fcitx5-black-simplicity"
+      "zpix-pixel-font"
+    ];
 }

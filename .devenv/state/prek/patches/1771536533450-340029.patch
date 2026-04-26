@@ -1,0 +1,77 @@
+diff --git a/etc/aether/services/containers/groups/02-internet/07-xmpp/etcetera/prosody.cfg.lua b/etc/aether/services/containers/groups/02-internet/07-xmpp/etcetera/prosody.cfg.lua
+index 2fa2f03..cbad091 100644
+--- a/etc/aether/services/containers/groups/02-internet/07-xmpp/etcetera/prosody.cfg.lua
++++ b/etc/aether/services/containers/groups/02-internet/07-xmpp/etcetera/prosody.cfg.lua
+@@ -8,7 +8,7 @@
+ -- sections as you like.
+ --
+ -- Lists are written
+-_ = { "like", "this", "one" } 
++-- _ = { "like", "this", "one" } 
+ -- Lists can also be of { 1, 2, 3 } numbers, etc. 
+ -- Either commas, or semi-colons; may be used
+ -- as separators.
+@@ -16,7 +16,7 @@ _ = { "like", "this", "one" }
+ -- A table is a list of values, except each value has a name. An 
+ -- example would be:
+ --
+-example_ssl = { key = "keyfile.key", certificate = "certificate.crt" }
++-- example_ssl = { key = "keyfile.key", certificate = "certificate.crt" }
+ --
+ -- Whitespace (that is tabs, spaces, line breaks) is mostly insignificant, so 
+ -- can 
+@@ -41,7 +41,9 @@ example_ssl = { key = "keyfile.key", certificate = "certificate.crt" }
+ -- for the server. Note that you must create the accounts separately
+ -- (see https://prosody.im/doc/creating_accounts for info)
+ -- Example: admins = { "user1@example.com", "user2@example.net" }
+-admins = { }
++admins = { 
++    "test@aether.ip"
++}
+ 
+ -- This option allows you to specify additional locations where Prosody
+ -- will search first for modules. For additional modules you can install, see
+diff --git a/etc/aether/services/containers/groups/02-internet/07-xmpp/services/prosody.nix b/etc/aether/services/containers/groups/02-internet/07-xmpp/services/prosody.nix
+index 42446e5..dc88814 100644
+--- a/etc/aether/services/containers/groups/02-internet/07-xmpp/services/prosody.nix
++++ b/etc/aether/services/containers/groups/02-internet/07-xmpp/services/prosody.nix
+@@ -14,7 +14,7 @@
+   inherit (container) self;
+ in {
+   services.prosody = {
+-    enable = true;
++    enable = false;
+ 
+     settings = {
+       allow_registration = false;
+diff --git a/nix/nixos/modules/services/prosody.nix b/nix/nixos/modules/services/prosody.nix
+index 06a3bc5..73d7176 100644
+--- a/nix/nixos/modules/services/prosody.nix
++++ b/nix/nixos/modules/services/prosody.nix
+@@ -48,7 +48,7 @@ in {
+   ];
+ 
+   options = let
+-    inherit (lib.modules) mkMerge;
++    inherit (lib.custom.attrsets) mergeAttrsList;
+     inherit (lib.options) mkEnableOption mkOption mkPackageOption;
+     inherit (lib.types) attrs attrsOf bool enum int lines listOf nullOr oneOf path port str submodule;
+   in {
+@@ -234,7 +234,7 @@ in {
+           # see https://prosody.im/doc/modules/mod_windows
+         };
+ 
+-        host = mkMerge [
++        host = mergeAttrsList [
+           {
+             modules_enabled = mkOption {
+               type = listOf (enum [
+@@ -404,7 +404,7 @@ in {
+           modules.mod_register
+         ];
+       in
+-        mkMerge [
++        mergeAttrsList [
+           {
+             inherit (host) modules_enabled modules_disabled;
+ 

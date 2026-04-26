@@ -37,7 +37,7 @@ in {
     enable = true;
     settings = rec {
       initial_session = {
-        command = "${getExe pkgs.uwsm} start -F -N river -C \"dynamic tiling compositor\" ${getExe pkgs.river}";
+        command = "${getExe pkgs.uwsm} start -F -N river -C \"dynamic tiling compositor\" ${getExe pkgs.river-classic}";
         user = "alex";
       };
       default_session = initial_session;

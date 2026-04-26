@@ -55,7 +55,7 @@ in {
       desktopName = "river";
       comment = "dynamic tiling compositor";
       name = "river";
-      exec = "${getExe pkgs.uwsm} start -F -N river -C \"dynamic tiling compositor\" ${getExe pkgs.river}";
+      exec = "${getExe pkgs.uwsm} start -F -N river -C \"dynamic tiling compositor\" ${getExe pkgs.river-classic}";
       destination = "/share/wayland-session";
     };
   in {

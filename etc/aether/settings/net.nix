@@ -15,35 +15,22 @@
 in {
   imports = singleton (self + /etc/shared/settings/net.nix);
 
-  networking = {
-    # WIRELESS
-    # --------
-    wireless.iwd = {
-      settings = {
-        General = {
-          # ────────────────────────────────────────────────────────────────────────
-          # TODO: Harden `iwd` by letting the daemon encrypt network configuraions.
-          # - Enable hybrid encryption.
-          # - Generate `iwd` secret passphrase/password and back it up.
-          # - Create `iwd` credential (/etc/credstore/iwd.secret).
-          # ────────────────────────────────────────────────────────────────────────
-          # SystemdEncrypt = "iwd";
-        };
-      };
-    };
-  };
+  # ────────────────────────────────────────────────────────────────────────
+  # NOTE(SECURITY): Having wireless driver blacklisted reduces the
+  #                 attack surface.
+  # ────────────────────────────────────────────────────────────────────────
+  boot.blacklistedKernelModules = ["iwlwifi"];
+  networking.wireless.iwd.enable = false;
 
   # SYSTEMD NETWORK
   # ------- -------
   systemd.network = {
     networks = {
       # Network Interface [+]
-
-      "25-wlp2s0" = {
+      "25-enp0s20" = {
         # [Match]
         matchConfig = {
-          Type = "wlan";
-          SSID = "heim";
+          MACAddress = "00:11:22:68:05:7c";
         };
 
         # [Link]
@@ -53,8 +40,19 @@ in {
 
         # [Network]
         networkConfig = {
-          Address = ["192.168.0.10/24" "fe80::9ecc:83ff:fec8:1010/64"];
-          Gateway = ["192.168.0.1" "fe80::9ecc:83ff:fec8:46aa"];
+          Address =
+            [
+              "192.168.1.2/24"
+            ]
+            ++ [
+              "fd4b:ad02:1b77:1:0020:61fc:3462:bf01/64" # ULA
+              "2a00:5ba0:8009:5f40:1:b03f:2f2a:c1df/64" # WAN
+            ];
+          Gateway =
+            ["192.168.1.1"]
+            ++ [
+              "fd4b:ad02:1b77:1:e228:6dff:fe1d:8a9c" # ULA
+            ];
 
           DNSDefaultRoute = true;
           DNSOverTLS = "yes";
@@ -69,6 +67,12 @@ in {
 
           Domains = ["~aether.ip" "~."];
         };
+
+        # [DHCP]
+        dhcpConfig = {
+          Hostname = "Aether";
+          SendHostname = true;
+        };
       };
     };
   };
@@ -77,13 +81,5 @@ in {
   # -----------
   security.pki.certificates = [
     (builtins.readFile (self + /.pki/ca/root/x0.pem))
-  ];
-
-  # PERSISTENCE
-  # -----------
-  environment.persistence."/state".directories = [
-    # iwd takes full control of network configuration and
-    # does not allow it to be read-only (or symlinked).
-    "/var/lib/iwd"
   ];
 }

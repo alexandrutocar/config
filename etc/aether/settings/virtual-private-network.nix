@@ -8,6 +8,8 @@
 #
 # vpn, wireguard, server...
 #
+#
+#
 # ────────────────────────────────────────────────────────────────────────
 _: {
   # WIREGUARD
@@ -20,12 +22,13 @@ _: {
       };
 
       wireguardConfig = {
-        ListenPort = 51820;
+        ListenPort = 50010;
 
         PrivateKeyFile = "/var/lib/wg/x0/p0.key";
       };
 
       wireguardPeers = [
+        # Laptop
         {
           PersistentKeepalive = 25;
 
@@ -34,10 +37,11 @@ _: {
           PublicKeyFile = "/var/lib/wg/x0/p1.pub";
 
           AllowedIPs = [
-            "fd31::100:2/128"
-            "192.168.1.2/32"
+            "fd31::1:2/128"
+            "172.16.1.2/32"
           ];
         }
+        # Handy
         {
           PersistentKeepalive = 25;
 
@@ -46,8 +50,8 @@ _: {
           PublicKeyFile = "/var/lib/wg/x0/p2.pub";
 
           AllowedIPs = [
-            "fd31::100:3/128"
-            "192.168.1.3/32"
+            "fd31::1:3/128"
+            "172.16.1.3/32"
           ];
         }
       ];
@@ -64,24 +68,25 @@ _: {
       };
 
       address = [
-        # /32 and /128 specifies a single address (smallest
+        # /32 and /128 specifies a single address (the tiniest
         # possible subnet) for use on this wg peer machine.
-        "fd31::100:1/128"
-        "192.168.1.1/32"
+        "fd31::1:1/128"
+        "172.16.1.1/32"
       ];
 
       routes = [
-        {Destination = "192.168.1.2/32";}
-        {Destination = "192.168.1.3/32";}
-        {Destination = "fd31::100:2/128";}
-        {Destination = "fd31::100:3/128";}
+        {Destination = "fd31::1:2/128";}
+        {Destination = "172.16.1.2/32";}
+
+        {Destination = "fd31::1:3/128";}
+        {Destination = "172.16.1.3/32";}
       ];
     };
   };
 
   networking.firewall = {
     allowedUDPPorts = [
-      51820
+      50010
     ];
   };
 
