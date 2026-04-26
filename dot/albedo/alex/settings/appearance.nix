@@ -16,11 +16,11 @@
   self,
   ...
 }: let
-  inherit (lib.lists) singleton;
+  inherit (lib.extra.files.list) recursive;
   inherit (lib.meta) getExe;
   inherit (pkgs.custom.scripts.extras) pools;
 in {
-  imports = singleton (self + /dot/shared/settings/desktop-environment.nix);
+  imports = recursive (self + /dot/shared/settings/appearance);
 
   wayland.windowManager.river = {
     settings = {

@@ -4,8 +4,8 @@
   pkgs,
   ...
 }: {
-  
 
+  
   # FOXESS-PROMETHEUS EXPORTER SERVICE
   # ----------------------------------
   systemd.services.prometheus-foxess-exporter = let

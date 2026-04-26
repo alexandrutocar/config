@@ -9,13 +9,14 @@
 {
   self,
   lib,
+  pkgs,
   ...
 }: let
-  inherit (lib.lists) singleton;
+  inherit (lib.extra.files.list) recursive;
 in {
-  imports = singleton (self + /dot/shared/settings/essentials.nix);
+  imports = recursive (self + /dot/shared/settings/essentials);
 
-  home.packages = [
+  home.packages = with pkgs; [
     # MARKDOWN VIEWER
     # ---------------
     glow

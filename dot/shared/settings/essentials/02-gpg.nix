@@ -1,18 +1,4 @@
-# ────────────────────────────────────────────────────────────────────────
-#
-# █▀▀ █▀ █▀ █▀▀ █▄░█ ▀█▀ █ ▄▀█ █░░ █▀
-# ██▄ ▄█ ▄█ ██▄ █░▀█ ░█░ █ █▀█ █▄▄ ▄█
-#
-# applications, fonts...
-#
-# ────────────────────────────────────────────────────────────────────────
-{pkgs, ...}: {
-  # DOCUMENT/MEDIA VIEWERS
-  # ----------------------
-  home.packages = with pkgs; [feh mpv zathura];
-
-  # GNU PRIVACY GUARD
-  # -----------------
+_: {
   programs.gpg = {
     # ────────────────────────────────────────────────────────────────────────
     # TODO: Reconfigure for new keyset (modified before 21.11.2024 16:59)
@@ -68,11 +54,5 @@
       s2k-mode = "3"; # Set the S2K mode
       s2k-count = "65011712"; # Set the S2K count
     };
-  };
-
-  # SSH AGENT
-  # ---------
-  services.ssh-agent = {
-    enable = true;
   };
 }

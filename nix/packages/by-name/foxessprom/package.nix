@@ -26,12 +26,12 @@ in
 
     pythonRelaxDeps = true;
 
-    pythonRemoveDeps = ["python-semantic-release" "pymodbus"];
+    pythonRemoveDeps = ["python-semantic-release"];
 
     dependencies = with python3Packages; [
       requests
       paho-mqtt
-      # pymodbus
+      pymodbus
       sentry-sdk
     ];
 
