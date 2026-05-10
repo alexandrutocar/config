@@ -1,18 +1,28 @@
 {
   description = ''
-    Nix Systems' Configuration
+    Aleks' Omnium Config 
   '';
 
   inputs = {
-    nixpkgs = {
-      url = "github:nixos/nixpkgs?rev=7e728862960bcb3e21520807bd6db5f968ee4079"; # nixos-unstable-small
+    # ────────────────────────────────────────────────────────────────────────
+    # NOTE: For server systems (hosts).
+    # ────────────────────────────────────────────────────────────────────────
+    nixpkgs-nixos-unstable-small = {
+      url = "github:nixos/nixpkgs?rev=1c5503ba41146fb6b49ed9706823b30de7f3a78f"; # nixos-unstable-small
+    };
+
+    # ────────────────────────────────────────────────────────────────────────
+    # NOTE: For desktop-oriented systems (workstations) and software
+    #       with long build times (e.g. Firefox, Chromium, Electron).
+    # ────────────────────────────────────────────────────────────────────────
+    nixpkgs-nixos-unstable = {
+      url = "github:nixos/nixpkgs?rev=549bd84d6279f9852cae6225e372cc67fb91a4c1"; # nixos-unstable
     };
 
     # ────────────────────────────────────────────────────────────────────────
 
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     impermanence = {
@@ -21,17 +31,14 @@
 
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     harmonia = {
       url = "github:nix-community/harmonia";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     home-manager = {
       url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
@@ -51,12 +58,14 @@
         overlays = attrValues self.overlays;
       };
 
-    lib = inputs.nixpkgs.lib.extend (final: super: ((import (self + /nix/lib) final super) // inputs.home-manager.lib));
+    lib = inputs.nixpkgs-nixos-unstable-small.lib.extend (final: super: ((import (self + /nix/lib) final super) // inputs.home-manager.lib));
 
     mkSystem = hostname: {
       nixpkgs,
       modules,
-    }:
+    }: let
+      lib = nixpkgs.lib.extend (final: super: ((import (self + /nix/lib) final super) // inputs.home-manager.lib));
+    in
       lib.nixosSystem {
         modules =
           [
@@ -68,9 +77,9 @@
 
             # Make `nix run nixpkgs#nixpkgs` use the same
             # package repository as the one used here.
-            {
-              nix.registry.nixpkgs.flake = lib.mkForce nixpkgs;
-            }
+            # {
+            #   nix.registry.nixpkgs.flake = lib.mkForce nixpkgs;
+            # }
 
             # Ensure device has expected name in wireless, wired and bluetooth networks.
             {
@@ -93,10 +102,12 @@
         };
       };
 
-    mkHome = {
-      user,
-      spec ? [],
-    }: [
+    mkHome = user: {
+      nixpkgs,
+      imports ? [],
+    }: let
+      lib = nixpkgs.lib.extend (final: super: ((import (self + /nix/lib) final super) // inputs.home-manager.lib));
+    in [
       inputs.home-manager.nixosModules.home-manager
       (_: {
         home-manager = {
@@ -113,7 +124,7 @@
           };
 
           users.${user} = _: {
-            imports = spec;
+            inherit imports;
           };
         };
       })
@@ -121,14 +132,14 @@
   in {
     # `nix develop`
     devShells = forSystems (system: let
-      pkgs = mkPackages system inputs.nixpkgs;
+      pkgs = mkPackages system inputs.nixpkgs-nixos-unstable-small;
     in {
       default = import ./nix/dev-shell/default.nix pkgs;
     });
 
     # `nix fmt`
     formatter = forSystems (
-      system: (mkPackages system inputs.nixpkgs).alejandra
+      system: (mkPackages system inputs.nixpkgs-nixos-unstable-small).alejandra
     );
 
     overlays = let
@@ -155,7 +166,7 @@
 
     nixosConfigurations = {
       aether = let
-        inherit (inputs) nixpkgs;
+        nixpkgs = inputs.nixpkgs-nixos-unstable-small;
       in
         mkSystem "aether" {
           inherit nixpkgs;
@@ -163,16 +174,16 @@
             [
               ./etc/aether
             ]
-            ++ (mkHome {
-              user = "git";
-              spec = [
+            ++ (mkHome "git" {
+              inherit nixpkgs;
+              imports = [
                 ./dot/aether/git
               ];
             });
         };
 
       albedo = let
-        inherit (inputs) nixpkgs;
+        nixpkgs = inputs.nixpkgs-nixos-unstable;
       in
         mkSystem "albedo" {
           inherit nixpkgs;
@@ -180,9 +191,9 @@
             [
               ./etc/albedo
             ]
-            ++ (mkHome {
-              user = "alex";
-              spec = [
+            ++ (mkHome "alex" {
+              inherit nixpkgs;
+              imports = [
                 ./dot/albedo/alex
               ];
             });
@@ -191,7 +202,7 @@
 
     packages = forSystems (
       system: let
-        pkgs = mkPackages system inputs.nixpkgs;
+        pkgs = mkPackages system inputs.nixpkgs-nixos-unstable-small;
       in
         mergeAttrsList [
           (
@@ -203,7 +214,7 @@
           {
             beidou = let
               _system = let
-                inherit (inputs) nixpkgs;
+                nixpkgs = inputs.nixpkgs-nixos-unstable;
               in
                 mkSystem "beidou" {
                   inherit nixpkgs;
@@ -214,9 +225,9 @@
                       }
                       ./etc/beidou
                     ]
-                    ++ (mkHome {
-                      user = "yelan";
-                      spec = [
+                    ++ (mkHome "yelan" {
+                      inherit nixpkgs;
+                      imports = [
                         ./dot/beidou/yelan
                       ];
                     });

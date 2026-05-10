@@ -5,11 +5,11 @@
 #
 # ────────────────────────────────────────────────────────────────────────
 {lib, ...}: let
-  inherit (lib.extra.files.list) shallow recursive;
+  inherit (lib.extra.files.list) recursive shallow;
 in {
-  imports = shallow ./services ++ recursive ./settings;
+  imports = recursive ./01-settings ++ shallow ./02-services;
 
   # HARDWARE CONFIGURATION
-  # ----------------------
+  # -------- -------------
   hardware.facter.reportPath = ./facter.json;
 }

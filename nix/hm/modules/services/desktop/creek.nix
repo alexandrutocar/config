@@ -114,8 +114,8 @@ in {
             args =
               if cfg.settings != {}
               then [
-                "-fn ${cfg.settings.font-name}:size=${builtins.toString cfg.settings.font-size}"
-                "-hg ${builtins.toString cfg.settings.size}"
+                "-fn ${cfg.settings.font-name}:size=${toString cfg.settings.font-size}"
+                "-hg ${toString cfg.settings.size}"
                 "-nf ${hexToBin cfg.settings.foreground-color}"
                 "-nb ${hexToBin cfg.settings.background-color}"
                 "-ff ${hexToBin cfg.settings.focused-foreground-color}"
