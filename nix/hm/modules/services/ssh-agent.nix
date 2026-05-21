@@ -38,8 +38,8 @@ in {
   in {
     services.ssh-agent = {
       enable = mkEnableOption "OpenSSH private key agent";
-      
-      package = mkPackageOption pkgs "openssh" { };
+
+      package = mkPackageOption pkgs "openssh" {};
     };
   };
 
@@ -47,60 +47,61 @@ in {
     inherit (lib.meta) getExe';
     inherit (lib.modules) mkIf mkMerge;
   in
-    mkIf cfg.enable (mkMerge [
-      {
-        assertions = [
-          (lib.hm.assertions.assertPlatform "services.ssh-agent" pkgs lib.platforms.linux)
-        ];
-      }
-      {
-        home.sessionVariablesExtra = let 
-          socketPath = "$XDG_RUNTIME_DIR/ssh-agent.socket";
-        in ''
-          if [ -z "$SSH_AUTH_SOCK" -o -z "$SSH_CONNECTION" ]; then
-            export SSH_AUTH_SOCK=${socketPath}
-          fi
-        '';
-      }
-      {
-        systemd.user = {
-          services.ssh-agent = {
+    mkIf cfg.enable (
+      mkMerge [
+        {
+          assertions = [
+            (lib.hm.assertions.assertPlatform "services.ssh-agent" pkgs lib.platforms.linux)
+          ];
+        }
+        {
+          home.sessionVariablesExtra = let
+            socketPath = "$XDG_RUNTIME_DIR/ssh-agent.socket";
+          in ''
+            if [ -z "$SSH_AUTH_SOCK" -o -z "$SSH_CONNECTION" ]; then
+              export SSH_AUTH_SOCK=${socketPath}
+            fi
+          '';
+        }
+        {
+          systemd.user = {
+            services.ssh-agent = {
+              Unit = {
+                ConditionEnvironment = ["!SSH_AGENT_PID"];
+                Description = "SSH Key Agent";
+                Documentation = "man:ssh-agent(1) man:ssh-add(1) man:ssh(1)";
+                Requires = ["ssh-agent.socket"];
+              };
+
+              Service = {
+                ExecStart = "${getExe' cfg.package "ssh-agent"} -D";
+                SuccessExitStatus = [2];
+              };
+
+              Install = {
+                Also = ["ssh-agent.socket"];
+              };
+            };
+          };
+        }
+        {
+          systemd.user.sockets.ssh-agent = {
             Unit = {
               ConditionEnvironment = ["!SSH_AGENT_PID"];
-              Description = "SSH Key Agent";
-              Documentation = "man:ssh-agent(1) man:ssh-add(1) man:ssh(1)";
-              Requires = ["ssh-agent.socket"];
+              Description = "Socket for the SSH Key Agent";
+              Documentation = "man:ssh-agent(1)";
             };
 
-            Service = {
-              ExecStart = "${getExe' cfg.package "ssh-agent"} -D";
-              SuccessExitStatus = [2];
+            Socket = {
+              ListenStream = "%t/ssh-agent.socket";
+              RemoveOnStop = true;
             };
 
             Install = {
-              Also = ["ssh-agent.socket"];
+              WantedBy = ["sockets.target"];
             };
           };
-        };
-      }
-      {
-        systemd.user.sockets.ssh-agent = {
-          Unit = {
-            ConditionEnvironment = ["!SSH_AGENT_PID"];
-            Description = "Socket for the SSH Key Agent";
-            Documentation = "man:ssh-agent(1)";
-          };
-
-          Socket = {
-            ListenStream = "%t/ssh-agent.socket";
-            RemoveOnStop = true;
-          };
-
-          Install = {
-            WantedBy = ["sockets.target"];
-          };
-        };
-      }
-    ]
-  );
+        }
+      ]
+    );
 }

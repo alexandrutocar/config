@@ -44,7 +44,7 @@ in {
         filter = name: type: (super.strings.hasSuffix ".nix" name) && (type != "directory");
         mapper = name: type: (builtins.concatStringsSep "/" [directory name]);
       };
-      
+
     recursive = directory:
       _list_recursive directory {
         filter = name: type: (super.strings.hasSuffix ".nix" name);

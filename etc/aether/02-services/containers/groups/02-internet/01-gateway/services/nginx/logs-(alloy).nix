@@ -1,7 +1,7 @@
 _: {
   services.nginx.commonHttpConfig = ''
     # ────────────────────────────────────────────────────────────────────────
-    # NOTE: Defines structured log format named 'analytics'. 
+    # NOTE: Defines structured log format named 'analytics'.
     # ────────────────────────────────────────────────────────────────────────
     log_format analytics escape=json '{'
       '"msec":                      "$msec", '                        # request unixtime in seconds with a milliseconds resolution

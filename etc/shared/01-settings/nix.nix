@@ -36,7 +36,7 @@ in {
       # re-evaluate on every rebuild instead of "cached failure of attribute" error
       eval-cache = mkDefault false;
       warn-dirty = mkDefault false;
- 
+
       # removes ~/.nix-profile and ~/.nix-defexpr
       use-xdg-base-directories = mkDefault true;
 

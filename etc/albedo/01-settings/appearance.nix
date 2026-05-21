@@ -32,13 +32,6 @@ in {
     };
   };
 
-  environment.systemPackages = with pkgs; [ sblast ffmpeg pulseaudio ];
-
-  networking.firewall = {
-    allowedTCPPorts = [ 9000 ];
-    allowedUDPPortRanges = [{ from = 32768; to = 61000; }];
-  };
-
   # TILING COMPOSITOR
   # -----------------
   programs.river-classic = {

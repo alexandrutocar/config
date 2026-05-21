@@ -39,7 +39,7 @@ in {
     "programs/wayland/river.nix"
   ];
 
-  options.programs.river-classic= let
+  options.programs.river-classic = let
     inherit (lib.options) mkEnableOption mkPackageOption;
   in {
     enable = mkEnableOption "river-classic";

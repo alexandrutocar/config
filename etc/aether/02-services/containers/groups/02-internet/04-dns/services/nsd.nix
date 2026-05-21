@@ -75,7 +75,7 @@ in {
   };
 
   systemd.paths.nsd-n8n-reload = {
-    wantedBy = [ "multi-user.target" ];
+    wantedBy = ["multi-user.target"];
     pathConfig.PathModified = "/etc/nsd/zones/ueuie.dev.soa.zone";
   };
 

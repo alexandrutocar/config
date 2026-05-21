@@ -14,7 +14,7 @@ _: {
       "usb_storage" # universal serial bus
       "xhci_pci" # extensible host controller interface (over) peripheral component interconnect
     ];
-    
+
     # ────────────────────────────────────────────────────────────────────────
     # NOTE: This is a ZFS safeguard.
     # ────────────────────────────────────────────────────────────────────────

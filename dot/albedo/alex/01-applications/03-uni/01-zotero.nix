@@ -7,7 +7,7 @@
     rule-add = {
       "-app-id"."'Zotero'"."-title" = {
         "'*'" = ["ssd" ""];
-        "'Zotero-Einstellungen'" = ["float"];                
+        "'Zotero-Einstellungen'" = ["float"];
       };
     };
   };
