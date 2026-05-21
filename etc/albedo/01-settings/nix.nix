@@ -9,11 +9,9 @@
 {
   self,
   lib,
-  pkgs,
   ...
 }: let
   inherit (lib.lists) singleton;
-  inherit (lib.meta) getExe;
 in {
   imports = singleton (self + /etc/shared/01-settings/nix.nix);
 
@@ -33,20 +31,6 @@ in {
         "/state/secrets/cache.aether.ip.key"
         "/state/secrets/cache.ueuie.dev.key"
       ];
-
-      # post-build-hook = getExe (
-      #   pkgs.custom.writeShell "post-build-hook.bash" {
-      #     inputs = with pkgs; [];
-      #     text = ''
-      #       set -eu
-      #       set -f
-      #       export IFS=' '
-
-      #       echo "Uploading paths" "$OUT_PATHS"
-      #       exec nix copy --to "ssh://cache@aether.ip" "$OUT_PATHS"
-      #     '';
-      #   }
-      # );
     };
 
     buildMachines = [

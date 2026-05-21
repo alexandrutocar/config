@@ -42,6 +42,10 @@
     };
   };
 
+  virtualisation.docker = {
+    enable = true;
+  };
+
   networking.firewall.trustedInterfaces = ["virbr0"];
 
   environment.persistence."/state".directories = [

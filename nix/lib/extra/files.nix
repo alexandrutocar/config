@@ -94,7 +94,7 @@ in {
         _list directory {
           filter = name: type: (type == "directory");
           mapper = name: type: {
-            inherit name;
+            name = builtins.substring 3 (builtins.stringLength name) name;
             value = pkgs.callPackage (builtins.concatStringsSep "/" [directory name "script.nix"]) pkgs;
           };
         }

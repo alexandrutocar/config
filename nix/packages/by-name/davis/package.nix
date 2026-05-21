@@ -31,19 +31,19 @@
 }:
 php.buildComposerProject (finalAttrs: {
   pname = "davis";
-  version = "5.3.0";
+  version = "5.4.1";
 
   src = fetchFromGitHub {
     owner = "tchapi";
     repo = "davis";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-YLVfcoC8cIcCfi7R2zWXNxD4P+KIXOCL+MqFEt2Z7Tc=";
+    hash = "sha256-8ExZAJ5NQ2HiH5nVEjrueH2mGmPI0aXJPTxp9mzr9i4=";
   };
 
   __structuredAttrs = true;
   strictDeps = true;
 
-  vendorHash = "sha256-RpvqgFvs1Yra7Z2vUWhAIIe8vJwUtp2FVtPBva9g90U=";
+  vendorHash = "sha256-UjKMMfi8YN1v4kMZfrZa4I8BYXSck496tKflYhFJw5s=";
 
   composerNoPlugins = false;
 

@@ -327,8 +327,8 @@ in {
             isReadOnly = false;
           };
 
-          "/var/lib/davis/home/" = {
-            hostPath = "/state/var/lib/machines/01-intranet/07-dav/var/lib/davis/home/";
+          "/var/lib/davis/homes/" = {
+            hostPath = "/state/var/lib/machines/01-intranet/07-dav/var/lib/davis/homes/";
             isReadOnly = false;
           };
           "/var/lib/davis/public/" = {

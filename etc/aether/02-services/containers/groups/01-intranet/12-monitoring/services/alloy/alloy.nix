@@ -53,12 +53,6 @@
       forward_to    = [prometheus.remote_write.mimir.receiver]
     }
 
-    prometheus.scrape "foxess" {
-      targets       = [{ __address__ = "127.0.0.1:9092" }]
-      metrics_path  = "/metrics"
-      forward_to    = [prometheus.remote_write.mimir.receiver]
-    }
-
     prometheus.scrape "unbound" {
       targets       = [{ __address__ = "${intranet-dns.localAddress}:9090" }]
       metrics_path  = "/metrics"

@@ -22,6 +22,7 @@
   in with pkgs; [
     shellcheck
     alejandra
+    
     deadnix
     vulnix
 

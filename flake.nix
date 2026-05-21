@@ -1,6 +1,6 @@
 {
   description = ''
-    Aleks' Omnium Config 
+    Aleks' Omnium Config
   '';
 
   inputs = {
@@ -8,7 +8,7 @@
     # NOTE: For server systems (hosts).
     # ────────────────────────────────────────────────────────────────────────
     nixpkgs-nixos-unstable-small = {
-      url = "github:nixos/nixpkgs?rev=1c5503ba41146fb6b49ed9706823b30de7f3a78f"; # nixos-unstable-small
+      url = "github:nixos/nixpkgs?rev=758b562bc257084aef30b8e3efbdd61d292806c3"; # nixos-unstable-small
     };
 
     # ────────────────────────────────────────────────────────────────────────
@@ -16,7 +16,7 @@
     #       with long build times (e.g. Firefox, Chromium, Electron).
     # ────────────────────────────────────────────────────────────────────────
     nixpkgs-nixos-unstable = {
-      url = "github:nixos/nixpkgs?rev=549bd84d6279f9852cae6225e372cc67fb91a4c1"; # nixos-unstable
+      url = "github:nixos/nixpkgs?rev=da5ad661ba4e5ef59ba743f0d112cbc30e474f32"; # nixos-unstable
     };
 
     # ────────────────────────────────────────────────────────────────────────
@@ -146,20 +146,13 @@
       inherit (lib.extra.files.special) patches scripts;
     in
       {
-        aliases = import (./nix + "/fixes?/aliases.nix");
+        packages-overlay = final: super: {
+          inherit (self.packages.${final.stdenv.hostPlatform.system}) davis;
+        };
 
-        custom = final: super: {
-          custom =
-            {
-              scripts = {
-                desktop = scripts ./nix/packages/scripts/desktop final;
-                extras = scripts ./nix/packages/scripts/extras final;
-              };
-            }
-            // self.packages.${final.stdenv.hostPlatform.system}
-            // {
-              writeShell = import ./nix/packages/utils/write-shell/package.nix final;
-            };
+        utils-overlay = final: super: {
+          custom.writeShell = import ./nix/packages/utils/write-shell/package.nix final;
+          custom.scripts = scripts ./nix/packages/scripts final;
         };
       }
       // (patches (./nix + "/fixes?"));

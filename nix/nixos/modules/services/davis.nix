@@ -53,7 +53,7 @@ in {
     services.davis = {
       enable = mkEnableOption "Davis";
 
-      package = mkPackageOption pkgs.custom "davis" {};
+      package = mkPackageOption pkgs "davis" {};
 
       logDir = mkOption {
         default = cfg.dataDir + "/log";
