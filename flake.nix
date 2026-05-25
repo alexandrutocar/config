@@ -150,6 +150,8 @@
           inherit (self.packages.${final.stdenv.hostPlatform.system}) davis;
         };
 
+        aliases-overlay = import (./nix + "/fixes?/aliases.nix");
+
         utils-overlay = final: super: {
           custom.writeShell = import ./nix/packages/utils/write-shell/package.nix final;
           custom.scripts = scripts ./nix/packages/scripts final;

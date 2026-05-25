@@ -19,7 +19,7 @@ in {
 
   # TILING COMPOSITOR
   # -----------------
-  programs.river-classic = {
+  programs.river = {
     enable = true;
   };
 
@@ -37,7 +37,7 @@ in {
     enable = true;
     settings = rec {
       initial_session = {
-        command = "${getExe pkgs.uwsm} start -F -N river -C \"dynamic tiling compositor\" ${getExe pkgs.river-classic}";
+        command = "${getExe pkgs.uwsm} start -F -N river -C \"dynamic tiling compositor\" ${getExe pkgs.river}";
         user = "alex";
       };
       default_session = initial_session;

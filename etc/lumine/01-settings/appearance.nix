@@ -34,7 +34,7 @@ in {
 
   # TILING COMPOSITOR
   # -----------------
-  programs.river-classic = {
+  programs.river = {
     enable = true;
   };
 
@@ -55,7 +55,7 @@ in {
       desktopName = "river";
       comment = "dynamic tiling compositor";
       name = "river";
-      exec = "${getExe pkgs.uwsm} start -F -N river -C \"dynamic tiling compositor\" ${getExe pkgs.river-classic}";
+      exec = "${getExe pkgs.uwsm} start -F -N river -C \"dynamic tiling compositor\" ${getExe pkgs.river}";
       destination = "/share/wayland-session";
     };
   in {
