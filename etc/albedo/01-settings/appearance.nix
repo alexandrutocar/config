@@ -37,6 +37,18 @@ in {
   programs.river = {
     enable = true;
   };
+  
+  # XDPW (xdg-desktop-portal-wlr)
+  # -----------------------------
+  xdg.portal.wlr = {
+    enable = true;
+    settings = {
+      screencast = {
+        chooser_type = "dmenu";
+        chooser_cmd = "${pkgs.tofi}/bin/tofi";
+      };
+    };
+  };
 
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
