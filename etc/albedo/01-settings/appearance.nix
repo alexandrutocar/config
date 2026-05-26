@@ -37,7 +37,21 @@ in {
   programs.river = {
     enable = true;
   };
-  
+
+  # DEFAULT XDP
+  # -----------
+  xdg.portal = {
+    extraPortals = with pkgs; [
+      xdg-desktop-portal-gtk
+    ];
+
+    config = {
+      common = {
+        default = ["gtk"];
+      };
+    };
+  };
+
   # XDPW (xdg-desktop-portal-wlr)
   # -----------------------------
   xdg.portal.wlr = {
