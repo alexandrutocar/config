@@ -58,11 +58,16 @@ in {
       xdg.portal = {
         enable = true;
 
+        config = {
+          river = {
+            "org.freedesktop.impl.portal.Screenshot" = [ "wlr" ];
+            "org.freedesktop.impl.portal.ScreenCast" = [ "wlr" ];
+          };
+        };
+
         extraPortals = with pkgs; [
           xdg-desktop-portal-wlr
         ];
-
-        config.common.default = "*";
       };
     };
 }
