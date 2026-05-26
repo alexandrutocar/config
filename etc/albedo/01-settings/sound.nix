@@ -55,13 +55,8 @@
   };
 
   # REAL-TIME SCHEDULING
-  #
-  # TODO
-  # - Give sound server real-time scheduling priority.
-  #   - Is RTKit maintained?
-  #
   # --------------------
-  # security.rtkit.enable = true;
+  security.rtkit.enable = true;
 
   environment.persistence."/state".directories = [
     # bluetooth devices
