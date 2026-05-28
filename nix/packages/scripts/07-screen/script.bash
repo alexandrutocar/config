@@ -1,7 +1,7 @@
-# sshot.bash - screenshot helper.
+# screen - screenshot helper.
 
 # Usage:
-#   sshot.bash   # make screenshot
+#   screen   # make screenshot
 
 # Collect logs
 exec >>"${XDG_RUNTIME_DIR:-/tmp}/screen.log" 2>&1
