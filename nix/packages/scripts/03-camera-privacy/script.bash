@@ -13,5 +13,6 @@ exec >>"${XDG_RUNTIME_DIR:-/tmp}/camera-privacy.log" 2>&1
 notify-send \
   --urgency "critical" \
   --expire-time 3000 \
+  --app-name "" \
   --category "not-implemented" \
   "the script for toggling cam (on/off) has not been implemented yet"

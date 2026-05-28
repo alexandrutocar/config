@@ -39,6 +39,7 @@ nid=$(
     --urgency=critical \
     --expire-time=1500 \
     --category=volume \
+    --app-name "" \
     --hint string:synchronous:volume \
     --hint "int:value:$level" \
     --print-id \

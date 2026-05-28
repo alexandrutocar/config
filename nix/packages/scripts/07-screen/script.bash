@@ -12,6 +12,7 @@ if ! grim -g "$(slurp)" - | wl-copy; then
     --urgency=critical \
     --expire-time=3000 \
     --category=screenshot \
+    --app-name "" \
     "Fehler beim Erstellen des Screenshots."
   exit 1
 fi
@@ -21,4 +22,5 @@ notify-send \
   --urgency=normal \
   --expire-time=1500 \
   --category=screenshot \
+  --app-name "" \
   "Kopiert in die Zwischenablage."

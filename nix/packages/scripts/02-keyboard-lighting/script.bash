@@ -38,6 +38,7 @@ nid=$(
     --urgency=critical \
     --expire-time=1500 \
     --category=brightness \
+    --app-name "" \
     --hint string:synchronous:brightness \
     --hint "int:value:$level" \
     --print-id \
