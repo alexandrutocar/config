@@ -1,8 +1,8 @@
-# brightness.bash - brightness control helper.
+# brightness - brightness control helper.
 
 # Usage:
-#   brightness.bash +   # increase brightness by 5%
-#   brightness.bash -   # decrease brightness by 5%
+#   brightness +   # increase brightness by 5%
+#   brightness -   # decrease brightness by 5%
 
 # Collect logs
 exec >>"${XDG_RUNTIME_DIR:-/tmp}/brightness.log" 2>&1
