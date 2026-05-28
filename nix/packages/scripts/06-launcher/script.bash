@@ -1,7 +1,7 @@
-# launcher.bash - application launcher helper.
+# launcher - application launcher helper.
 
 # Usage:
-#   launcher.bash   # launch overlay
+#   launcher   # launch overlay
 
 # Collect logs
 exec >>"${XDG_RUNTIME_DIR:-/tmp}/launcher.log" 2>&1
