@@ -30,7 +30,7 @@ if ! declare -F __logs_log >/dev/null; then
     __logs_do_not_log_is_empty
 
     local tid
-  	local lvl="$1"
+    local lvl="$1"
     local msg="$2"
 
     tid="$(basename "${BASH_SOURCE[0]}")"
@@ -40,21 +40,21 @@ if ! declare -F __logs_log >/dev/null; then
 
     # Build the sed command dynamically
     for key in "${DO_NOT_LOG[@]}"; do
-        # Only build the substitution pattern if the key is non-empty
-        if [[ -n "$key" ]]; then
-            # Escape sed delimiters (using #) if they appear in the key
-    		# shellcheck disable=SC2001
-            safe=$(echo "$key" | sed 's/[^a-zA-Z0-9]/\\&/g')
-            redaction+="s#$safe#[REDACTED]#g;"
-        fi
+      # Only build the substitution pattern if the key is non-empty
+      if [[ -n "$key" ]]; then
+        # Escape sed delimiters (using #) if they appear in the key
+        # shellcheck disable=SC2001
+        safe=$(echo "$key" | sed 's/[^a-zA-Z0-9]/\\&/g')
+        redaction+="s#$safe#[REDACTED]#g;"
+      fi
     done
 
     if [[ -n "$redaction" ]]; then
-        # The -p flag specifies the priority (e.g., user.info, user.err)
-        echo "$msg" | sed "$redaction" | logger -t "$tid" -s -p "user.$lvl"
+      # The -p flag specifies the priority (e.g., user.info, user.err)
+      echo "$msg" | sed "$redaction" | logger -t "$tid" -s -p "user.$lvl"
     else
-        # Pipe to logger
-        logger -t "$tid" -s -p "user.$lvl" "$msg"
+      # Pipe to logger
+      logger -t "$tid" -s -p "user.$lvl" "$msg"
     fi
   }
 
@@ -73,7 +73,7 @@ if ! declare -F log6 >/dev/null; then
 
   # shellcheck disable=SC2329
   log6() {
-  	__logs_log "info" "$1"
+    __logs_log "info" "$1"
   }
 
 fi
@@ -82,7 +82,7 @@ if ! declare -F log7 >/dev/null; then
 
   # shellcheck disable=SC2329
   log7() {
-  	__logs_log "debug" "$1"
+    __logs_log "debug" "$1"
   }
 
 fi
