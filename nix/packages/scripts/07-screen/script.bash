@@ -3,6 +3,9 @@
 # Usage:
 #   sshot.bash   # make screenshot
 
+# Collect logs
+exec >>"${XDG_RUNTIME_DIR:-/tmp}/screen.log" 2>&1
+
 # Try to take a screenshot of the selected area and copy to clipboard
 if ! grim -g "$(slurp)" - | wl-copy; then
   notify-send \

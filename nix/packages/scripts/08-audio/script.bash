@@ -5,6 +5,9 @@
 #   volume.bash -   # decrease volume by 5%
 #   volume.bash /   # toggle mute
 
+# Collect logs
+exec >>"${XDG_RUNTIME_DIR:-/tmp}/audio.log" 2>&1
+
 # Where to store the last notification ID
 nid_file="${XDG_RUNTIME_DIR:-/tmp}/volume.nid"
 

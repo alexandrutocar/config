@@ -4,6 +4,9 @@
 #   brightness.bash +   # increase brightness by 5%
 #   brightness.bash -   # decrease brightness by 5%
 
+# Collect logs
+exec >>"${XDG_RUNTIME_DIR:-/tmp}/brightness.log" 2>&1
+
 # Where to store the last notification ID
 nid_file="${XDG_RUNTIME_DIR:-/tmp}/brightness.nid"
 

@@ -4,6 +4,9 @@
 #   backlighting.bash +   # increase brightness by 5%
 #   backlighting.bash -   # decrease brightness by 5%
 
+# Collect logs
+exec >>"${XDG_RUNTIME_DIR:-/tmp}/keyboard-lighting.log" 2>&1
+
 # Where to store the last notification ID
 nid_file="${XDG_RUNTIME_DIR:-/tmp}/brightness.nid"
 
