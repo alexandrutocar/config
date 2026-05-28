@@ -1,7 +1,7 @@
-# tcam.bash - camera toggle helper.
+# microphone-privacy - camera toggle helper.
 
 # Usage:
-#   tcamp.bash   # toggle camera
+#   microphone-privacy   # toggle camera
 
 # Collect logs
 exec >>"${XDG_RUNTIME_DIR:-/tmp}/microphone-privacy.log" 2>&1
