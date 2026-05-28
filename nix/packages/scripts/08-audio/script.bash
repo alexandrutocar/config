@@ -1,15 +1,15 @@
-# volume.bash — volume control helper.
+# audio — volume control helper.
 
 # Usage:
-#   volume.bash +   # increase volume by 5%
-#   volume.bash -   # decrease volume by 5%
-#   volume.bash /   # toggle mute
+#   audio +   # increase volume by 5%
+#   audio -   # decrease volume by 5%
+#   audio /   # toggle mute
 
 # Collect logs
 exec >>"${XDG_RUNTIME_DIR:-/tmp}/audio.log" 2>&1
 
 # Where to store the last notification ID
-nid_file="${XDG_RUNTIME_DIR:-/tmp}/volume.nid"
+nid_file="${XDG_RUNTIME_DIR:-/tmp}/audio.nid"
 
 # Ensure the file exists
 touch "$nid_file"
