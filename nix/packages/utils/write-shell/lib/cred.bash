@@ -76,7 +76,7 @@ if ! declare -F cred >/dev/null; then
 
       read)
         # Read credential and export to specified variable name
-        printf -v "${name}" '%s' "$( < "$path" )"
+        printf -v "${name}" '%s' "$(<"$path")"
         export "${name?}"
 
         log7 "Loaded credential: ${name} <- ${cred}."
@@ -90,5 +90,5 @@ if ! declare -F cred >/dev/null; then
 
     esac
   }
-  
+
 fi

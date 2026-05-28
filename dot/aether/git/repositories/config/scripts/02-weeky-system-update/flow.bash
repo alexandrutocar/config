@@ -3,7 +3,7 @@ cd $REPO_PATH
 # ---
 
 PACKAGES_LAST_COMMIT_SHA1=$(
-    gh api graphql -f query='
+  gh api graphql -f query='
         query {
           repository(owner: "nixos", name: "nixpkgs") {
             ref(qualifiedName: "refs/heads/nixos-unstable-small") {
@@ -21,12 +21,12 @@ PACKAGES_LAST_COMMIT_SHA1=$(
             }
           }
         }
-        ' | 
-        jq -r '.data.repository.ref.target.history.edges[0].node.oid' 
+        ' \
+    | jq -r '.data.repository.ref.target.history.edges[0].node.oid'
 )
 
 PACKAGES_LAST_COMMIT_DATE=$(
-    gh api graphql -f query='
+  gh api graphql -f query='
         query {
           repository(owner: "nixos", name: "nixpkgs") {
             ref(qualifiedName: "refs/heads/nixos-unstable-small") {
@@ -44,8 +44,8 @@ PACKAGES_LAST_COMMIT_DATE=$(
             }
           }
         }
-        ' | 
-        jq -r '.data.repository.ref.target.history.edges[0].node.committedDate' 
+        ' \
+    | jq -r '.data.repository.ref.target.history.edges[0].node.committedDate'
 )
 
 # ---

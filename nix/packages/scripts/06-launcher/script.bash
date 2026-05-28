@@ -3,8 +3,8 @@
 # Usage:
 #   launcher.bash   # launch overlay
 
-read -r -a APPLICATION <<< "$(tofi-drun)"
+read -r -a APPLICATION <<<"$(tofi-drun)"
 
-if [ "${#APPLICATION[@]}" -gt 0  ]; then
-    uwsm-app -- "${APPLICATION[@]}"
+if [ "${#APPLICATION[@]}" -gt 0 ]; then
+  uwsm-app -- "${APPLICATION[@]}"
 fi

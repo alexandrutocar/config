@@ -8,7 +8,7 @@
 # ────────────────────────────────────────────────────────────────────────
 
 notify-send \
-    --urgency "critical" \
-    --expire-time 3000 \
-    --category "not-implemented" \
-    "the script for toggling mic (on/off) has not been implemented yet"
+  --urgency "critical" \
+  --expire-time 3000 \
+  --category "not-implemented" \
+  "the script for toggling mic (on/off) has not been implemented yet"
