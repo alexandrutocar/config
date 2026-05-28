@@ -1,7 +1,7 @@
-# tcam.bash - camera toggle helper.
+# camera-privacy - camera toggle helper.
 
 # Usage:
-#   tcamp.bash   # toggle camera
+#   camera-privacy   # toggle camera
 
 # Collect logs
 exec >>"${XDG_RUNTIME_DIR:-/tmp}/camera-privacy.log" 2>&1
