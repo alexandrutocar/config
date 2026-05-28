@@ -1,14 +1,14 @@
-# backlighting.bash - backlight control helper.
+# keyboard-lighting - backlight control helper.
 
 # Usage:
-#   backlighting.bash +   # increase brightness by 5%
-#   backlighting.bash -   # decrease brightness by 5%
+#   keyboard-lighting +   # increase brightness by 5%
+#   keyboard-lighting -   # decrease brightness by 5%
 
 # Collect logs
 exec >>"${XDG_RUNTIME_DIR:-/tmp}/keyboard-lighting.log" 2>&1
 
 # Where to store the last notification ID
-nid_file="${XDG_RUNTIME_DIR:-/tmp}/brightness.nid"
+nid_file="${XDG_RUNTIME_DIR:-/tmp}/keyboard-lighting.nid"
 
 # Ensure the file exists
 touch "$nid_file"
