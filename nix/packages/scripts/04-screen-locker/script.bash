@@ -1,7 +1,7 @@
-# locker.bash - screen locking helper.
+# screen-locker - screen locking helper.
 
 # Usage:
-#   locker.bash   # lock screen
+#   screen-locker   # lock screen
 
 # Collect logs
 exec >>"${XDG_RUNTIME_DIR:-/tmp}/screen-locker.log" 2>&1
