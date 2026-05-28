@@ -11,10 +11,10 @@ nid_file="${XDG_RUNTIME_DIR:-/tmp}/brightness.nid"
 touch "$nid_file"
 
 # Read previous notification ID (if any)
-if [ -s "$nid_file" ]; then
-    replace_flag="--replace-id=$(cat "$nid_file")"
+if [[ -s "$nid_file" ]] && [[ "$(cat "$nid_file")" =~ ^[0-9]+$ ]]; then
+    replace_flag=("--replace-id=$(cat "$nid_file")")
 else
-    replace_flag=""
+    replace_flag=()
 fi
 
 if [ "$1" = "+" ]; then
@@ -39,8 +39,10 @@ nid=$(
         --hint string:synchronous:brightness \
         --hint "int:value:$level" \
         --print-id \
-        "$replace_flag" \
+        "${replace_flag[@]}" \
         "Helligkeit"
 )
 
-echo "$nid" >"$nid_file"
+if [[ "$nid" =~ ^[0-9]+$ ]]; then
+    echo "$nid" > "$nid_file"
+fi
