@@ -292,4 +292,6 @@
       ${pkgs.systemd}/bin/systemctl --user start river-session.target
     '';
   };
+
+  services.microphone-privacy-indicator.enable = true;
 }
