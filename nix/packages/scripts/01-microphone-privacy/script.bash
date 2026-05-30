@@ -19,13 +19,12 @@ else
   replace_flag=()
 fi
 
-
 if wpctl get-volume @DEFAULT_SOURCE@ | grep -q '\[MUTED\]'; then
-    wpctl set-mute @DEFAULT_SOURCE@ 0
-    muted="0"
+  wpctl set-mute @DEFAULT_SOURCE@ 0
+  muted="0"
 else
-    wpctl status \
-        | awk '
+  wpctl status \
+    | awk '
             /^Audio/              { in_audio=1 }
             /^Video/              { in_audio=0 }
             in_audio && /Sources/ { in_sources=1; next }
@@ -36,7 +35,7 @@ else
             }
           ' \
     | xargs -I{} wpctl set-mute {} 1
-    muted="1"
+  muted="1"
 fi
 
 # Send notification and save the returned ID
