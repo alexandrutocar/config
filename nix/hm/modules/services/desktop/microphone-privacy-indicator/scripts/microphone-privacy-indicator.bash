@@ -6,8 +6,9 @@ declare -A mutes  # [node_id]=true|false
 extract='
   .[]
   | select(
-      .info.props != null
-      and .info.props."media.class" == "Audio/Source"
+      (.info.props != null and .info.props."media.class" == "Audio/Source")
+      or
+      (.info == null)
     )
   | {
       id: .id,
