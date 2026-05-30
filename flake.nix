@@ -16,7 +16,7 @@
     #       with long build times (e.g. Firefox, Chromium, Electron).
     # ────────────────────────────────────────────────────────────────────────
     nixpkgs-nixos-unstable = {
-      url = "github:nixos/nixpkgs?rev=64c08a7ca051951c8eae34e3e3cb1e202fe36786"; # nixos-unstable
+      url = "github:nixos/nixpkgs?rev=a2e55e31d6b0c104e92922c241ec5090be99b912"; # ~nixos-unstable
     };
 
     # ────────────────────────────────────────────────────────────────────────
