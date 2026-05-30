@@ -1,4 +1,4 @@
-declare -A mutes  # [node_id]=true|false
+declare -A mutes # [node_id]=true|false
 
 # ────────────────────────────────────────────────────────────────────────
 # NOTE: Extract numeric IDs of all nodes listed under the Sources section.
@@ -25,35 +25,32 @@ extract='
     }
   | "\(.id) \(.mute) \(.removed)"
 '
-
-pw-dump --no-colors --monitor \
-  | jq --unbuffered -r "$extract" \
-  | while read -r id mute removed; do
-      if [[ "$removed" == "true" ]]; then
-        unset "mutes[$id]"
-      elif [[ "$mute" != "null" ]]; then
-        mutes[$id]="$mute"
-      fi
-      
-      # ────────────────────────────────────────────────────────────────────────
-      # NOTE: Recompute aggregate from in-memory state.
-      # ────────────────────────────────────────────────────────────────────────
-      muted=true
-      for _muted in "${mutes[@]}"; do
-        if [[ "$_muted" == "false" ]]; then
-          muted=false
-          break
-        fi
-      done
-
-      # ────────────────────────────────────────────────────────────────────────
-      # NOTE: Toggle the led indicator on MIC_MUTE button.
-      # ────────────────────────────────────────────────────────────────────────
-      if [[ "$muted" == true ]]; then
-        brightnessctl -d "platform::micmute" set 1 &>/dev/null || true
-        echo "<6>All recording devices have been muted (turn on microphone privacy indicator)."
-      else
-        brightnessctl -d "platform::micmute" set 0 &>/dev/null || true
-        echo "<6>At least one recording device is listening (turn off microphone privacy indicator)."
+while read -r id mute removed; do
+  if [[ "$removed" == "true" ]]; then
+    unset "mutes[$id]"
+  elif [[ "$mute" != "null" ]]; then
+    mutes[$id]="$mute"
   fi
-    done
+
+  # ────────────────────────────────────────────────────────────────────────
+  # NOTE: Recompute aggregate from in-memory state.
+  # ────────────────────────────────────────────────────────────────────────
+  muted=true
+  for _muted in "${mutes[@]}"; do
+    if [[ "$_muted" == "false" ]]; then
+      muted=false
+      break
+    fi
+  done
+
+  # ────────────────────────────────────────────────────────────────────────
+  # NOTE: Toggle the led indicator on MIC_MUTE button.
+  # ────────────────────────────────────────────────────────────────────────
+  if [[ "$muted" == true ]]; then
+    brightnessctl -d "platform::micmute" set 1 &>/dev/null || true
+    echo "<6>All recording devices have been muted (turn on microphone privacy indicator)."
+  else
+    brightnessctl -d "platform::micmute" set 0 &>/dev/null || true
+    echo "<6>At least one recording device is listening (turn off microphone privacy indicator)."
+  fi
+done < <(pw-dump --no-colors --monitor | jq --unbuffered -r "$extract")
