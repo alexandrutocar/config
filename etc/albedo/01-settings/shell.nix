@@ -16,6 +16,10 @@
 in {
   imports = singleton (self + /etc/shared/01-settings/shell.nix);
 
+  environment.systemPackages = with pkgs; [
+    comma
+  ];
+
   programs = {
     # SECURE SHELL
     # ------------
