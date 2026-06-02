@@ -6,8 +6,12 @@
 # davis, dav, calendar, addresses, contacts...
 #
 # ────────────────────────────────────────────────────────────────────────
-{container, ...}: let
-  inherit (container) self intranet-database;
+{
+  container,
+  config,
+  ...
+}: let
+  inherit (container) self;
 in {
   services.davis = {
     enable = true;
@@ -23,12 +27,8 @@ in {
       APP_SECRET = "XC1Z10J2Bxru2brX7KgijbWjBal6hHqcagCi4z3A8jhWxFjd";
 
       # Storage
-      DATABASE_DRIVER = "pgsql";
-      DATABASE_URL = "pgsql://davis@${intranet-database.localAddress}:5432/davis?sslmode=disable";
-
-      # Storage (SQLite)
-      # DATABASE_DRIVER = "sqlite";
-      # DATABASE_URL = builtins.concatStringsSep "/" ["sqlite://" config.services.davis.dataDir "davis.db"];
+      DATABASE_DRIVER = "sqlite";
+      DATABASE_URL = builtins.concatStringsSep "/" ["sqlite://" config.services.davis.dataDir "davis.db"];
 
       # Calendar
       CALDAV_ENABLED = "true";
