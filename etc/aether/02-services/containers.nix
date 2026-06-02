@@ -326,13 +326,16 @@ in {
             hostPath = "/state/var/lib/machines/01-intranet/07-dav/etc/machine-id";
             isReadOnly = false;
           };
-
           "/var/lib/davis/homes/" = {
             hostPath = "/state/var/lib/machines/01-intranet/07-dav/var/lib/davis/homes/";
             isReadOnly = false;
           };
           "/var/lib/davis/public/" = {
             hostPath = "/state/var/lib/machines/01-intranet/07-dav/var/lib/davis/public/";
+            isReadOnly = false;
+          };
+          "/var/lib/davis/davis.db" = {
+            hostPath = "/state/var/lib/machines/01-intranet/07-dav/var/lib/davis/davis.db";
             isReadOnly = false;
           };
         }
