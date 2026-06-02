@@ -432,12 +432,6 @@ in {
             isReadOnly = false;
           };
         }
-        {
-          "/var/lib/postgresql/" = {
-            hostPath = "/blobs/var/lib/machines/01-intranet/11-database/var/lib/postgresql/";
-            isReadOnly = false;
-          };
-        }
       ];
 
       config = mkConfig (recursive ./containers/groups/01-intranet/11-database);
