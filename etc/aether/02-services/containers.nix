@@ -417,26 +417,6 @@ in {
       config = mkConfig (recursive ./containers/groups/01-intranet/10-storage);
     };
 
-    intranet-database = mkContainer "intranet-database" {
-      hostAddress = "10.255.255.244";
-      localAddress = "10.0.0.11";
-
-      bindMounts = mkMerge [
-        {
-          "/var/lib/systemd/" = {
-            hostPath = "/state/var/lib/machines/01-intranet/11-database/var/lib/systemd/";
-            isReadOnly = false;
-          };
-          "/etc/machine-id" = {
-            hostPath = "/state/var/lib/machines/01-intranet/11-database/etc/machine-id";
-            isReadOnly = false;
-          };
-        }
-      ];
-
-      config = mkConfig (recursive ./containers/groups/01-intranet/11-database);
-    };
-
     intranet-monitoring = mkContainer "intranet-monitoring" {
       hostAddress = "10.255.255.243";
       localAddress = "10.0.0.12";
