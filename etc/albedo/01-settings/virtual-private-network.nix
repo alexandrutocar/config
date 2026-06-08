@@ -121,14 +121,24 @@ in {
   in {
     network = mkVPN [
       {
-        name = "wg-intranet";
+        name = "wg-intra-ipv4";
         marker = 1010;
+        endpoint = mkHost "192.168.1.2" 50010;
+      }
+      {
+        name = "wg-intra-ipv6";
+        marker = 1020;
         endpoint = mkHost "[fd4b:ad02:1b77:1:0020:61fc:3462:bf01]" 50010;
       }
       {
-        name = "wg-internet";
-        marker = 1020;
-        endpoint = mkHost "212.201.71.75" 50010;
+        name = "wg-inter-ipv4";
+        marker = 1030;
+        endpoint = mkHost "212.201.78.87" 50010;
+      }
+      {
+        name = "wg-inter-ipv6";
+        marker = 1040;
+        endpoint = mkHost "[2a00:5ba0:8009:5f40:1:b03f:2f2a:c1df]" 50010;
       }
     ];
   };
@@ -138,15 +148,36 @@ in {
     rules = {
       vpn-on-demand = {
         onState = ["routable" "carrier"];
-        script = ''
+        script = let
+          internet-ipv4-only-networks = [
+            "eduroam"
+            "eduroam-cs"
+            "eduroam-math"
+            "eduroam-stw"
+            "eduroam-ukb"
+          ];
+        in ''
           #!${pkgs.runtimeShell}
-          if [[ $IFACE == wlan0 ]]; then
-            if [[ $ESSID == "Specht" ]]; then
-              ${getExe' pkgs.systemd "networkctl"} up ${config.systemd.network.netdevs."25-wg-intranet".netdevConfig.Name}
-              ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-internet".netdevConfig.Name}
+          if [[ "$IFACE" == wlan0 ]]; then
+            if [[ "$ESSID" == "Specht" ]]; then
+              ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-intra-ipv4".netdevConfig.Name}
+              ${getExe' pkgs.systemd "networkctl"} up ${config.systemd.network.netdevs."25-wg-intra-ipv6".netdevConfig.Name}
+              ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-inter-ipv4".netdevConfig.Name}
+              ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-inter-ipv6".netdevConfig.Name}
+            elif ${
+            if builtins.length internet-ipv4-only-networks > 0
+            then builtins.concatStringsSep " || " (map (name: "[[ \"$ESSID\" ==  \"${name}\" ]]") internet-ipv4-only-networks)
+            else "false"
+          }; then
+              ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-intra-ipv4".netdevConfig.Name}
+              ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-intra-ipv6".netdevConfig.Name}
+              ${getExe' pkgs.systemd "networkctl"} up ${config.systemd.network.netdevs."25-wg-inter-ipv4".netdevConfig.Name}
+              ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-inter-ipv6".netdevConfig.Name}
             else
-              ${getExe' pkgs.systemd "networkctl"} up ${config.systemd.network.netdevs."25-wg-internet".netdevConfig.Name}
-              ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-intranet".netdevConfig.Name}
+              ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-intra-ipv4".netdevConfig.Name}
+              ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-intra-ipv6".netdevConfig.Name}
+              ${getExe' pkgs.systemd "networkctl"} down ${config.systemd.network.netdevs."25-wg-inter-ipv4".netdevConfig.Name}
+              ${getExe' pkgs.systemd "networkctl"} up ${config.systemd.network.netdevs."25-wg-inter-ipv6".netdevConfig.Name}
             fi
           fi
         '';
