@@ -8,7 +8,7 @@
     # NOTE: For server systems (hosts).
     # ────────────────────────────────────────────────────────────────────────
     nixpkgs-nixos-unstable-small = {
-      url = "github:nixos/nixpkgs?rev=6079c8387de10bcbd1ba9f802163d48a9b610f27"; # nixos-unstable-small
+      url = "github:nixos/nixpkgs?rev=cd00ce769cfc48ece6911ffca7527ef07cd20c3b"; # nixos-unstable-small
     };
 
     # ────────────────────────────────────────────────────────────────────────
@@ -16,7 +16,7 @@
     #       with long build times (e.g. Firefox, Chromium, Electron).
     # ────────────────────────────────────────────────────────────────────────
     nixpkgs-nixos-unstable = {
-      url = "github:nixos/nixpkgs?rev=9ae611a455b90cf061d8f332b977e387bda8e1ca"; # ~nixos-unstable
+      url = "github:nixos/nixpkgs?rev=567a49d1913ce81ac6e9582e3553dd90a955875f"; # ~nixos-unstable
     };
 
     # ────────────────────────────────────────────────────────────────────────
