@@ -193,6 +193,17 @@
               ];
             });
         };
+
+      lumine = let
+        nixpkgs = inputs.nixpkgs-nixos-unstable;
+      in
+        mkSystem "lumine" {
+          inherit nixpkgs;
+          modules =
+            [
+              ./etc/lumine
+            ];
+        };
     };
 
     packages = forSystems (
