@@ -15,9 +15,12 @@
 in {
   imports = singleton (self + /etc/shared/01-settings/nix.nix);
 
+  # NIX
+  # ---
   nix = {
     distributedBuilds = true;
 
+    # NOTE: Store size constraints.
     extraOptions = ''
       min-free = ${toString (250 * 1024 * 1024 * 1024)}
       max-free = ${toString (300 * 1024 * 1024 * 1024)}
@@ -25,12 +28,21 @@ in {
 
     settings = {
       builders-use-substitutes = true;
-      trusted-users = ["root" "alex"];
 
       secret-key-files = [
         "/state/secrets/cache.aether.ip.key"
         "/state/secrets/cache.ueuie.dev.key"
       ];
+
+      substituters = [
+        "https://cache.aether.ip"
+      ];
+
+      trusted-public-keys = [
+        "cache.aether.ip:YJj654vefxddqk3R5eEyDzFQXw6hDmVkJKVvxAqHnj4="
+      ];
+
+      trusted-users = ["root" "alex"];
     };
 
     buildMachines = [
