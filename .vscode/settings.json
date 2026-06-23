@@ -5,5 +5,19 @@
         "Tamsyn",
         "uwsm",
         "yelan"
-    ]
+    ],
+    "nix.serverSettings": {
+        "nixd": {
+            "formatting": {
+                "command": [
+                    "alejandra"
+                ],
+            },
+            "options": {
+                "nixos": {
+                    "expr": "(builtins.getFlake \"${workspaceFolder}\").nixosConfigurations.albedo.options",
+                },
+            },
+        }
+    }
 }
