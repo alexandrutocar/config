@@ -20,7 +20,6 @@ in {
   #                 attack surface.
   # ────────────────────────────────────────────────────────────────────────
   boot.blacklistedKernelModules = ["iwlwifi"];
-  networking.wireless.iwd.enable = false;
 
   # SYSTEMD NETWORK
   # ------- -------
