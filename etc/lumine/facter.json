@@ -21,7 +21,7 @@
       "pnp": true,
       "pnp_id": 0,
       "lba_support": false,
-      "low_memory_size": 638976,
+      "low_memory_size": 654336,
       "smbios_version": 768
     },
     "bridge": [
@@ -157,21 +157,6 @@
         "driver_modules": [
           "lpc_ich"
         ],
-        "driver_info": {
-          "type": "module",
-          "db_entry_0": [
-            "lpc_ich"
-          ],
-          "active": true,
-          "modprobe": true,
-          "names": [
-            "lpc_ich"
-          ],
-          "module_args": [
-            ""
-          ],
-          "conf": ""
-        },
         "module_alias": "pci:v00008086d00002918sv00001AF4sd00001100bc06sc01i00"
       },
       {
@@ -427,21 +412,6 @@
           "header_type": 0,
           "secondary_bus": 0,
           "prog_if": 0
-        },
-        "driver_info": {
-          "type": "module",
-          "db_entry_0": [
-            "intel_agp"
-          ],
-          "active": true,
-          "modprobe": true,
-          "names": [
-            "intel_agp"
-          ],
-          "module_args": [
-            ""
-          ],
-          "conf": ""
         },
         "module_alias": "pci:v00008086d000029C0sv00001AF4sd00001100bc06sc00i00"
       },
@@ -783,7 +753,7 @@
     ],
     "cdrom": [
       {
-        "index": 40,
+        "index": 34,
         "attached_to": 7,
         "class_list": [
           "cdrom",
@@ -890,7 +860,6 @@
           "pdpe1gb",
           "rdtscp",
           "lm",
-          "constant_tsc",
           "rep_good",
           "nopl",
           "xtopology",
@@ -944,6 +913,7 @@
           "xsaves",
           "arat",
           "pku",
+          "ospke",
           "md_clear"
         ],
         "bugs": [
@@ -959,6 +929,7 @@
           "retbleed",
           "gds",
           "bhi",
+          "spectre_v2_user",
           "its"
         ],
         "power_management": [
@@ -985,348 +956,7 @@
     ],
     "disk": [
       {
-        "index": 33,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram2",
-        "unix_device_names": [
-          "/dev/ram2"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
-        ]
-      },
-      {
-        "index": 34,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram0",
-        "unix_device_names": [
-          "/dev/ram0"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
-        ]
-      },
-      {
         "index": 35,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram9",
-        "unix_device_names": [
-          "/dev/ram9"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
-        ]
-      },
-      {
-        "index": 36,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram14",
-        "unix_device_names": [
-          "/dev/ram14"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
-        ]
-      },
-      {
-        "index": 37,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram7",
-        "unix_device_names": [
-          "/dev/ram7"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
-        ]
-      },
-      {
-        "index": 38,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram12",
-        "unix_device_names": [
-          "/dev/ram12"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
-        ]
-      },
-      {
-        "index": 39,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram5",
-        "unix_device_names": [
-          "/dev/ram5"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
-        ]
-      },
-      {
-        "index": 41,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram10",
-        "unix_device_names": [
-          "/dev/ram10"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
-        ]
-      },
-      {
-        "index": 42,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram3",
-        "unix_device_names": [
-          "/dev/ram3"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
-        ]
-      },
-      {
-        "index": 43,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram1",
-        "unix_device_names": [
-          "/dev/ram1"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
-        ]
-      },
-      {
-        "index": 44,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram15",
-        "unix_device_names": [
-          "/dev/ram15"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
-        ]
-      },
-      {
-        "index": 45,
         "attached_to": 30,
         "class_list": [
           "disk",
@@ -1377,6 +1007,7 @@
           "/dev/sda"
         ],
         "unix_device_name2": "/dev/sg0",
+        "rom_id": "0x80",
         "resources": [
           {
             "type": "disk_geo",
@@ -1402,161 +1033,6 @@
         "driver_modules": [
           "sd_mod",
           "virtio_scsi"
-        ]
-      },
-      {
-        "index": 46,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram8",
-        "unix_device_names": [
-          "/dev/ram8"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
-        ]
-      },
-      {
-        "index": 47,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram13",
-        "unix_device_names": [
-          "/dev/ram13"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
-        ]
-      },
-      {
-        "index": 48,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram6",
-        "unix_device_names": [
-          "/dev/ram6"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
-        ]
-      },
-      {
-        "index": 49,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram11",
-        "unix_device_names": [
-          "/dev/ram11"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
-        ]
-      },
-      {
-        "index": 50,
-        "attached_to": 0,
-        "class_list": [
-          "disk",
-          "block_device"
-        ],
-        "base_class": {
-          "hex": "0106",
-          "name": "Mass Storage Device",
-          "value": 262
-        },
-        "sub_class": {
-          "hex": "0000",
-          "name": "Disk",
-          "value": 0
-        },
-        "model": "Disk",
-        "sysfs_id": "/class/block/ram4",
-        "unix_device_names": [
-          "/dev/ram4"
-        ],
-        "resources": [
-          {
-            "type": "size",
-            "unit": "sectors",
-            "value_1": 131072,
-            "value_2": 512
-          }
         ]
       }
     ],
@@ -1617,7 +1093,7 @@
         "sysfs_bus_id": "0000:00:01.0",
         "detail": {
           "function": 0,
-          "command": 263,
+          "command": 1287,
           "header_type": 0,
           "secondary_bus": 0,
           "prog_if": 0
@@ -1630,27 +1106,12 @@
         "driver_modules": [
           "virtio_pci"
         ],
-        "driver_info": {
-          "type": "module",
-          "db_entry_0": [
-            "virtio_pci"
-          ],
-          "active": true,
-          "modprobe": true,
-          "names": [
-            "virtio_pci"
-          ],
-          "module_args": [
-            ""
-          ],
-          "conf": ""
-        },
         "module_alias": "pci:v00001AF4d00001050sv00001AF4sd00001100bc03sc00i00"
       }
     ],
     "hub": [
       {
-        "index": 51,
+        "index": 36,
         "attached_to": 11,
         "class_list": [
           "usb",
@@ -1672,7 +1133,7 @@
         },
         "vendor": {
           "hex": "1d6b",
-          "name": "Linux 6.12.67 xhci-hcd",
+          "name": "Linux 7.0.12 xhci-hcd",
           "value": 7531
         },
         "device": {
@@ -1682,11 +1143,11 @@
         },
         "revision": {
           "hex": "0000",
-          "name": "6.12",
+          "name": "7.00",
           "value": 0
         },
         "serial": "0000:02:00.0",
-        "model": "Linux 6.12.67 xhci-hcd xHCI Host Controller",
+        "model": "Linux 7.0.12 xhci-hcd xHCI Host Controller",
         "sysfs_id": "/devices/pci0000:00/0000:00:02.1/0000:02:00.0/usb1/1-0:1.0",
         "sysfs_bus_id": "1-0:1.0",
         "resources": [
@@ -1734,10 +1195,10 @@
         "driver_modules": [
           "usbcore"
         ],
-        "module_alias": "usb:v1D6Bp0002d0612dc09dsc00dp01ic09isc00ip00in00"
+        "module_alias": "usb:v1D6Bp0002d0700dc09dsc00dp01ic09isc00ip00in00"
       },
       {
-        "index": 53,
+        "index": 38,
         "attached_to": 11,
         "class_list": [
           "usb",
@@ -1759,7 +1220,7 @@
         },
         "vendor": {
           "hex": "1d6b",
-          "name": "Linux 6.12.67 xhci-hcd",
+          "name": "Linux 7.0.12 xhci-hcd",
           "value": 7531
         },
         "device": {
@@ -1769,11 +1230,11 @@
         },
         "revision": {
           "hex": "0000",
-          "name": "6.12",
+          "name": "7.00",
           "value": 0
         },
         "serial": "0000:02:00.0",
-        "model": "Linux 6.12.67 xhci-hcd xHCI Host Controller",
+        "model": "Linux 7.0.12 xhci-hcd xHCI Host Controller",
         "sysfs_id": "/devices/pci0000:00/0000:00:02.1/0000:02:00.0/usb2/2-0:1.0",
         "sysfs_bus_id": "2-0:1.0",
         "detail": {
@@ -1811,7 +1272,7 @@
         "driver_modules": [
           "usbcore"
         ],
-        "module_alias": "usb:v1D6Bp0003d0612dc09dsc00dp03ic09isc00ip00in00"
+        "module_alias": "usb:v1D6Bp0003d0700dc09dsc00dp03ic09isc00ip00in00"
       }
     ],
     "memory": [
@@ -1840,10 +1301,158 @@
         ]
       }
     ],
+    "monitor": [
+      {
+        "index": 32,
+        "attached_to": 12,
+        "class_list": [
+          "monitor"
+        ],
+        "base_class": {
+          "hex": "0100",
+          "name": "Monitor",
+          "value": 256
+        },
+        "sub_class": {
+          "hex": "0002",
+          "name": "LCD Monitor",
+          "value": 2
+        },
+        "vendor": {
+          "hex": "4914",
+          "value": 18708
+        },
+        "device": {
+          "hex": "1234",
+          "name": "QEMU Monitor",
+          "value": 4660
+        },
+        "serial": "0",
+        "model": "QEMU Monitor",
+        "resources": [
+          {
+            "type": "monitor",
+            "width": 1024,
+            "height": 768,
+            "vertical_frequency": 60,
+            "interlaced": false
+          },
+          {
+            "type": "monitor",
+            "width": 1280,
+            "height": 800,
+            "vertical_frequency": 60,
+            "interlaced": false
+          },
+          {
+            "type": "monitor",
+            "width": 1600,
+            "height": 1200,
+            "vertical_frequency": 60,
+            "interlaced": false
+          },
+          {
+            "type": "monitor",
+            "width": 1920,
+            "height": 1080,
+            "vertical_frequency": 60,
+            "interlaced": false
+          },
+          {
+            "type": "monitor",
+            "width": 2048,
+            "height": 1152,
+            "vertical_frequency": 60,
+            "interlaced": false
+          },
+          {
+            "type": "monitor",
+            "width": 640,
+            "height": 480,
+            "vertical_frequency": 60,
+            "interlaced": false
+          },
+          {
+            "type": "monitor",
+            "width": 800,
+            "height": 600,
+            "vertical_frequency": 60,
+            "interlaced": false
+          },
+          {
+            "type": "size",
+            "unit": "mm",
+            "value_1": 325,
+            "value_2": 203
+          }
+        ],
+        "detail": {
+          "manufacture_year": 2014,
+          "manufacture_week": 42,
+          "vertical_sync": {
+            "min": 50,
+            "max": 125
+          },
+          "horizontal_sync": {
+            "min": 30,
+            "max": 160
+          },
+          "horizontal_sync_timings": {
+            "disp": 1280,
+            "sync_start": 1600,
+            "sync_end": 1638,
+            "total": 1728
+          },
+          "vertical_sync_timings": {
+            "disp": 800,
+            "sync_start": 804,
+            "sync_end": 808,
+            "total": 828
+          },
+          "clock": 107300,
+          "width": 1280,
+          "height": 800,
+          "width_millimetres": 325,
+          "height_millimetres": 203,
+          "horizontal_flag": 45,
+          "vertical_flag": 45,
+          "vendor": "",
+          "name": "QEMU Monitor"
+        },
+        "driver_info": {
+          "type": "display",
+          "width": 2048,
+          "height": 1152,
+          "vertical_sync": {
+            "min": 50,
+            "max": 125
+          },
+          "horizontal_sync": {
+            "min": 30,
+            "max": 160
+          },
+          "bandwidth": 0,
+          "horizontal_sync_timings": {
+            "disp": 1280,
+            "sync_start": 1600,
+            "sync_end": 1638,
+            "total": 1728
+          },
+          "vertical_sync_timings": {
+            "disp": 800,
+            "sync_start": 804,
+            "sync_end": 808,
+            "total": 828
+          },
+          "horizontal_flag": 45,
+          "vertical_flag": 45
+        }
+      }
+    ],
     "mouse": [
       {
-        "index": 52,
-        "attached_to": 51,
+        "index": 37,
+        "attached_to": 36,
         "class_list": [
           "mouse",
           "usb"
@@ -1978,7 +1587,7 @@
         "sysfs_id": "/devices/pci0000:00/0000:00:02.0/0000:01:00.0/virtio1",
         "sysfs_bus_id": "virtio1",
         "unix_device_names": [
-          "eth0"
+          "enp1s0"
         ],
         "resources": [
           {
@@ -1998,68 +1607,12 @@
         "driver_modules": [
           "virtio_net"
         ],
-        "driver_info": {
-          "type": "module",
-          "db_entry_0": [
-            "virtio_net"
-          ],
-          "active": true,
-          "modprobe": true,
-          "names": [
-            "virtio_net"
-          ],
-          "module_args": [
-            ""
-          ],
-          "conf": ""
-        },
         "module_alias": "virtio:d00000001v00001AF4"
       }
     ],
     "network_interface": [
       {
-        "index": 54,
-        "attached_to": 26,
-        "class_list": [
-          "network_interface"
-        ],
-        "base_class": {
-          "hex": "0107",
-          "name": "Network Interface",
-          "value": 263
-        },
-        "sub_class": {
-          "hex": "0001",
-          "name": "Ethernet",
-          "value": 1
-        },
-        "model": "Ethernet network interface",
-        "sysfs_id": "/class/net/eth0",
-        "sysfs_device_link": "/devices/pci0000:00/0000:00:02.0/0000:01:00.0/virtio1",
-        "unix_device_names": [
-          "eth0"
-        ],
-        "resources": [
-          {
-            "type": "hwaddr",
-            "address": 57
-          },
-          {
-            "type": "phwaddr",
-            "address": 57
-          }
-        ],
-        "driver": "virtio_net",
-        "driver_module": "virtio_net",
-        "drivers": [
-          "virtio_net"
-        ],
-        "driver_modules": [
-          "virtio_net"
-        ]
-      },
-      {
-        "index": 55,
+        "index": 39,
         "attached_to": 0,
         "class_list": [
           "network_interface"
@@ -2078,6 +1631,47 @@
         "sysfs_id": "/class/net/lo",
         "unix_device_names": [
           "lo"
+        ]
+      },
+      {
+        "index": 40,
+        "attached_to": 26,
+        "class_list": [
+          "network_interface"
+        ],
+        "base_class": {
+          "hex": "0107",
+          "name": "Network Interface",
+          "value": 263
+        },
+        "sub_class": {
+          "hex": "0001",
+          "name": "Ethernet",
+          "value": 1
+        },
+        "model": "Ethernet network interface",
+        "sysfs_id": "/class/net/enp1s0",
+        "sysfs_device_link": "/devices/pci0000:00/0000:00:02.0/0000:01:00.0/virtio1",
+        "unix_device_names": [
+          "enp1s0"
+        ],
+        "resources": [
+          {
+            "type": "hwaddr",
+            "address": 57
+          },
+          {
+            "type": "phwaddr",
+            "address": 57
+          }
+        ],
+        "driver": "virtio_net",
+        "driver_module": "virtio_net",
+        "drivers": [
+          "virtio_net"
+        ],
+        "driver_modules": [
+          "virtio_net"
         ]
       }
     ],
@@ -2146,21 +1740,6 @@
         "driver_modules": [
           "virtio_pci"
         ],
-        "driver_info": {
-          "type": "module",
-          "db_entry_0": [
-            "virtio_pci"
-          ],
-          "active": true,
-          "modprobe": true,
-          "names": [
-            "virtio_pci"
-          ],
-          "module_args": [
-            ""
-          ],
-          "conf": ""
-        },
         "module_alias": "pci:v00001AF4d00001043sv00001AF4sd00001100bc07sc80i00"
       },
       {
@@ -2227,21 +1806,6 @@
         "driver_modules": [
           "virtio_pci"
         ],
-        "driver_info": {
-          "type": "module",
-          "db_entry_0": [
-            "virtio_pci"
-          ],
-          "active": true,
-          "modprobe": true,
-          "names": [
-            "virtio_pci"
-          ],
-          "module_args": [
-            ""
-          ],
-          "conf": ""
-        },
         "module_alias": "pci:v00001AF4d00001041sv00001AF4sd00001100bc02sc00i00"
       },
       {
@@ -2318,21 +1882,6 @@
         "driver_modules": [
           "i2c_i801"
         ],
-        "driver_info": {
-          "type": "module",
-          "db_entry_0": [
-            "i2c_i801"
-          ],
-          "active": true,
-          "modprobe": true,
-          "names": [
-            "i2c_i801"
-          ],
-          "module_args": [
-            ""
-          ],
-          "conf": ""
-        },
         "module_alias": "pci:v00008086d00002930sv00001AF4sd00001100bc0Csc05i00"
       },
       {
@@ -2398,21 +1947,6 @@
         "driver_modules": [
           "virtio_pci"
         ],
-        "driver_info": {
-          "type": "module",
-          "db_entry_0": [
-            "virtio_pci"
-          ],
-          "active": true,
-          "modprobe": true,
-          "names": [
-            "virtio_pci"
-          ],
-          "module_args": [
-            ""
-          ],
-          "conf": ""
-        },
         "module_alias": "pci:v00001AF4d00001044sv00001AF4sd00001100bc00scFFi00"
       },
       {
@@ -2478,21 +2012,6 @@
         "driver_modules": [
           "virtio_pci"
         ],
-        "driver_info": {
-          "type": "module",
-          "db_entry_0": [
-            "virtio_pci"
-          ],
-          "active": true,
-          "modprobe": true,
-          "names": [
-            "virtio_pci"
-          ],
-          "module_args": [
-            ""
-          ],
-          "conf": ""
-        },
         "module_alias": "pci:v00001AF4d00001045sv00001AF4sd00001100bc00scFFi00"
       }
     ],
@@ -2574,21 +2093,6 @@
         "driver_modules": [
           "ahci"
         ],
-        "driver_info": {
-          "type": "module",
-          "db_entry_0": [
-            "ahci"
-          ],
-          "active": true,
-          "modprobe": true,
-          "names": [
-            "ahci"
-          ],
-          "module_args": [
-            ""
-          ],
-          "conf": ""
-        },
         "module_alias": "pci:v00008086d00002922sv00001AF4sd00001100bc01sc06i01"
       },
       {
@@ -2655,21 +2159,6 @@
         "driver_modules": [
           "virtio_pci"
         ],
-        "driver_info": {
-          "type": "module",
-          "db_entry_0": [
-            "virtio_pci"
-          ],
-          "active": true,
-          "modprobe": true,
-          "names": [
-            "virtio_pci"
-          ],
-          "module_args": [
-            ""
-          ],
-          "conf": ""
-        },
         "module_alias": "pci:v00001AF4d00001048sv00001AF4sd00001100bc01sc00i00"
       }
     ],
@@ -2706,21 +2195,6 @@
         "driver_modules": [
           "virtio_rng"
         ],
-        "driver_info": {
-          "type": "module",
-          "db_entry_0": [
-            "virtio_rng"
-          ],
-          "active": true,
-          "modprobe": true,
-          "names": [
-            "virtio_rng"
-          ],
-          "module_args": [
-            ""
-          ],
-          "conf": ""
-        },
         "module_alias": "virtio:d00000004v00001AF4"
       },
       {
@@ -2752,21 +2226,6 @@
         "driver_modules": [
           "virtio_console"
         ],
-        "driver_info": {
-          "type": "module",
-          "db_entry_0": [
-            "virtio_console"
-          ],
-          "active": true,
-          "modprobe": true,
-          "names": [
-            "virtio_console"
-          ],
-          "module_args": [
-            ""
-          ],
-          "conf": ""
-        },
         "module_alias": "virtio:d00000003v00001AF4"
       },
       {
@@ -2790,6 +2249,14 @@
         "model": "Virtio Unclassified device",
         "sysfs_id": "/devices/pci0000:00/0000:00:01.0/virtio0",
         "sysfs_bus_id": "virtio0",
+        "driver": "virtio_gpu",
+        "driver_module": "virtio_gpu",
+        "drivers": [
+          "virtio_gpu"
+        ],
+        "driver_modules": [
+          "virtio_gpu"
+        ],
         "module_alias": "virtio:d00000010v00001AF4"
       },
       {
@@ -2821,21 +2288,6 @@
         "driver_modules": [
           "virtio_scsi"
         ],
-        "driver_info": {
-          "type": "module",
-          "db_entry_0": [
-            "virtio_scsi"
-          ],
-          "active": true,
-          "modprobe": true,
-          "names": [
-            "virtio_scsi"
-          ],
-          "module_args": [
-            ""
-          ],
-          "conf": ""
-        },
         "module_alias": "virtio:d00000008v00001AF4"
       },
       {
@@ -2867,25 +2319,10 @@
         "driver_modules": [
           "virtio_balloon"
         ],
-        "driver_info": {
-          "type": "module",
-          "db_entry_0": [
-            "virtio_balloon"
-          ],
-          "active": true,
-          "modprobe": true,
-          "names": [
-            "virtio_balloon"
-          ],
-          "module_args": [
-            ""
-          ],
-          "conf": ""
-        },
         "module_alias": "virtio:d00000005v00001AF4"
       },
       {
-        "index": 32,
+        "index": 33,
         "attached_to": 0,
         "class_list": [
           "unknown"
