@@ -7,7 +7,7 @@
 #
 # ────────────────────────────────────────────────────────────────────────
 {lib, ...}: let
-  inherit (lib.modules) mkDefault mkForce;
+  inherit (lib.modules) mkDefault;
 in {
   # NIX
   # ---
@@ -39,14 +39,6 @@ in {
 
       # removes ~/.nix-profile and ~/.nix-defexpr
       use-xdg-base-directories = mkDefault true;
-
-      substituters = [
-        "https://cache.aether.ip"
-      ];
-
-      trusted-public-keys = [
-        "cache.aether.ip:YJj654vefxddqk3R5eEyDzFQXw6hDmVkJKVvxAqHnj4="
-      ];
     };
 
     extraOptions = mkDefault ''

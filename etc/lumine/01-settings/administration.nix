@@ -16,79 +16,126 @@
   users.users = {
     root = {
       openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN1biuTFWEqGFZf044otVrbAJFRFBdIvc+/oJLkVfYnd root@lumine"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFFqc9UHouDJ8CKLFYUNteH3WX7FskQouDeW/S+xeks7 alex@aether.ip"
       ];
 
-      initialHashedPassword = "$y$j9T$uFXBUysQPX8xzEe9SQBrS0$o9isJAqaqNb2iz1KxLyqqa82hJwNN.yCM60Z4h56KAC";
-    };
-
-    alex = {
-      isNormalUser = true;
-
-      extraGroups = [
-        "video"
-        "input"
-        "wheel"
-      ];
-
-      openssh = {
-        authorizedKeys = {
-          keys = [
-            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAGnMalGnqtkuQKQfYF1lvJHVA9YKvi94Vg/9rHvKqKZ alex@lumine"
-          ];
-        };
-      };
-
-      initialHashedPassword = "$y$j9T$2vrNLqCgONznFy/EeJuTb/$INYuTJVmZLkwGoABqfhOrPvAKeZdmnHPzCGmvjHvnN0";
+      hashedPassword = "$y$j9T$OzsTZYTshaOkZm7RSqQnZ1$F7gdqJ3GWKxUpuWJYmEpphmAmu2C6aI.2lpyIyjOT24";
     };
   };
 
-  isoImage.contents = [
-    {
-      source = /home/alex/.ssh/keys.d/lumine_ssh_host_rsa_key;
-      target = "/ssh_host_rsa_key"; # /iso/ssh_host_rsa_key
-    }
-    {
-      source = /home/alex/.ssh/keys.d/lumine_ssh_host_rsa_key.pub;
-      target = "/ssh_host_rsa_key.pub"; # /iso/ssh_host_rsa_key.pub
-    }
-    {
-      source = /home/alex/.ssh/keys.d/lumine_ssh_host_ed25519_key;
-      target = "/ssh_host_ed25519_key"; # /iso/ssh_host_ed25519_key
-    }
-    {
-      source = /home/alex/.ssh/keys.d/lumine_ssh_host_ed25519_key.pub;
-      target = "/ssh_host_ed25519_key.pub"; # /iso/ssh_host_ed25519_key.pub
-    }
-  ];
+  services = {
+    # SECURE SHELL ACCESS
+    # -------------------
+    openssh = {
+      enable = true;
+      settings = {
+        Banner = "/state/etc/ssh/banner";
+      };
 
-  system.activationScripts.sshd.text = ''
-    FILES=(
-      "/iso/ssh_host_rsa_key"
-      "/iso/ssh_host_rsa_key.pub"
-      "/iso/ssh_host_ed25519_key"
-      "/iso/ssh_host_ed25519_key.pub"
-    )
+      extraConfig = let
+        algorithms = {
+          key = [
+            "ssh-ed25519-cert-v01@openssh.com"
+            "ssh-ed25519"
+            "ssh-rsa-cert-v01@openssh.com"
+            "ssh-rsa"
+          ];
+          kex = [
+            "sntrup761x25519-sha512"
+            "mlkem768x25519-sha256"
+          ];
+          mac = [
+            "hmac-sha2-512-etm@openssh.com"
+            "hmac-sha2-256-etm@openssh.com"
+          ];
+          enc = [
+            "aes256-gcm@openssh.com"
+            "aes128-gcm@openssh.com"
+          ];
+        };
+      in ''
+        # ────────────────────────────────────────────────────────────────────────
+        # TODO: Figure out which addresses to listen on.
+        # - Take onion-proxy into account.
+        # ────────────────────────────────────────────────────────────────────────
+        # ListenAddress 127.0.0.1:22
+        Protocol 2
+        # Banner (handled in options)
 
-    for FILE in "''${FILES[@]}"; do
-        if [ -e "$FILE" ]; then
-            echo "$FILE exists. Copying to /etc/ssh"
-            cp "$FILE" /etc/ssh/
+        # Authentication
+        PubkeyAuthentication yes
+        UsePAM yes
 
-            BASENAME=$(basename "$FILE")
-            TARGET="/etc/ssh/$BASENAME"
+        # ────────────────────────────────────────────────────────────────────────
+        # TODO: Add relevant users to the ssh-allowed group.
+        # ────────────────────────────────────────────────────────────────────────
+        # AllowGroups ssh-user
 
-            # Set correct permissions:
-            if [[ "$BASENAME" == *.pub ]]; then
-                chmod 444 "$TARGET"  # Public keys: readable by all
-            else
-                chmod 400 "$TARGET"  # Private keys: owner read-only
-            fi
+        PasswordAuthentication no
+        ChallengeResponseAuthentication no
 
-            echo "Permissions set for $TARGET."
-        else
-            echo "$FILE does not exist."
-        fi
-    done
-  '';
+        # Limit Algorithms and Ciphers
+        KexAlgorithms ${builtins.concatStringsSep "," algorithms.kex}
+        MACs ${builtins.concatStringsSep "," algorithms.mac}
+        Ciphers ${builtins.concatStringsSep "," algorithms.enc}
+        HostKeyAlgorithms ${builtins.concatStringsSep "," algorithms.key}
+
+        Match user git
+          AllowTcpForwarding no
+          AllowAgentForwarding no
+          PasswordAuthentication no
+          PermitTTY no
+          X11Forwarding no
+
+        Match user cache
+          AllowTcpForwarding no
+          AllowAgentForwarding no
+          PasswordAuthentication no
+          PermitTTY no
+          X11Forwarding no
+      '';
+
+      hostKeys = [
+        {
+          path = "/etc/ssh/ssh_host_ed25519_key";
+          type = "ed25519";
+          rounds = 200;
+        }
+        {
+          path = "/etc/ssh/ssh_host_rsa_key";
+          type = "rsa";
+          bits = 4096;
+          rounds = 200;
+        }
+      ];
+    };
+
+    # FAIL2BAN
+    # --------
+    fail2ban = {
+      enable = true;
+      bantime = "24h";
+      maxretry = 3;
+
+      bantime-increment = {
+        enable = true;
+        rndtime = "8m";
+      };
+    };
+  };
+
+  environment.persistence."/state" = {
+    directories = [
+      "/var/lib/git"
+      "/etc/hashed"
+      "/var/lib/nixos"
+    ];
+    files = [
+      # Secure Shell' Host Keys
+      "/etc/ssh/ssh_host_rsa_key"
+      "/etc/ssh/ssh_host_rsa_key.pub"
+      "/etc/ssh/ssh_host_ed25519_key"
+      "/etc/ssh/ssh_host_ed25519_key.pub"
+    ];
+  };
 }

@@ -6,24 +6,35 @@
 # disks, swap, filesystems...
 #
 # ────────────────────────────────────────────────────────────────────────
-_: {
+{
+  config,
+  lib,
+  ...
+}: let
+  inherit (lib.extra.facter) report;
+in {
   boot = {
     initrd.availableKernelModules = [
-      "ahci" # advanced host controller interface
-      "sd_mod" # secure digital
-      "usb_storage" # universal serial bus
-      "xhci_pci" # extensible host controller interface (over) peripheral component interconnect
+      "ahci"
+      "xhci_pci"
+      "virtio_pci"
+      "virtio_scsi"
+      "sd_mod"
+      "sr_mod"
     ];
+
 
     # ────────────────────────────────────────────────────────────────────────
     # NOTE: This is a safeguard against bypassing important checks.
     # ────────────────────────────────────────────────────────────────────────
     zfs.forceImportRoot = false;
-
-    kernelParams = [
-      # Maximum size of Arc cache and reserved space add up to
-      # leave exactly 12.5 GiB free for the rest of the system.
-      "zfs.zfs_arc_max=2139856896" # bytes
+    
+    kernelParams = let
+      size = report.memory.extra.size config.hardware.facter.report;
+    in [
+      # NOTE: Cap Arc cache memory usage at 25% of total available
+      #       memory (bytes).
+      "zfs.zfs_arc_max=${toString (builtins.ceil (0.25 * size))}"
     ];
   };
 
@@ -32,12 +43,12 @@ _: {
     "/" = {
       device = "tmpfs";
       fsType = "tmpfs";
-      options = ["defaults" "size=25%" "mode=755"];
+      options = ["defaults" "size=10%" "mode=755"];
     };
 
     # Boot
     "/boot" = {
-      device = "/dev/disk/by-uuid/F3AC-84D9";
+      device = "/dev/disk/by-uuid/EE58-DFC9";
       fsType = "vfat";
       options = [
         "fmask=0022" # file      permissions mask: 666 (default) - 022 = 644 ~ rw-r--r--
@@ -75,27 +86,9 @@ _: {
       neededForBoot = true;
       options = ["zfsutil"];
     };
-
-    # Data
-    "/archive" = {
-      device = "data/archive";
-      fsType = "zfs";
-      options = ["zfsutil"];
-    };
-    "/backup" = {
-      device = "data/backup";
-      fsType = "zfs";
-      options = ["zfsutil"];
-    };
   };
-
-  swapDevices = [
-    {
-      device = "/dev/disk/by-uuid/f342a395-2d19-43b3-af61-78fb0a9b6051";
-    }
-  ];
 
   # required by zfs to uniquely identify the machine
   # in a networked pool consisting of many nodes.
-  networking.hostId = "8425e349";
+  networking.hostId = "8a098e8c";
 }

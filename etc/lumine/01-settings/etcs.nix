@@ -3,26 +3,24 @@
 # █▀▀ ▀█▀ █▀▀ █▀
 # ██▄ ░█░ █▄▄ ▄█
 #
+# etcs, everything else...
+#
 # ────────────────────────────────────────────────────────────────────────
 {
   modulesPath,
   self,
-  lib,
   ...
 }: {
   imports = [
-    (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix")
-    (self + /etc/shared/01-settings/net.nix)
+    (self + /etc/shared/01-settings/etcs.nix)
+    (modulesPath + "/profiles/qemu-guest.nix")
   ];
 
-  # ignore lid state. it should remain running.
-  hardware.sensor.lid.enable = false;
+  powerManagement.cpuFreqGovernor = "performance";
 
-  # Configuration files and access credentials for `nixos-install`
-  isoImage.contents = [
-    # {
-    #   source = ../shared/defaults/minimal;
-    #   target = "/configuration"; # /iso/configuration
-    # }
-  ];
+  hardware = {
+    enableRedistributableFirmware = true;
+    # TODO: Check what it does?
+    # cpu.intel.updateMicrocode = true;
+  };
 }

@@ -19,8 +19,11 @@ in {
   # WIRELESS
   # --------
   networking.wireless.iwd = {
+    enable = true;
+
     settings = {
       General = {
+        AddressRandomization = "network";
         # ────────────────────────────────────────────────────────────────────────
         # TODO: Harden `iwd` by letting the daemon encrypt network configuraions.
         # - Enable hybrid encryption.
@@ -76,6 +79,32 @@ in {
   # UTILITIES
   # ---------
   environment.systemPackages = with pkgs; [
+    (impala.overrideAttrs (oldAttrs: {
+      nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [copyDesktopItems];
+
+      desktopItems = [
+        (makeDesktopItem {
+          name = "impala";
+          exec = "impala %u";
+          terminal = true;
+          comment = oldAttrs.meta.description;
+          desktopName = "Impala";
+          genericName = "Terminal-based wireless dashboard.";
+          categories = [
+            "System"
+            "Utility"
+            "Settings"
+          ];
+          keywords = [
+            "iwd"
+            "wireless"
+            "network"
+            "impala"
+            "nm"
+          ];
+        })
+      ];
+    }))
     iwqr
   ];
 
