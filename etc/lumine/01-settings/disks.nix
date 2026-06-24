@@ -23,10 +23,16 @@ in {
       "sr_mod"
     ];
 
+
+    # ────────────────────────────────────────────────────────────────────────
+    # NOTE: This is a safeguard against bypassing important checks.
+    # ────────────────────────────────────────────────────────────────────────
+    zfs.forceImportRoot = false;
+    
     kernelParams = let
       size = report.memory.extra.size config.hardware.facter.report;
     in [
-      # NOTE: Cap Arc cache memory usage at 25% of total available 
+      # NOTE: Cap Arc cache memory usage at 25% of total available
       #       memory (bytes).
       "zfs.zfs_arc_max=${toString (builtins.ceil (0.25 * size))}"
     ];
