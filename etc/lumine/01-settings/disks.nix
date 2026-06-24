@@ -6,7 +6,13 @@
 # disks, swap, filesystems...
 #
 # ────────────────────────────────────────────────────────────────────────
-_: {
+{
+  config,
+  lib,
+  ...
+}: let
+  inherit (lib.extra.facter) report;
+in {
   boot = {
     initrd.availableKernelModules = [
       "ahci"
@@ -17,10 +23,12 @@ _: {
       "sr_mod"
     ];
 
-    kernelParams = [
-      # Maximum size of Arc cache and reserved space add up to
-      # leave exactly 3625 MiB free for the rest of the system.
-      "zfs.zfs_arc_max=393219" # bytes
+    kernelParams = let
+      size = report.memory.extra.size config.hardware.facter.report;
+    in [
+      # NOTE: Cap Arc cache memory usage at 25% of total available 
+      #       memory (bytes).
+      "zfs.zfs_arc_max=${toString (builtins.ceil (0.25 * size))}"
     ];
   };
 
