@@ -16,7 +16,7 @@ _: {
     ];
 
     # ────────────────────────────────────────────────────────────────────────
-    # NOTE: This is a ZFS safeguard.
+    # NOTE: This is a safeguard against bypassing important checks.
     # ────────────────────────────────────────────────────────────────────────
     zfs.forceImportRoot = false;
 
