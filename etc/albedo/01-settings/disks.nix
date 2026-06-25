@@ -32,6 +32,7 @@ in {
         pool = {
           bypassWorkqueues = true;
           device = "/dev/disk/by-uuid/66863f41-ea06-4943-b8cf-7001c6188a44";
+          allowDiscards = true;
         };
       };
 
