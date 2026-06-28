@@ -25,8 +25,9 @@
       # for auditing purposes
       "/var/log/journal"
     ];
-    files = [
-      "/etc/machine-id"
-    ];
   };
+
+  # MACHINE-ID
+  # ----------
+  environment.etc.machine-id.source = "/state/etc/machine-id";
 }
