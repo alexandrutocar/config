@@ -24,11 +24,6 @@ in {
     bat = {
       enable = true;
 
-      scripts = with pkgs.bat-extras; [
-        batdiff
-        batgrep
-      ];
-
       settings = {
         paging = "never";
         theme = "ansi";

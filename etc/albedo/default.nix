@@ -7,9 +7,9 @@
 {lib, ...}: let
   inherit (lib.extra.files.list) recursive;
 in {
-  imports = recursive ./01-settings ++ recursive ./02-services;
+  imports = recursive ./_config;
 
   # HARDWARE CONFIGURATION
   # -------- -------------
-  hardware.facter.reportPath = ./facter.json;
+  hardware.facter.reportPath = ./report.json;
 }

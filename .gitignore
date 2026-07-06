@@ -1,1 +1,5 @@
+# Local Build
 /result
+
+# Logs
+*.log
