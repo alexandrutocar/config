@@ -19,7 +19,7 @@ in {
     port = 8080;
 
     # Storage
-    models = "/var/lib/models";
+    modelsDir = "/var/lib/models";
   };
 
   nixpkgs.config.allowUnfreePredicate = pkg:
