@@ -31,5 +31,7 @@ mkShell {
       nixd
       shfmt
       statix
+
+      opentofu
     ];
 }

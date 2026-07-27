@@ -1,6 +1,6 @@
 {
   description = ''
-    Aleks' Omnium Config
+    Reproducible configuration for Aether (Server), Albedo (Laptop), Lumine (Remote Server) and Beidou (Air-Gapped Bootable).
   '';
 
   inputs = {
@@ -20,11 +20,6 @@
     };
 
     # ────────────────────────────────────────────────────────────────────────
-
-    nixos-generators = {
-      url = "github:nix-community/nixos-generators";
-    };
-
     impermanence = {
       url = "github:nix-community/impermanence";
     };
@@ -33,23 +28,32 @@
       url = "github:nix-community/lanzaboote";
     };
 
-    harmonia = {
-      url = "github:nix-community/harmonia";
-    };
-
     home-manager = {
       url = "github:nix-community/home-manager";
     };
   };
 
   outputs = {self, ...} @ inputs: let
+    inherit (lib.customisation) callPackageWith;
     inherit (lib.filesystem) packagesFromDirectoryRecursive;
     inherit (lib.attrsets) attrValues genAttrs;
-    inherit (lib.extra.attrsets) mergeAttrsList;
 
     forSystems = genAttrs [
       "x86_64-linux"
     ];
+
+    mkLib = nixpkgs:
+      nixpkgs.lib.extend (final: super: let
+        custom = import (self + /nix/lib) final super;
+        hm = inputs.home-manager.lib;
+      in
+        hm
+        // custom
+        // {
+          types = custom.types;
+        });
+
+    lib = mkLib inputs.nixpkgs-nixos-unstable-small;
 
     mkPackages = system: pkgs:
       import pkgs {
@@ -58,13 +62,11 @@
         overlays = attrValues self.overlays;
       };
 
-    lib = inputs.nixpkgs-nixos-unstable-small.lib.extend (final: super: ((import (self + /nix/lib) final super) // inputs.home-manager.lib));
-
     mkSystem = hostname: {
       nixpkgs,
       modules,
     }: let
-      lib = nixpkgs.lib.extend (final: super: ((import (self + /nix/lib) final super) // inputs.home-manager.lib));
+      lib = mkLib nixpkgs;
     in
       lib.nixosSystem {
         modules =
@@ -73,7 +75,7 @@
             inputs.lanzaboote.nixosModules.lanzaboote
 
             # Custom options.
-            ./nix/nixos/modules
+            ./nix/nixos
 
             # Make `nix run nixpkgs#nixpkgs` use the same
             # package repository as the one used here.
@@ -106,7 +108,7 @@
       nixpkgs,
       imports ? [],
     }: let
-      lib = nixpkgs.lib.extend (final: super: ((import (self + /nix/lib) final super) // inputs.home-manager.lib));
+      lib = mkLib nixpkgs;
     in [
       inputs.home-manager.nixosModules.home-manager
       (_: {
@@ -146,15 +148,28 @@
       inherit (lib.extra.files.special) patches scripts;
     in
       {
-        packages-overlay = final: super: {
-          inherit (self.packages.${final.stdenv.hostPlatform.system}) davis;
+        lib = final: super: {
+          inherit lib;
         };
 
-        aliases-overlay = import (./nix + "/fixes?/aliases.nix");
+        packages = final: super: {
+          inherit (self.packages.${final.stdenv.hostPlatform.system}) certs davis;
+        };
 
-        utils-overlay = final: super: {
-          custom.writeShell = import ./nix/packages/utils/write-shell/package.nix final;
+        aliases = import (./nix + "/fixes?/aliases.nix");
+
+        tools = final: super: {
+          custom.writeShell = import ./nix/packages/tools/write-shell/package.nix final;
           custom.scripts = scripts ./nix/packages/scripts final;
+        };
+
+        formats = final: super: {
+          formats =
+            super.formats
+            // {
+              plist = import ./nix/packages/formats/plist.nix final;
+              strongswan = import ./nix/packages/formats/strongswan.nix final;
+            };
         };
       }
       // (patches (./nix + "/fixes?"));
@@ -172,7 +187,7 @@
             ++ (mkHome "git" {
               inherit nixpkgs;
               imports = [
-                ./dot/aether/git
+                ./dot/aether/by-user/git
               ];
             });
         };
@@ -189,7 +204,7 @@
             ++ (mkHome "alex" {
               inherit nixpkgs;
               imports = [
-                ./dot/albedo/alex
+                ./dot/albedo/by-user/alex
               ];
             });
         };
@@ -199,10 +214,9 @@
       in
         mkSystem "lumine" {
           inherit nixpkgs;
-          modules =
-            [
-              ./etc/lumine
-            ];
+          modules = [
+            ./etc/lumine
+          ];
         };
     };
 
@@ -210,45 +224,10 @@
       system: let
         pkgs = mkPackages system inputs.nixpkgs-nixos-unstable-small;
       in
-        mergeAttrsList [
-          (
-            packagesFromDirectoryRecursive {
-              inherit (pkgs) callPackage;
-              directory = ./nix/packages/by-name;
-            }
-          )
-          {
-            beidou = let
-              _system = let
-                nixpkgs = inputs.nixpkgs-nixos-unstable;
-              in
-                mkSystem "beidou" {
-                  inherit nixpkgs;
-                  modules =
-                    [
-                      {
-                        nixpkgs.hostPlatform = system;
-                      }
-                      ./etc/beidou
-                    ]
-                    ++ (mkHome "yelan" {
-                      inherit nixpkgs;
-                      imports = [
-                        ./dot/beidou/yelan
-                      ];
-                    });
-                };
-            in
-              inputs.nixos-generators.nixosGenerate {
-                inherit system;
-
-                format = "iso";
-
-                inherit (_system._module.args) modules;
-                inherit (_system._module) specialArgs;
-              };
-          }
-        ]
+        packagesFromDirectoryRecursive {
+          callPackage = callPackageWith (pkgs // {inherit lib;});
+          directory = ./nix/packages/by-name;
+        }
     );
   };
 }

@@ -1,0 +1,3 @@
+_: {
+  boot.blacklistedKernelModules = ["iwlwifi"];
+}
