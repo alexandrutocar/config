@@ -1,3 +1,7 @@
+# Development Shell
+/.devenv
+/.direnv
+
 # Local Build
 /result
 
