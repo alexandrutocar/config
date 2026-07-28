@@ -1,4 +1,4 @@
-final: super: let
+_: super: let
   inherit (super.attrsets) mapAttrsToList;
   inherit (super.lists) flatten optionals;
   inherit (super.strings) concatMapStringsSep escapeXML;

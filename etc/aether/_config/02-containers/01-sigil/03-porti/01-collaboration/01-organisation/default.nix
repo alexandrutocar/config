@@ -1,8 +1,4 @@
-{
-  config,
-  lib,
-  ...
-}: let
+{lib, ...}: let
   inherit (lib.extra.files.list) recursive;
   inherit (lib.modules) mkAfter;
 in let

@@ -1,5 +1,5 @@
 _: super: {
-  creek = super.creek.overrideAttrs (old: let
+  creek = super.creek.overrideAttrs (_: let
     version = "0.4.5-20260728";
     deps = super.callPackage ./build.zig.zon.nix {};
   in {

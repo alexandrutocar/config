@@ -23,7 +23,7 @@ in {
             };
           };
         };
-        
+
         network = {
           links = {
             intra = {

@@ -54,9 +54,9 @@ in {
         # Auth
         # ----
         AUTH_METHOD = "LDAP";
-        LDAP_AUTH_URL="ldap://${ipv6.enclose sigil.containers.intra."c38a828e-58a7-49af-894d-ba02f936d211".addresses.ula}:3890";
-        LDAP_DN_PATTERN ="uid=%u,ou=people,dc=intra,dc=net,dc=internal";
-        LDAP_MAIL_ATTRIBUTE="mail";
+        LDAP_AUTH_URL = "ldap://${ipv6.enclose sigil.containers.intra."c38a828e-58a7-49af-894d-ba02f936d211".addresses.ula}:3890";
+        LDAP_DN_PATTERN = "uid=%u,ou=people,dc=intra,dc=net,dc=internal";
+        LDAP_MAIL_ATTRIBUTE = "mail";
         LDAP_AUTH_USER_AUTOCREATE = "true";
         LDAP_CERTIFICATE_CHECKING_STRATEGY = "try";
 

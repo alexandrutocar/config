@@ -1,8 +1,8 @@
-{...}: {
+_: {
   systemd = {
     network = {
       networks = {
-        "10-host0" = { 
+        "10-host0" = {
           networkConfig = {
             IPv6AcceptRA = false;
             IPv6LinkLocalAddressGenerationMode = "none";

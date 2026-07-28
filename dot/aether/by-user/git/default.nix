@@ -4,11 +4,7 @@
 # █▄█ █ ░█░ ▀▄ █▀█ ░█░ ▄▀ █▀█ ██▄ ░█░ █▀█ ██▄ █▀▄
 #
 # ────────────────────────────────────────────────────────────────────────
-{lib, ...}: let
-  inherit (lib.extra.files.list) recursive;
-in {
-  imports = recursive ./repositories;
-
+_: {
   home = {
     homeDirectory = "/var/lib/git";
     stateVersion = "26.05";

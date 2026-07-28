@@ -355,7 +355,7 @@ final: super: let
       shallow = directory:
         _list directory {
           filter = path: type: (type != "directory") && !(super.hasPrefix "_" (baseNameOf path)) && (super.strings.hasSuffix ".nix" path);
-          mapper = name: type: (builtins.concatStringsSep "/" [directory name]);
+          mapper = name: _: (builtins.concatStringsSep "/" [directory name]);
         };
 
       recursive = directory:
@@ -363,7 +363,7 @@ final: super: let
           filter = path: type:
             !(super.hasPrefix "_" (baseNameOf path))
             && (type == "directory" || super.strings.hasSuffix ".nix" path);
-          mapper = name: type: name;
+          mapper = name: _: name;
         };
     };
 
@@ -371,7 +371,7 @@ final: super: let
       shallow = f: directory:
         _list directory {
           filter = path: type: (type != "directory") && !(super.hasPrefix "_" (baseNameOf path)) && (super.strings.hasSuffix ".nix" path);
-          mapper = name: type: f (builtins.concatStringsSep "/" [directory name]);
+          mapper = name: _: f (builtins.concatStringsSep "/" [directory name]);
         };
 
       recursive = f: directory:
@@ -379,7 +379,7 @@ final: super: let
           filter = path: type:
             !(super.hasPrefix "_" (baseNameOf path))
             && (type == "directory" || super.strings.hasSuffix ".nix" path);
-          mapper = name: type: f name;
+          mapper = name: _: f name;
         };
     };
 
@@ -388,7 +388,7 @@ final: super: let
         builtins.listToAttrs (
           _list directory {
             filter = path: type: !(super.hasPrefix "_" (baseNameOf path)) && (type == "directory");
-            mapper = name: type: {
+            mapper = name: _: {
               inherit name;
               value = import (builtins.concatStringsSep "/" [directory name "patch.nix"]);
             };
@@ -410,7 +410,7 @@ final: super: let
         builtins.listToAttrs (
           _list directory {
             filter = path: type: !(super.hasPrefix "_" (baseNameOf path)) && (type == "directory");
-            mapper = name: type: {
+            mapper = name: _: {
               name = builtins.substring 3 (builtins.stringLength name) name;
               value = pkgs.callPackage (builtins.concatStringsSep "/" [directory name "script.nix"]) pkgs;
             };

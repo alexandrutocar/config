@@ -389,7 +389,7 @@ in {
     inherit (lib.modules) mkDefault mkForce mkIf mkMerge;
   in
     mkIf cfg.enable (let
-      filteredSettings = filterAttrs (name: value: value != null) cfg.settings;
+      filteredSettings = filterAttrs (_: value: value != null) cfg.settings;
     in
       mkMerge [
         {
