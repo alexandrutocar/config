@@ -8,7 +8,7 @@
     # NOTE: For server systems (hosts).
     # ────────────────────────────────────────────────────────────────────────
     nixpkgs-nixos-unstable-small = {
-      url = "github:nixos/nixpkgs?rev=1c0fc59a961424afd95e00966e6b6021b65ef605"; # nixos-unstable-small
+      url = "github:nixos/nixpkgs?rev=aac3a899cc6ce8d928dfc5818dafc093b7936010"; # nixos-unstable-small
     };
 
     # ────────────────────────────────────────────────────────────────────────
@@ -16,7 +16,7 @@
     #       with long build times (e.g. Firefox, Chromium, Electron).
     # ────────────────────────────────────────────────────────────────────────
     nixpkgs-nixos-unstable = {
-      url = "github:nixos/nixpkgs?rev=1c0fc59a961424afd95e00966e6b6021b65ef605"; # ~nixos-unstable
+      url = "github:nixos/nixpkgs?rev=624af665418d3c65d544145b4d34ad696439570e"; # ~nixos-unstable
     };
 
     # ────────────────────────────────────────────────────────────────────────
@@ -148,17 +148,17 @@
       inherit (lib.extra.files.special) patches scripts;
     in
       {
-        lib = final: super: {
+        lib = _: _: {
           inherit lib;
         };
 
-        packages = final: super: {
+        packages = final: _: {
           inherit (self.packages.${final.stdenv.hostPlatform.system}) certs davis;
         };
 
         aliases = import (./nix + "/fixes?/aliases.nix");
 
-        tools = final: super: {
+        tools = final: _: {
           custom.writeShell = import ./nix/packages/tools/write-shell/package.nix final;
           custom.scripts = scripts ./nix/packages/scripts final;
         };
