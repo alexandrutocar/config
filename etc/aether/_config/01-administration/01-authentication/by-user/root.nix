@@ -1,8 +1,4 @@
-{
-  config,
-  lib,
-  ...
-}: let
+{lib, ...}: let
   inherit (lib.modules) mkForce;
 in let
   user.name = "root";
@@ -12,16 +8,8 @@ in {
       ${user.name} = {
         description = mkForce "Administrator";
 
-        hashedPasswordFile = "/etc/hashed/${user.name}";
+        hashedPasswordFile = "/state/etc/hashed/${user.name}";
       };
-    };
-  };
-
-  environment.persistence = {
-    "/state" = {
-      files = [
-        config.users.users.${user.name}.hashedPasswordFile
-      ];
     };
   };
 }

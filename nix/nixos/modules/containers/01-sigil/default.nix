@@ -56,189 +56,190 @@ in {
               in "${prefix}:${builtins.substring 0 4 hash}";
 
               getULAddress = prefix: group: mid: "${getULAPrefix prefix group}:${getIIdentity mid}";
-            in (
+            in
               group:
-                submodule ({
-                  config,
-                  name,
-                  ...
-                }: {
-                  options = let
-                    # EVALUATION
-                    # ----------
-                    # Address book handed to the container's own module system through
-                    # `specialArgs.container`.
-                    infosFor = container: {
-                      inherit (container) mid group addresses;
-                      links = linksFor container;
-                    };
-
-                    # Links declared for a container under
-                    # `settings.network.links.<group>.<id>`, if any.
-                    linksFor = container: let
-                      policies = {
-                        outgoing = attrByPath [container.group container.mid] [] cfg.settings.network.links;
-
-                        incoming = concatMap (
-                          group:
-                            concatMap (
-                              source:
-                                builtins.filter (l: l.target.mid == container.mid) group.${source}
-                            ) (builtins.attrNames group)
-                        ) (builtins.attrValues cfg.settings.network.links);
+                submodule (
+                  {
+                    config,
+                    name,
+                    ...
+                  }: {
+                    options = let
+                      # EVALUATION
+                      # ----------
+                      # Address book handed to the container's own module system through
+                      # `specialArgs.container`.
+                      infosFor = container: {
+                        inherit (container) mid group addresses;
+                        links = linksFor container;
                       };
 
-                      bridges = attrValues (foldl' (acc: link:
-                        if acc ? ${link.bid}
-                        then acc
-                        else
-                          acc
-                          // {
-                            ${link.bid} = {
-                              inherit (link) bid;
-                              port =
-                                if link.source.mid == container.mid
-                                then link.target
-                                else link.source;
-                            };
-                          }) {}
-                      (policies.outgoing ++ policies.incoming));
+                      # Links declared for a container under
+                      # `settings.network.links.<group>.<id>`, if any.
+                      linksFor = container: let
+                        policies = {
+                          outgoing = attrByPath [container.group container.mid] [] cfg.settings.network.links;
+
+                          incoming = concatMap (
+                            group:
+                              concatMap (
+                                source:
+                                  builtins.filter (l: l.target.mid == container.mid) group.${source}
+                              ) (builtins.attrNames group)
+                          ) (builtins.attrValues cfg.settings.network.links);
+                        };
+
+                        bridges = attrValues (foldl' (acc: link:
+                          if acc ? ${link.bid}
+                          then acc
+                          else
+                            acc
+                            // {
+                              ${link.bid} = {
+                                inherit (link) bid;
+                                port =
+                                  if link.source.mid == container.mid
+                                  then link.target
+                                  else link.source;
+                              };
+                            }) {}
+                        (policies.outgoing ++ policies.incoming));
+                      in {
+                        lib = {
+                          bridge = {
+                            mapToAttrs = f: mergeAttrsList (map f bridges);
+                            mapToList = f: concatMap f bridges;
+                          };
+                          policy = {
+                            mapToAttrs = f: mergeAttrsList (map f policies.outgoing);
+                            mapToList = f: concatMap f policies.outgoing;
+                          };
+                        };
+                      };
                     in {
-                      lib = {
-                        bridge = {
-                          mapToAttrs = f: mergeAttrsList (map f bridges);
-                          mapToList = f: concatMap f bridges;
+                      addresses = {
+                        gua = mkOption {
+                          readOnly = false;
+                          type = nullOr str;
+                          default = getGUAddress cfg.settings.network.gua.prefix config.mid;
+                          description = "Globally routable address of the container.";
                         };
-                        policy = {
-                          mapToAttrs = f: mergeAttrsList (map f policies.outgoing);
-                          mapToList = f: concatMap f policies.outgoing;
+
+                        ula = mkOption {
+                          readOnly = false;
+                          type = nullOr str;
+                          default = getULAddress cfg.settings.network.ula.prefix config.group config.mid;
+                          description = "Zone-local address of the container.";
                         };
                       };
-                    };
-                  in {
-                    addresses = {
-                      gua = mkOption {
-                        readOnly = false;
-                        type = nullOr str;
-                        default = getGUAddress cfg.settings.network.gua.prefix config.mid;
-                        description = "Globally routable address of the container.";
-                      };
 
-                      ula = mkOption {
-                        readOnly = false;
-                        type = nullOr str;
-                        default = getULAddress cfg.settings.network.ula.prefix config.group config.mid;
-                        description = "Zone-local address of the container.";
-                      };
-                    };
-
-                    group = mkOption {
-                      type = str;
-                      default = group;
-                      defaultText = literalExpression "group";
-                      description = ''
-                        Group this container belongs to. Determines the ULA /64
-                        prefix its address is derived from.
-                      '';
-                    };
-
-                    mid = mkOption {
-                      type = str;
-                      default = name;
-                      defaultText = literalExpression "name";
-                      description = ''
-                        Container identity. Must be a valid UUID: it is passed
-                        verbatim to `systemd-nspawn --uuid=` and seeds the
-                        container's interface identifier.
-                      '';
-                    };
-
-                    nspawn = {
-                      config = mkOption {
-                        type = options.systemd.nspawn.type.nestedTypes.elemType;
-                        default = {};
-                        description = "Nspawn configuration `systemd.nspawn.<name>`.";
-                      };
-                      flags = mkOption {
-                        type = listOf str;
-                        default = [];
-                        example = ["--drop-capability=CAP_SYS_CHROOT"];
+                      group = mkOption {
+                        type = str;
+                        default = group;
+                        defaultText = literalExpression "group";
                         description = ''
-                          Flags passed to the systemd-nspawn command.
-                          See {manpage}`systemd-nspawn(1)` for details.
+                          Group this container belongs to. Determines the ULA /64
+                          prefix its address is derived from.
                         '';
                       };
-                    };
 
-                    modules = mkOption {
-                      type = listOf deferredModule;
-                      default = [];
-                      description = ''
-                        NixOS modules of this container, evaluated together with
-                        the shared module set.
-                      '';
-                    };
+                      mid = mkOption {
+                        type = str;
+                        default = name;
+                        defaultText = literalExpression "name";
+                        description = ''
+                          Container identity. Must be a valid UUID: it is passed
+                          verbatim to `systemd-nspawn --uuid=` and seeds the
+                          container's interface identifier.
+                        '';
+                      };
 
-                    evaluation = mkOption {
-                      type = lib.types.unspecified;
-                      readOnly = true;
-                      default = import "${toString pkgs.path}/nixos/lib/eval-config.nix" {
-                        prefix = ["sigil" "containers" config.group config.mid];
-                        system = null;
+                      nspawn = {
+                        config = mkOption {
+                          type = options.systemd.nspawn.type.nestedTypes.elemType;
+                          default = {};
+                          description = "Nspawn configuration `systemd.nspawn.<name>`.";
+                        };
+                        flags = mkOption {
+                          type = listOf str;
+                          default = [];
+                          example = ["--drop-capability=CAP_SYS_CHROOT"];
+                          description = ''
+                            Flags passed to the systemd-nspawn command.
+                            See {manpage}`systemd-nspawn(1)` for details.
+                          '';
+                        };
+                      };
 
-                        modules =
-                          config.modules
-                          ++ recursive ./_container
-                          ++ [
-                            (_: {
-                              imports = [
-                                (modulesPath + "/misc/nixpkgs/read-only.nix")
-                                (self + /nix/nixos)
-                              ];
-                              config = {
-                                nixpkgs = {
-                                  inherit pkgs;
+                      modules = mkOption {
+                        type = listOf deferredModule;
+                        default = [];
+                        description = ''
+                          NixOS modules of this container, evaluated together with
+                          the shared module set.
+                        '';
+                      };
+
+                      evaluation = mkOption {
+                        type = lib.types.unspecified;
+                        readOnly = true;
+                        default = import "${toString pkgs.path}/nixos/lib/eval-config.nix" {
+                          prefix = ["sigil" "containers" config.group config.mid];
+                          system = null;
+
+                          modules =
+                            config.modules
+                            ++ recursive ./_container
+                            ++ [
+                              (_: {
+                                imports = [
+                                  (modulesPath + "/misc/nixpkgs/read-only.nix")
+                                  (self + /nix/nixos)
+                                ];
+                                config = {
+                                  nixpkgs = {
+                                    inherit pkgs;
+                                  };
+                                  system = {
+                                    stateVersion = "26.05";
+                                  };
                                 };
-                                system = {
-                                  stateVersion = "26.05";
-                                };
-                              };
-                            })
-                          ];
+                              })
+                            ];
 
-                        specialArgs = {
-                          sigil = {
-                            self = infosFor config;
-                            containers =
-                              mapAttrs (_: mapAttrs (_: infosFor)) cfg.settings.containers;
+                          specialArgs = {
+                            sigil = {
+                              self = infosFor config;
+                              containers =
+                                mapAttrs (_: mapAttrs (_: infosFor)) cfg.settings.containers;
+                            };
+                            inherit lib;
                           };
-                          inherit lib;
                         };
                       };
                     };
-                  };
 
-                  config = {
-                    nspawn = {
-                      # No flags are a requirement for sigil to work correctly, but
-                      # having a stable machine id can improve debugging experience.
-                      flags = mkBefore [
-                        "--settings=trusted"
-                        "--keep-unit"
-                        "--quiet"
-                        # If you decide to use systemd credentials for services inside the container
-                        # then having a stable machine id is a must, as host-key based encryption
-                        # ties generated credential.secret to a machine id (tpm2 would require a
-                        # bind mount and a device passthrough). If your machine id changes, then
-                        # your credential.secret WILL BE DELETED when a decryption by any service
-                        # is attempted WITHOUT A WARNING.
-                        "--uuid=${config.mid}"
-                        "--machine=${config.mid}"
-                      ];
+                    config = {
+                      nspawn = {
+                        # No flags are a requirement for sigil to work correctly, but
+                        # having a stable machine id can improve debugging experience.
+                        flags = mkBefore [
+                          "--settings=trusted"
+                          "--keep-unit"
+                          "--quiet"
+                          # If you decide to use systemd credentials for services inside the container
+                          # then having a stable machine id is a must, as host-key based encryption
+                          # ties generated credential.secret to a machine id (tpm2 would require a
+                          # bind mount and a device passthrough). If your machine id changes, then
+                          # your credential.secret WILL BE DELETED when a decryption by any service
+                          # is attempted WITHOUT A WARNING.
+                          "--uuid=${config.mid}"
+                          "--machine=${config.mid}"
+                        ];
+                      };
                     };
-                  };
-                })
-            );
+                  }
+                );
           in
             attrsOf (
               submodule ({name, ...}: {
@@ -274,40 +275,41 @@ in {
                     (concatStringsSep ":" (sort (x: y: x < y) [a b])));
 
                 getPIdentity = a: b: substring 0 12 (hashString "sha256" "${a}:${b}");
-              in (
+              in
                 group: source:
-                  submodule ({config, ...}: {
-                    options = {
-                      source = lib.mkOption {
-                        type = str;
-                        readOnly = true;
-                        apply = mid: attrByPath [mid] null cfg.settings.containers.${group};
-                        default = source;
-                      };
+                  submodule (
+                    {config, ...}: {
+                      options = {
+                        source = lib.mkOption {
+                          type = str;
+                          readOnly = true;
+                          apply = mid: attrByPath [mid] null cfg.settings.containers.${group};
+                          default = source;
+                        };
 
-                      target = mkOption {
-                        type = attrsOf raw;
-                        description = "Target container. Must be a container's UUID.";
-                      };
+                        target = mkOption {
+                          type = attrsOf raw;
+                          description = "Target container. Must be a container's UUID.";
+                        };
 
-                      bid = mkOption {
-                        type = str;
-                        readOnly = true;
-                        default = getBIdentity config.source.mid config.target.mid; # direction-free: sorted before hashing
-                        defaultText = literalExpression "mkBID <source> config.target";
-                        description = "Bridge id — identical for a→b and b→a.";
-                      };
+                        bid = mkOption {
+                          type = str;
+                          readOnly = true;
+                          default = getBIdentity config.source.mid config.target.mid; # direction-free: sorted before hashing
+                          defaultText = literalExpression "mkBID <source> config.target";
+                          description = "Bridge id — identical for a→b and b→a.";
+                        };
 
-                      pid = mkOption {
-                        type = str;
-                        readOnly = true;
-                        default = getPIdentity config.source.mid config.target.mid; # directional
-                        defaultText = literalExpression "mkPID <source> config.target";
-                        description = "Policy id — distinct per direction.";
+                        pid = mkOption {
+                          type = str;
+                          readOnly = true;
+                          default = getPIdentity config.source.mid config.target.mid; # directional
+                          defaultText = literalExpression "mkPID <source> config.target";
+                          description = "Policy id — distinct per direction.";
+                        };
                       };
-                    };
-                  })
-              );
+                    }
+                  );
 
               linksList = mkOptionType {
                 name = "listOfLinks";
@@ -487,8 +489,7 @@ in {
                       (builtins.toJSON globalConfig.systemd.nspawn.${container.mid})
                     ];
                     serviceConfig = {
-                      ExecStart = let
-                      in [
+                      ExecStart = [
                         ""
                         (builtins.concatStringsSep " " ((singleton "systemd-nspawn") ++ container.nspawn.flags))
                       ];
@@ -615,7 +616,7 @@ in {
                 concatMap (
                   bridge:
                     map (port: {
-                      mid = port.mid;
+                      inherit (port) mid;
                       extra = "${mkLHLinkName bridge.bid port.mid}:${mkLCLinkName bridge.bid port.mid}";
                     })
                     bridge.ports
@@ -639,8 +640,7 @@ in {
             # NETWORK CONFIG
             # --------------
             systemd = {
-              network = let
-              in {
+              network = {
                 netdevs = links.lib.bridge.mapToAttrs (bridge: let
                   Name = mkBridgeName bridge.bid;
                 in {
