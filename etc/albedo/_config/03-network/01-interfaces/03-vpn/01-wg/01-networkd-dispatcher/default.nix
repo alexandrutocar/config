@@ -10,13 +10,22 @@
       vpn-on-demand = {
         onState = ["routable" "carrier"];
         script = let
-          internet-ipv4-only-networks = [
-            "eduroam"
-            "eduroam-cs"
-            "eduroam-math"
-            "eduroam-stw"
-            "eduroam-ukb"
-          ];
+          internet-ipv4-only-networks = with organisations; uni ++ c4;
+
+          organisations = {
+            chaos-computer-club = [
+              "c4-beta"
+              "c4"
+            ];
+
+            university-of-bonn = [
+              "eduroam"
+              "eduroam-cs"
+              "eduroam-math"
+              "eduroam-stw"
+              "eduroam-ukb"
+            ];
+          };
         in ''
           #!${pkgs.runtimeShell}
           if [[ "$IFACE" == wlan0 ]]; then
