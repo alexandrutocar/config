@@ -20,15 +20,17 @@ in {
       lldap = {
         serviceConfig = {
           SetCredentialEncrypted = mkSetCredentialEncrypted {
+            # tr -dc 'a-f0-9' < /dev/urandom | head -c 64; echo -n | systemd-creds encrypt --with-key=host --name=jwt_secret - -
             "jwt_secret" = ''
-              Whxqht+dQJax1aZeCGLxmiAAAAABAAAADAAAABAAAAAjO51Vp+98W3pYP4EAAAAANx1VJY243YPIc/F
-              OSceU1W6VTD23JLN4Uh1y6YeYOX1RbIF13MzG48XKhfgpQQ8WJ9vaxJfEQYWafJ6jIjof1ZZhrfIeH+
-              7pkoMDw+SVFN17EnB0arL+DkZvD8WglQfoAXfsjtazIYKNS/3t3PjPKQ==
+              Whxqht+dQJax1aZeCGLxmiAAAAABAAAADAAAABAAAADWJc8u+fhzg1yZVCgAAAAAKlXQELPUP+EcpDM
+              Xxqu8Z9BVzSOWCukhE4ctBNsM9HPtDwqiTcd9pZ/UYmDbZ8dYTNPosEtr09nMJlHZKT1gqqq+N+eBoX
+              kIlHeFqsh9/5m5xr7N8CxFU1kHMNsUe72XzoJODfttIn9M/QxtSaMOEg==
             '';
+            # echo -n '<password>' 
             "ldap_user_pass" = ''
-              Whxqht+dQJax1aZeCGLxmiAAAAABAAAADAAAABAAAAAJfY8KplLBTeJfzbEAAAAAVhbA8L5WymLW0W6
-              2PRmis1I449XxPBnEJfqwIE9kWVFVd7cVCfmWoGbt1S2rfCvqdt/EhU7LO1ZDLMZiQBaNN7WGLjQSEB
-              RK0c0SEapAcSr/EzRkZKobwg==
+              Whxqht+dQJax1aZeCGLxmiAAAAABAAAADAAAABAAAAAXdL1lDO55zci9qsgAAAAAcLZYvCOR55WtJJX
+              CwuFuetjuDJYEF6ZDTAND87+KARUIx2QdBl/8BAFekL3y9jRKxXAyYPSDRKdZ2Ajs0MOCN4wqpmRhau
+              yaquOZbbm/lFxx5H7odhhGhA==
             '';
           };
         };

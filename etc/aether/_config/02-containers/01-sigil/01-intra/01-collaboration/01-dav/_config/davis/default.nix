@@ -19,15 +19,17 @@ in {
     services = let
       serviceConfig = {
         SetCredentialEncrypted = mkSetCredentialEncrypted {
+          # echo -n '<password>' | systemd-creds encrypt --with-key=host --name=admin-password - -
           admin-password = ''
-            Whxqht+dQJax1aZeCGLxmiAAAAABAAAADAAAABAAAADs+H0i2u/hSoAR3W4AAAAAoSGd5oSLdo5YBCZ
-            Vf2/L+QQH3oZLNdDumHGbutFJuTgQZ2iBfwU083BHr5/wVwAdRTV46MSK3/ymeHCdTUArwS/sMb8KZK
-            uhu9sxlgZlteQIDyf7S51U7g8=
+            Whxqht+dQJax1aZeCGLxmiAAAAABAAAADAAAABAAAAADu1kyGXR1xHg2GPIAAAAApsb8q/w9geS0ZIj
+            J++iYmaM+U9lYIs/J3BFad9OtUFyx+gtfxz9GKBtFvI/eFS7VFje5Y6O1qwbuWOEy5cNrVFt8fhlK2L
+            kSXzdUpHaGNzMirEycI+pdZA==
           '';
+          # tr -dc 'a-f0-9' < /dev/urandom | head -c 64; echo -n | systemd-creds encrypt --with-key=host --name=app-secret - -
           app-secret = ''
-            Whxqht+dQJax1aZeCGLxmiAAAAABAAAADAAAABAAAAAG71HJWWlfUTLpJuoAAAAA1hMeJ362c2k7XAi
-            AbIuRViljRmdu5y0yO0TdkrcjRulwJRqs/yDGimWNeWkUs0th8/iZ8iKnnnshnqPGEG6q9I9zrBUskc
-            m4SJrPdkXXlkoqUEEPVRx9NkqBtAzM1Pegs3cRWrmRSeWIYoo6WhauFw==
+            Whxqht+dQJax1aZeCGLxmiAAAAABAAAADAAAABAAAAC7D/MV+q0hrqNzu0MAAAAAmqMxWdr+ze/Y9j+
+            KjKpNbKEI+PXKvNfPpxwsrhmJfd919Qb+rdaMN65MS61V+iDgpSf09n0y67T10US4/ewayz27KIp67f
+            AjXH6LssaJLOVxSXMEjV8EvGuDWMJ6LjmRLq7+Mg6OtU/S4xscm9TidQ==
           '';
         };
       };

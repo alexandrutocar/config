@@ -24,13 +24,14 @@ in let
 in {
   systemd.services.nginx.serviceConfig = {
     SetCredentialEncrypted = mkSetCredentialEncrypted {
+      # cat /tmp/intra.net.internal-key.pem | systemd-creds encrypt --with-key=host --name=intra.net.internal-key.pem - -
       "intra.net.internal-key.pem" = ''
-        Whxqht+dQJax1aZeCGLxmiAAAAABAAAADAAAABAAAADVtgmcrVbpqzHU3+gAAAAANuwocUGZvTqOEhv
-        ALpV1IeR/uZdRh+gQDEGTe3KAWYrv9QBaN0hf2Pa4iyxFBq3sQO9mS1i9qo3dJMzv/I1cTuu4cSxwLF
-        BlSyDMLRYqy2tSb87xCJVa9cWkVBNL6p/buCagmLejcly9ngVRKwhmcIiirFacs6bFBetUv7+AXE780
-        WFY96ad6M1rqVy/hGkGL3hIwTt0yqhFgE3qKKt0/2sV1ereCdl0oDdn9+z5rZDBjBZB4ERTeboDC9VI
-        MWqiSNuZ+8EJOxh31OAvT1HWilqdQnFRmJUht/8BmFtqnexbWvTlJjc9GybVafIqkKkk62tWAAh5NL0
-        Y0TsI57P8i02gC3zTWgreDn4L4vvhjrdcuPBabskJc5tjMp3eeDv32Q0U
+        Whxqht+dQJax1aZeCGLxmiAAAAABAAAADAAAABAAAAAGBlPIxd1u6NawYfEAAAAAohZpS7LS+pwpv6p
+        6EQqiISQUChWEVOpqMU88q5x/drOWt+JAJnXVcZc+bqm9LO79eDR8y3gKeaTeUG4qtWlmOw5EJPSGHb
+        fw3CTN+D/HPFfDKXehE8tgmdFMNGDxqhZWTqZSrrhBMcYxcW6T+zkLeCTPv36vawfYSYyofKnOVvGia
+        SH/HVhPH65/UOQUoEH+fOYIzJU6qZPEuXER+I4iHA/bYPDr/aCjDSdTzQHehkPXukc5Aq0Qj6OebAW/
+        BUIiAn02cxIeuQYxgfjvH5zvQgeNmr/AYDea54deF/0w64/Ov4L70A0VpxDEM0Bi21tEJpLwyyv5tai
+        WJqYAzH9Z0WrPZ8LcU8Hr1BsOOH8mfCcYpFPBdTQpYK/0g427Cz0UlFX5
       '';
     };
   };
