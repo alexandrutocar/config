@@ -2,7 +2,7 @@
   inherit (lib.extra.files.list) recursive;
   inherit (lib.modules) mkAfter;
 in let
-  mid = "c7f4d370-8043-46c8-97ae-39417237ac82";
+  mid = "a8dd2ef7-86c8-4a7e-af8a-b3f98a2f31d3";
 in {
   services = {
     sigil = {
@@ -15,6 +15,8 @@ in {
                 config = {
                   filesConfig = {
                     Bind = [
+                      "/state/var/lib/machines/${mid}/var/lib/postgresql:/var/lib/postgresql:idmap"
+                      "/state/var/lib/machines/${mid}/var/lib/redis:/var/lib/redis:idmap"
                       "/state/var/lib/machines/${mid}/var/lib/stalwart:/var/lib/stalwart:idmap"
                     ];
                   };
@@ -26,14 +28,6 @@ in {
             };
           };
         };
-        network = {
-          links = {
-            porti = {
-              ${mid} = [
-              ];
-            };
-          };
-        };
       };
     };
   };
@@ -41,7 +35,7 @@ in {
   systemd.services."systemd-nspawn@${mid}" = {
     serviceConfig = {
       LoadCredentialEncrypted = [
-        # { xxd -r -p <<< "$(systemd-id128 show "c7f4d370804346c897ae39417237ac82" --app-specific=d3acecba-0dad-4cdf-b8c9-381528936c58 --value)"; head -c 4096 /dev/urandom; } | systemd-creds encrypt --name=credential.secret --with-key=host+tpm2 - -
+        # { xxd -r -p <<< "$(systemd-id128 show "a8dd2ef786c84a7eaf8ab3f98a2f31d3" --app-specific=d3acecba-0dad-4cdf-b8c9-381528936c58 --value)"; head -c 4096 /dev/urandom; } | systemd-creds encrypt --name=credential.secret --with-key=host+tpm2 - -
         "credential.secret:${./_secret/credential.secret.encrypted}"
       ];
     };

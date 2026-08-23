@@ -10,8 +10,11 @@
   services.stalwart = {
     enable = true;
     settings = {
-      "@type" = "Sqlite";
-      path = "/var/lib/stalwart/data.db";
+      "@type" = "PostgreSql";
+      host = "::1";
+      authSecret = {
+        "@type" = "None";
+      };
     };
   };
 
