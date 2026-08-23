@@ -10,7 +10,7 @@
       vpn-on-demand = {
         onState = ["routable" "carrier"];
         script = let
-          internet-ipv4-only-networks = with organisations; uni ++ c4;
+          internet-ipv4-only-networks = with organisations; university-of-bonn ++ chaos-computer-club;
 
           organisations = {
             chaos-computer-club = [
@@ -18,13 +18,13 @@
               "c4"
             ];
 
-            university-of-bonn = [
-              "eduroam"
-              "eduroam-cs"
-              "eduroam-math"
-              "eduroam-stw"
-              "eduroam-ukb"
-            ];
+            university-of-bonn =
+              ["eduroam"]
+              ++ [
+                "eduroam-cs"
+                "eduroam-stw"
+                "eduroam-math"
+              ];
           };
         in ''
           #!${pkgs.runtimeShell}
