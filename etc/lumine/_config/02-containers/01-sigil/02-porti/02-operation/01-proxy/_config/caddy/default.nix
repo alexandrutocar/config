@@ -1,14 +1,9 @@
 {
-  sigil,
   pkgs,
   lib,
   ...
 }: let
   inherit (lib.modules) mkForce;
-in let
-  resolver = {
-    inherit (sigil.containers.intra.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a.addresses) ula;
-  };
 in {
   services.caddy = {
     enable = true;
@@ -21,14 +16,13 @@ in {
   networking.resolvconf.enable = false;
 
   environment.etc."resolv.conf".text = mkForce ''
-    nameserver ${resolver.ula}
+    nameserver 2606:4700:4700::1111
   '';
 
   networking = {
     firewall = {
       allowedTCPPorts = [
         443 # HTTPS
-        80 # HTTP
       ];
     };
   };

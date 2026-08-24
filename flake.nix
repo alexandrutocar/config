@@ -153,7 +153,7 @@
         };
 
         packages = final: _: {
-          inherit (self.packages.${final.stdenv.hostPlatform.system}) certs davis;
+          inherit (self.packages.${final.stdenv.hostPlatform.system}) certs davis notes;
         };
 
         aliases = import (./nix + "/fixes?/aliases.nix");
