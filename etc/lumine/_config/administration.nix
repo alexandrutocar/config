@@ -19,7 +19,7 @@
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFFqc9UHouDJ8CKLFYUNteH3WX7FskQouDeW/S+xeks7 alex@albedo"
       ];
 
-      hashedPassword = "$y$j9T$OzsTZYTshaOkZm7RSqQnZ1$F7gdqJ3GWKxUpuWJYmEpphmAmu2C6aI.2lpyIyjOT24";
+      hashedPassword = "$y$j9T$3eE.gxBdQ1CZXo7/jgh1Q.$UE3bX81ROEFdMJp7Do9dY3zM9zjESMO3534YGasoXS8";
     };
   };
 

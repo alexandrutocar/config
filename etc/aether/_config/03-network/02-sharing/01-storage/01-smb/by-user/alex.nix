@@ -8,7 +8,7 @@ in {
         extraGroups = [
           "samba"
         ];
-        hashedPasswordFile = "/etc/hashed/${user.name}";
+        hashedPasswordFile = "/state/etc/hashed/${user.name}";
       };
     };
   };
