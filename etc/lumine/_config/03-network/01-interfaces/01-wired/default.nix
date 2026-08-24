@@ -11,25 +11,11 @@ _: {
 
           # [Network]
           networkConfig = {
-            Address =
-              [
-                "88.198.112.114"
-              ]
-              ++ [
-                "2a01:4f8:c0c:687::/64"
-              ];
-            Gateway =
-              ["172.31.1.1"]
-              ++ [
-                "fe80::1"
-              ];
+            Address = ["2a01:4f8:c0c:687::1/64"];
+            Gateway = ["fe80::1"];
           };
 
           routes = [
-            {
-              Gateway = "172.31.1.1";
-              GatewayOnLink = true;
-            }
             {
               Gateway = "fe80::1";
             }

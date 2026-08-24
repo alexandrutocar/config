@@ -125,7 +125,7 @@ in {
       {
         name = "wg-inter-ipv4";
         marker = 1030;
-        endpoint = mkHost "212.201.78.87" 50010;
+        endpoint = mkHost "212.201.76.52" 50010;
       }
       {
         name = "wg-inter-ipv6";
