@@ -34,6 +34,9 @@ in {
                 {
                   target = config.services.sigil.settings.containers.intra.c38a828e-58a7-49af-894d-ba02f936d211; # intra/operation/auth
                 }
+                {
+                  target = config.services.sigil.settings.containers.intra.acda4bf3-2678-43c5-bae9-e67bd8cb710d; # intra/collaboration/forge
+                }
               ];
             };
           };
