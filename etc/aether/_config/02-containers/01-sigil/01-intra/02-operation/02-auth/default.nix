@@ -16,6 +16,7 @@ in {
                   filesConfig = {
                     Bind = [
                       "/state/var/lib/machines/${mid}/var/lib/lldap/users.db:/var/lib/lldap/users.db:idmap"
+                      "/state/var/lib/machines/${mid}/var/lib/pocket-id:/var/lib/pocket-id:idmap"
                     ];
                   };
                 };
