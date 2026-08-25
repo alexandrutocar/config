@@ -129,6 +129,8 @@ in {
 
                 @             IN    AAAA  ${sigil.containers.intra."e079b57e-4727-4408-8c33-39abaae975d9".addresses.ula}
                 directory     IN    AAAA  ${sigil.containers.intra."e079b57e-4727-4408-8c33-39abaae975d9".addresses.ula}
+                forge.dev     IN    AAAA  ${sigil.containers.intra."e079b57e-4727-4408-8c33-39abaae975d9".addresses.ula}
+                pocket-id     IN    AAAA  ${sigil.containers.intra."e079b57e-4727-4408-8c33-39abaae975d9".addresses.ula}
               ''
             }";
             name = "intra.net.internal";

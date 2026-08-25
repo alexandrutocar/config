@@ -19,6 +19,14 @@
             name = "directory.intra.net.internal";
             path = ./certs/server/intra.net.internal/directory.intra.net.internal.pem;
           }
+          {
+            name = "forge.dev.intra.net.internal";
+            path = ./certs/server/intra.net.internal/forge.dev.intra.net.internal.pem;
+          }
+          {
+            name = "pocket-id.intra.net.internal";
+            path = ./certs/server/intra.net.internal/pocket-id.intra.net.internal.pem;
+          }
         ];
       }
     ];

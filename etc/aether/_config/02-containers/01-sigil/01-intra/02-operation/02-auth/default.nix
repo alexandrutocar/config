@@ -12,6 +12,15 @@ in {
             ${mid} = {
               modules = recursive ./_config;
               nspawn = {
+                config = {
+                  filesConfig = {
+                    Bind = [
+                      "/state/var/lib/machines/${mid}/var/lib/lldap/users.db:/var/lib/lldap/users.db:idmap"
+                      "/state/var/lib/machines/${mid}/var/lib/pocket-id:/var/lib/pocket-id:idmap"
+                    ];
+                  };
+                };
+
                 flags = mkAfter [
                   "--load-credential=credential.secret:%d/credential.secret"
                 ];
