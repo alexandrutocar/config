@@ -57,7 +57,7 @@ in {
 
         jwt_secret_file = "/run/credentials/lldap.service/jwt_secret";
 
-        ldap_host = sigil.self.addresses.ula;
+        ldap_host = "::";
         ldap_port = 3890;
         ldap_base_dn = "dc=intra,dc=net,dc=internal";
         ldap_user_dn = "Alex";
