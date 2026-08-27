@@ -168,6 +168,7 @@
             super.formats
             // {
               plist = import ./nix/packages/formats/plist.nix final;
+              kdl = import ./nix/packages/formats/kdl.nix final;
               strongswan = import ./nix/packages/formats/strongswan.nix final;
             };
         };
