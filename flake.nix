@@ -180,16 +180,9 @@
       in
         mkSystem "aether" {
           inherit nixpkgs;
-          modules =
-            [
-              ./etc/aether
-            ]
-            ++ (mkHome "git" {
-              inherit nixpkgs;
-              imports = [
-                ./dot/aether/by-user/git
-              ];
-            });
+          modules = [
+            ./etc/aether
+          ];
         };
 
       albedo = let
