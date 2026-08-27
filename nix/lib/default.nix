@@ -1,8 +1,10 @@
 final: super: let
   # CERTIFICATES
   # ------------
-  certificates = {
-    mkCertificateChain = certs: builtins.concatStringsSep "\n" certs;
+  certificates = let
+    inherit (super.strings) concatLines;
+  in {
+    mkCertificateChain = certs: concatLines certs;
   };
 
   # ATTRSETS

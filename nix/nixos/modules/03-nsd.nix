@@ -33,7 +33,7 @@
 }: let
   inherit (lib.attrsets) mapAttrsToList;
   inherit (lib.debug) traceSeq;
-  inherit (lib.strings) concatStringsSep concatMapStringsSep literalExpression;
+  inherit (lib.strings) concatLines concatMapStringsSep literalExpression;
   inherit (lib.trivial) boolToYesNo;
   inherit (lib) isAttrs isBool isList isInt isString;
 
@@ -53,13 +53,13 @@
     else if isList v
     then (concatMapStringsSep "\n" (toConf indent n) v)
     else if isAttrs v
-    then (concatStringsSep "\n" (["${indent}${n}:"] ++ (mapAttrsToList (toConf "${indent}  ") v)))
+    then (concatLines (["${indent}${n}:"] ++ (mapAttrsToList (toConf "${indent}  ") v)))
     else throw (traceSeq v "services.nsd.settings: unexpected type");
 
-  confNoServer = concatStringsSep "\n" (
+  confNoServer = concatLines (
     (mapAttrsToList (toConf "") (removeAttrs cfg.settings ["server"])) ++ [""]
   );
-  confServer = concatStringsSep "\n" (
+  confServer = concatLines (
     mapAttrsToList (toConf "  ") cfg.settings.server
   );
 

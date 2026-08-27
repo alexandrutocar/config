@@ -1,7 +1,7 @@
 _: super: let
   inherit (super.attrsets) mapAttrsToList;
   inherit (super.lists) flatten optionals;
-  inherit (super.strings) concatMapStringsSep escapeXML;
+  inherit (super.strings) concatLines concatMapStringsSep escapeXML;
   inherit (super.types) mergeEqualOption mkOptionType;
 in {
   generators =
@@ -62,14 +62,14 @@ in {
         item = ind: concatMapStringsSep "\n" (indent ind);
 
         list = ind: x:
-          builtins.concatStringsSep "\n" [
+          concatLines [
             (literal ind "<array>")
             (item ind x)
             (literal ind "</array>")
           ];
 
         attrs = ind: x:
-          builtins.concatStringsSep "\n" [
+          concatLines [
             (literal ind "<dict>")
             (attr ind x)
             (literal ind "</dict>")
@@ -79,7 +79,7 @@ in {
           attrFilter = name: value: name != "_module" && value != null;
         in
           ind: x:
-            builtins. concatStringsSep "\n" (
+            concatLines (
               flatten (
                 mapAttrsToList (
                   name: value:
