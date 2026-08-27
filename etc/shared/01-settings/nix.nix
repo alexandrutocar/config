@@ -25,6 +25,8 @@ in {
       # store --optimize (every build)
       auto-optimise-store = mkDefault true;
 
+      builders-use-substitutes = true;
+
       # flake.nix & `$ nix command`
       experimental-features = mkDefault ["ca-derivations" "flakes" "nix-command" "parse-toml-timestamps" "pipe-operators"];
 
@@ -40,9 +42,5 @@ in {
       # removes ~/.nix-profile and ~/.nix-defexpr
       use-xdg-base-directories = mkDefault true;
     };
-
-    extraOptions = mkDefault ''
-      builders-use-substitutes = true
-    '';
   };
 }
