@@ -70,10 +70,7 @@
   '';
 
   confFile =
-    pkgs.runCommand "nsd-checkconf"
-    {
-      preferLocalBuild = true;
-    }
+    pkgs.runCommandLocal "nsd-checkconf"
     ''
       cp ${confFileUnchecked} nsd.conf
 
