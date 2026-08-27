@@ -11,7 +11,7 @@
   lib,
   ...
 }: {
-  imports = lib.lists.singleton (self + /etc/shared/01-settings/administration.nix);
+  imports = lib.lists.singleton (self + "/etc/shared/01-settings/administration.nix");
 
   users.users = {
     root = {

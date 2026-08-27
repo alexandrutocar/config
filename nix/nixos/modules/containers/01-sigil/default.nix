@@ -194,7 +194,7 @@ in {
                               (_: {
                                 imports = [
                                   (modulesPath + "/misc/nixpkgs/read-only.nix")
-                                  (self + /nix/nixos)
+                                  (self + "/nix/nixos")
                                 ];
                                 config = {
                                   nixpkgs = {

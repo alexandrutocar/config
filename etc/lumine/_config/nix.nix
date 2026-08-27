@@ -15,7 +15,7 @@
   inherit (lib.extra.facter) report;
   inherit (lib.lists) singleton;
 in {
-  imports = singleton (self + /etc/shared/01-settings/nix.nix);
+  imports = singleton (self + "/etc/shared/01-settings/nix.nix");
 
   # NIX
   # ---

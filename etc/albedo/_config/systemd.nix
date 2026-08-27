@@ -11,7 +11,7 @@
   lib,
   ...
 }: {
-  imports = lib.lists.singleton (self + /etc/shared/01-settings/systemd.nix);
+  imports = lib.lists.singleton (self + "/etc/shared/01-settings/systemd.nix");
 
   # in case of a configuration early in the boot sequence,
   # allow entering emergency shell (helps with debugging)

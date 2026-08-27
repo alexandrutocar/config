@@ -15,7 +15,7 @@
   inherit (lib.lists) singleton;
   inherit (lib.meta) getExe;
 in {
-  imports = singleton (self + /etc/shared/01-settings/appearance.nix);
+  imports = singleton (self + "/etc/shared/01-settings/appearance.nix");
 
   # MULTILINGUAL INPUT
   # ------------------
@@ -68,40 +68,8 @@ in {
     NIXOS_OZONE_WL = "1";
   };
 
-  # BLUE-LIGHT FILTER
-  # -----------------
-  # services.clight = {
-  #   enable = true;
-
-  #   settings = {
-  #     # Do not use camera or screen calibration.
-  #     backlight.disabled = true;
-  #     screen.disabled = true;
-  #     verbose = true;
-
-  #     daytime = {
-  #       sunrise = "6:00";
-  #       sunset = "18:00";
-
-  #       sunrise_offset = 1800; # +00:30
-  #       sunset_offset = -1800; # -00:30
-  #     };
-
-  #     gamma = {
-  #       temp = [
-  #         5500 # Daylight
-  #         3500 # Filtered
-  #       ];
-  #       long_transition = true;
-  #     };
-  #   };
-  # };
-
   # LOGIN MANAGER
   # -------------
-  # ────────────────────────────────────────────────────────────────────────
-  # TODO: Replace with `ly`.
-  # ────────────────────────────────────────────────────────────────────────
   services.greetd = let
     river = pkgs.makeDesktopItem {
       desktopName = "river";

@@ -44,7 +44,7 @@
 
     mkLib = nixpkgs:
       nixpkgs.lib.extend (final: super: let
-        custom = import (self + /nix/lib) final super;
+        custom = import (self + "/nix/lib") final super;
         hm = inputs.home-manager.lib;
       in
         hm

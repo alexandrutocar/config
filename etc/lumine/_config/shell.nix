@@ -11,5 +11,5 @@
   lib,
   ...
 }: {
-  imports = lib.lists.singleton (self + /etc/shared/01-settings/shell.nix);
+  imports = lib.lists.singleton (self + "/etc/shared/01-settings/shell.nix");
 }

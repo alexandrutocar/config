@@ -12,7 +12,7 @@
   ...
 }: {
   imports = [
-    (self + /etc/shared/01-settings/etcs.nix)
+    (self + "/etc/shared/01-settings/etcs.nix")
     (modulesPath + "/profiles/qemu-guest.nix")
   ];
 

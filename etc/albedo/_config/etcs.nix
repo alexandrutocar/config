@@ -11,7 +11,7 @@
   lib,
   ...
 }: {
-  imports = lib.lists.singleton (self + /etc/shared/01-settings/etcs.nix);
+  imports = lib.lists.singleton (self + "/etc/shared/01-settings/etcs.nix");
 
   hardware.enableRedistributableFirmware = true;
 
