@@ -24,6 +24,11 @@
       url = "github:nix-community/impermanence";
     };
 
+    "dns.nix" = {
+      url = "github:nix-community/dns.nix";
+      inputs.nixpkgs.follows = "nixpkgs-nixos-unstable-small";
+    };
+
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
     };
@@ -51,7 +56,11 @@
         // custom
         // {
           types = custom.types;
-        });
+        })
+      // {
+        dns =
+          inputs."dns.nix".lib;
+      };
 
     lib = mkLib inputs.nixpkgs-nixos-unstable-small;
 
@@ -159,8 +168,13 @@
         aliases = import (./nix + "/fixes?/aliases.nix");
 
         tools = final: _: {
+          custom.writeAuthZone = import ./nix/packages/tools/write-auth-zone/package.nix final;
           custom.writeShell = import ./nix/packages/tools/write-shell/package.nix final;
           custom.scripts = scripts ./nix/packages/scripts final;
+        };
+
+        dns = final: _: {
+          dns.util = inputs."dns.nix".util.${final.stdenv.hostPlatform.system};
         };
 
         formats = final: super: {
