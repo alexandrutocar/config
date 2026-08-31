@@ -39,32 +39,51 @@ in {
         control-enable = false;
       };
 
-      zone = [
-        {
-          name = ''"ueuie.earth"'';
-          zonefile = ''"${
-              pkgs.writeText "ueuie.earth.zone" ''
-                @   IN 	    SOA  	vega.ns.ueuie.earth.    noc.vega.ns.ueuie.earth. 	(
-                    2026072801
-                    10800
-                    3600
-                    1209600
-                    3600
-                )
+      zone = let
+        ip = {
+          dns = sigil.self.addresses.gua;
+          web = sigil.containers.porti.c8ac5cd5-7563-4e68-9dce-68bb11224eab.addresses.gua;
+        };
+      in [
+        (pkgs.custom.writeAuthZone "ueuie.earth" {
+          AAAA = [
+            ip.web
+          ];
 
-                @           IN  NS      vega.ns.ueuie.earth.
-                @           IN  NS      dara.ns.ueuie.earth.
-                @           IN  NS      tara.ns.ueuie.earth.
+          SOA = {
+            nameServer = "vega.ns.ueuie.earth.";
+            minimum = 3600;
+            serial = 2026082801;
+            retry = 3600;
+            expire = 1209600;
+            refresh = 10800;
+            adminEmail = "noc@vega.ns.ueuie.earth";
+          };
 
+          NS = [
+            "vega.ns.ueuie.earth."
+            "dara.ns.ueuie.earth."
+            "tara.ns.ueuie.earth."
+          ];
 
-                vega.ns     IN  AAAA    ${sigil.self.addresses.gua}
-                dara.ns     IN  AAAA    ${sigil.self.addresses.gua}
-                tara.ns     IN  AAAA    ${sigil.self.addresses.gua}
-
-                @           IN  AAAA    ${sigil.containers.porti.c8ac5cd5-7563-4e68-9dce-68bb11224eab.addresses.gua}
-              ''
-            }"'';
-        }
+          subdomains = {
+            "vega.ns" = {
+              AAAA = [
+                ip.dns
+              ];
+            };
+            "dara.ns" = {
+              AAAA = [
+                ip.dns
+              ];
+            };
+            "tara.ns" = {
+              AAAA = [
+                ip.dns
+              ];
+            };
+          };
+        })
       ];
     };
   };
