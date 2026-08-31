@@ -1,8 +1,5 @@
 _: {
   programs.gpg = {
-    # ────────────────────────────────────────────────────────────────────────
-    # TODO: Reconfigure for new keyset (modified before 21.11.2024 16:59)
-    # ────────────────────────────────────────────────────────────────────────
     settings = {
       # General
       no-greeting = true; # disable the greeting message

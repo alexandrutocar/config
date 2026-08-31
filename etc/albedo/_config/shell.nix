@@ -36,9 +36,6 @@ in {
             "sntrup761x25519-sha512"
             "mlkem768x25519-sha256"
             "curve25519-sha256"
-            # ────────────────────────────────────────────────────────────────────────
-            # TODO: Remove when "login-stud.informatik.uni-bonn.de" gets updated.
-            # ────────────────────────────────────────────────────────────────────────
             "diffie-hellman-group-exchange-sha256"
           ];
           mac = [

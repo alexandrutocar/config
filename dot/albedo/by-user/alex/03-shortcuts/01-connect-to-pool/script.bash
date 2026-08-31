@@ -31,11 +31,6 @@ RESERVED=$(
     | pup "div.hour time[datetime=\"$DATETIME\"] + div.events div text{}"
 )
 
-# ────────────────────────────────────────────────────────────────────────
-# TODO: Bestimme ob ich in dem Raum bin anhand der aktuellen
-#       Router-Verbindung. Die Routern im Computer-Pool haben
-#       jeweils eine einzigartige MAC-Addresse.
-# ────────────────────────────────────────────────────────────────────────
 if [ -n "$RESERVED" ]; then
   notify-send --app-name "" --expire-time=5000 "Raum $ROOM ist durch $RESERVED belegt."
   notify-send --app-name "" --expire-time=10000 "Verbinde sich nur mit dem PC wenn du gerade im Raum bist."

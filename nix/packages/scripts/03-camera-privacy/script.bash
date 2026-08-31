@@ -6,10 +6,6 @@
 # Collect logs
 exec >>"${XDG_RUNTIME_DIR:-/tmp}/camera-privacy.log" 2>&1
 
-# ────────────────────────────────────────────────────────────────────────
-# TODO: Implement toggling (wpctl) and indicator (brightnessctl).
-# ────────────────────────────────────────────────────────────────────────
-
 notify-send \
   --urgency "critical" \
   --expire-time 3000 \
