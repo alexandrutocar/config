@@ -19,7 +19,7 @@ in {
 
     settings = {
       server = {
-        chroot = mkForce ''""'';
+        chroot = mkForce "";
 
         interface = [
           (mkHost' sigil.self.addresses.gua 53)

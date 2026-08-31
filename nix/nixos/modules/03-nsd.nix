@@ -49,7 +49,7 @@
     else if isBool v
     then (toOption indent n (boolToYesNo v))
     else if isString v
-    then (toOption indent n v)
+    then (toOption indent n ''"${v}"'')
     else if isList v
     then (concatMapStringsSep "\n" (toConf indent n) v)
     else if isAttrs v
@@ -70,7 +70,7 @@
   '';
 
   confFile =
-    pkgs.runCommandLocal "nsd-checkconf"
+    pkgs.runCommandLocal "nsd-checkconf" {}
     ''
       cp ${confFileUnchecked} nsd.conf
 
@@ -174,8 +174,8 @@ in {
               interface = [ "127.0.0.1" ];
             };
             zone = [{
-              name = \'\'"ueuie.dev"\'\';
-              zonefile = \'\'"/var/lib/nsd/zones/%s.zone"\'\';
+              name = "ueuie.dev";
+              zonefile = "/var/lib/nsd/zones/%s.zone";
             }];
             remote-control.control-enable = true;
           };
@@ -196,17 +196,17 @@ in {
     mkIf cfg.enable {
       services.nsd.settings = {
         server = {
-          chroot = ''"${cfg.stateDir}"'';
+          chroot = "${cfg.stateDir}";
           username = "${cfg.user}";
 
           # Directory for 'zonefile:' files.
-          zonesdir = ''"${cfg.stateDir}"'';
+          zonesdir = "${cfg.stateDir}";
 
           # List of dynamically added zones.
-          pidfile = ''"${cfg.pidFile}"'';
-          xfrdfile = ''"${cfg.stateDir}/var/xfrd.state"'';
-          xfrdir = ''"${cfg.stateDir}/tmp"'';
-          zonelistfile = ''"${cfg.stateDir}/var/zone.list"'';
+          pidfile = "${cfg.pidFile}";
+          xfrdfile = "${cfg.stateDir}/var/xfrd.state";
+          xfrdir = "${cfg.stateDir}/tmp";
+          zonelistfile = "${cfg.stateDir}/var/zone.list";
         };
 
         remote-control = {
