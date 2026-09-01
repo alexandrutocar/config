@@ -16,16 +16,8 @@ in {
   boot = {
     initrd = {
       availableKernelModules = [
-        # advanced host controller interface
-        "ahci"
-        # non-volatile memory express driver
-        "nvme"
-        # secure digital
-        "sd_mod"
         # universal serial bus
         "usb_storage"
-        # extensible host controller interface (over) peripheral component interconnect
-        "xhci_pci"
       ];
 
       luks.devices = {

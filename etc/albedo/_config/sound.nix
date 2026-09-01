@@ -22,8 +22,6 @@
   # BLUETOOTH
   # ---------
   hardware.bluetooth = {
-    enable = true;
-
     settings = {
       General = {
         ControllerMode = "dual";
@@ -38,7 +36,7 @@
 
   # LOCAL SERVICE DISCOVERY
   # -----------------------
-  services. avahi = {
+  services.avahi = {
     enable = true;
   };
 
@@ -58,8 +56,12 @@
   # --------------------
   security.rtkit.enable = true;
 
-  environment.persistence."/state".directories = [
-    # bluetooth devices
-    "/var/lib/bluetooth"
-  ];
+  environment.persistence = {
+    "/state" = {
+      directories = [
+        # bluetooth devices
+        "/var/lib/bluetooth"
+      ];
+    };
+  };
 }
