@@ -1133,7 +1133,7 @@
         },
         "vendor": {
           "hex": "1d6b",
-          "name": "Linux 7.0.12 xhci-hcd",
+          "name": "Linux 6.18.40 xhci-hcd",
           "value": 7531
         },
         "device": {
@@ -1143,11 +1143,11 @@
         },
         "revision": {
           "hex": "0000",
-          "name": "7.00",
+          "name": "6.18",
           "value": 0
         },
         "serial": "0000:02:00.0",
-        "model": "Linux 7.0.12 xhci-hcd xHCI Host Controller",
+        "model": "Linux 6.18.40 xhci-hcd xHCI Host Controller",
         "sysfs_id": "/devices/pci0000:00/0000:00:02.1/0000:02:00.0/usb1/1-0:1.0",
         "sysfs_bus_id": "1-0:1.0",
         "resources": [
@@ -1195,7 +1195,7 @@
         "driver_modules": [
           "usbcore"
         ],
-        "module_alias": "usb:v1D6Bp0002d0700dc09dsc00dp01ic09isc00ip00in00"
+        "module_alias": "usb:v1D6Bp0002d0618dc09dsc00dp01ic09isc00ip00in00"
       },
       {
         "index": 38,
@@ -1220,7 +1220,7 @@
         },
         "vendor": {
           "hex": "1d6b",
-          "name": "Linux 7.0.12 xhci-hcd",
+          "name": "Linux 6.18.40 xhci-hcd",
           "value": 7531
         },
         "device": {
@@ -1230,11 +1230,11 @@
         },
         "revision": {
           "hex": "0000",
-          "name": "7.00",
+          "name": "6.18",
           "value": 0
         },
         "serial": "0000:02:00.0",
-        "model": "Linux 7.0.12 xhci-hcd xHCI Host Controller",
+        "model": "Linux 6.18.40 xhci-hcd xHCI Host Controller",
         "sysfs_id": "/devices/pci0000:00/0000:00:02.1/0000:02:00.0/usb2/2-0:1.0",
         "sysfs_bus_id": "2-0:1.0",
         "detail": {
@@ -1272,7 +1272,7 @@
         "driver_modules": [
           "usbcore"
         ],
-        "module_alias": "usb:v1D6Bp0003d0700dc09dsc00dp03ic09isc00ip00in00"
+        "module_alias": "usb:v1D6Bp0003d0618dc09dsc00dp03ic09isc00ip00in00"
       }
     ],
     "memory": [
@@ -1612,7 +1612,7 @@
     ],
     "network_interface": [
       {
-        "index": 39,
+        "index": 43,
         "attached_to": 0,
         "class_list": [
           "network_interface"
@@ -1634,7 +1634,7 @@
         ]
       },
       {
-        "index": 40,
+        "index": 44,
         "attached_to": 26,
         "class_list": [
           "network_interface"
