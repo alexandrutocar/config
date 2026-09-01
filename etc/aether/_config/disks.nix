@@ -8,12 +8,7 @@
 # ────────────────────────────────────────────────────────────────────────
 _: {
   boot = {
-    initrd.availableKernelModules = [
-      "ahci" # advanced host controller interface
-      "sd_mod" # secure digital
-      "usb_storage" # universal serial bus
-      "xhci_pci" # extensible host controller interface (over) peripheral component interconnect
-    ];
+    initrd.availableKernelModules = ["usb_storage"]; # universal serial bus
 
     # ────────────────────────────────────────────────────────────────────────
     # NOTE: This is a safeguard against bypassing important checks.
