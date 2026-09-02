@@ -38,6 +38,10 @@ in {
         # HTML Pages
         header ?Cache-Control "no-cache"
 
+        # Icons
+        @icons path /favicon.svg /img/icons/*
+        header @icons Cache-Control "max-age=3600, must-revalidate"
+
         # Compression
         encode zstd gzip
         file_server { precompressed br gzip zstd }
