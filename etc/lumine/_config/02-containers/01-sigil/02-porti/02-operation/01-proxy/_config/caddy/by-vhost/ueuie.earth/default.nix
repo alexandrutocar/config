@@ -24,29 +24,22 @@ in {
         }
 
         root * ${pkgs.notes}
+
+        # Hashed Assets
+        header /_astro/* Cache-Control "public, max-age=31536000, immutable"
+
+        # HTML Pages
+        header ?Cache-Control "no-cache"
+
+        # Compression
         encode zstd gzip
+        file_server { precompressed br gzip zstd }
 
-        @assets path /_astro/*
-        header @assets Cache-Control "public, max-age=31536000, immutable"
-
-        @nonassets not path /_astro/*
-        header @nonassets ?Cache-Control "no-cache"
-
-        @static file {
-          try_files {path} {path}/index.html {path}.html
-        }
-
-        handle @static {
-          rewrite * {file_match.relative}
-          file_server
-        }
-        
+        # Error Handling
         handle_errors {
-          @404 {
-              expression {http.error.status_code} == 404
-          }
+          @404 { expression {http.error.status_code} == 404 }
           rewrite @404 /404.html
-          file_server
+          file_server { precompressed br gzip zstd }
         }
       '';
     };

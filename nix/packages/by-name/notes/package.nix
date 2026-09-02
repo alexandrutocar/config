@@ -3,6 +3,10 @@
   fetchFromGitHub,
   callPackage,
   certs,
+  brotli,
+  gzip,
+  fd,
+  zstd,
 }: let
   deno2nix = let
     src = fetchFromGitHub {
@@ -41,7 +45,43 @@ in
 
     denoDepsHash = "sha256-2ttUoNWk+4PDWAKsRMgNlNponxr6oeFYp0mSkGVZuqQ=";
 
+    nativeBuildInputs = [
+      brotli
+      gzip
+      fd
+      zstd
+    ];
+
     installPhase = ''
+      pushd ${denoWorkspacePath}/.build
+
+      echo "Sidecar files generation started."
+
+      TARGET_FILES=$(
+      	fd --type f --exec file --mime-type {} + |
+      		grep -E "text/|javascript|json|xml|svg|font/(ttf|otf)" |
+      		cut -d: -f1
+          fd --type f --extension ttf --extension otf |
+              sort -u
+      )
+
+      if [ -z "$TARGET_FILES" ]; then
+      	echo "Could not find any compressable text-assets."
+      else
+      	echo "Generate Brotli..."
+      	echo "$TARGET_FILES" | xargs -P 0 -I {} brotli -q 11 -w 24 -f -k "{}" -o "{}.br"
+
+      	echo "Generate Gzip..."
+      	echo "$TARGET_FILES" | xargs -P 0 -I {} gzip -9 -k -f "{}"
+
+      	echo "Generate Zstd..."
+      	echo "$TARGET_FILES" | xargs -P 0 -I {} zstd --ultra -22 -k -f "{}" -o "{}.zst"
+      fi
+
+      echo "Sidecar files generation completed."
+
+      popd
+
       cp -r ${denoWorkspacePath}/.build/. $out/
     '';
   }
