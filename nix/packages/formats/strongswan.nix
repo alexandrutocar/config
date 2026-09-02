@@ -1,6 +1,6 @@
 {
-  lib,
   pkgs,
+  lib,
   ...
 }:
 # strongswan.conf / swanctl.conf configuration format.
@@ -27,6 +27,7 @@
   inherit
     (lib)
     any
+    concatLines
     concatLists
     concatStringsSep
     hasInfix
@@ -121,7 +122,7 @@
   in
     [header] ++ renderBody "${indent}  " attrs ++ ["${indent}}"];
 
-  renderConf = attrs: concatStringsSep "\n" (renderBody "" attrs) + "\n";
+  renderConf = attrs: concatLines (renderBody "" attrs) + "\n";
 
   valueType =
     types.nullOr

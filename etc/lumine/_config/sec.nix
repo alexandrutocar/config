@@ -8,5 +8,5 @@
 }: let
   inherit (lib.lists) singleton;
 in {
-  imports = singleton (self + /etc/shared/01-settings/sec.nix);
+  imports = singleton (self + "/etc/shared/01-settings/sec.nix");
 }

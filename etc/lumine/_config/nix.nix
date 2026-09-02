@@ -15,16 +15,19 @@
   inherit (lib.extra.facter) report;
   inherit (lib.lists) singleton;
 in {
-  imports = singleton (self + /etc/shared/01-settings/nix.nix);
+  imports = singleton (self + "/etc/shared/01-settings/nix.nix");
 
   # NIX
   # ---
   nix = {
-    extraOptions = let
+    settings = let
       size = report.disk.extra.size "scsi-0QEMU_QEMU_HARDDISK_116491725" config.hardware.facter.report;
-    in ''
-      min-free = ${toString (builtins.ceil (0.25 * size))}
-      max-free = ${toString (builtins.ceil (0.50 * size))}
-    '';
+    in {
+      # ────────────────────────────────────────────────────────────────────────
+      # NOTE: Store size constraints.
+      # ────────────────────────────────────────────────────────────────────────
+      min-free = builtins.ceil (0.25 * size);
+      max-free = builtins.ceil (0.50 * size);
+    };
   };
 }

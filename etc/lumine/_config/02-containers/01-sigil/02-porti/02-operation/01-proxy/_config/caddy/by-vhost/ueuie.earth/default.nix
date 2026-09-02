@@ -1,4 +1,5 @@
 {
+  config,
   sigil,
   pkgs,
   ...
@@ -10,7 +11,7 @@ in {
       listenAddresses = ["${sigil.self.addresses.gua}"];
 
       logFormat = ''
-        output file /var/log/caddy/${serverName}.access.log
+        output file ${config.services.caddy.logDir}/${serverName}.access.log
         format json
       '';
 

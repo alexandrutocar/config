@@ -22,23 +22,22 @@
   # BLUETOOTH
   # ---------
   hardware.bluetooth = {
-    enable = true;
-
     settings = {
       General = {
-        ControllerMode = "dual";
-        FastConnectable = "true";
-        Experimental = "true";
-      };
-      Policy = {
-        AutoEnable = "true";
+        Experimental = true;
+
+        # ────────────────────────────────────────────────────────────────────────
+        # NOTE: Try disabling the option if any issues arise (spec. connecting to
+        #       older devices which do may not implement the privacy features).
+        # ────────────────────────────────────────────────────────────────────────
+        Privacy = "on";
       };
     };
   };
 
   # LOCAL SERVICE DISCOVERY
   # -----------------------
-  services. avahi = {
+  services.avahi = {
     enable = true;
   };
 
@@ -58,8 +57,12 @@
   # --------------------
   security.rtkit.enable = true;
 
-  environment.persistence."/state".directories = [
-    # bluetooth devices
-    "/var/lib/bluetooth"
-  ];
+  environment.persistence = {
+    "/state" = {
+      directories = [
+        # bluetooth devices
+        "/var/lib/bluetooth"
+      ];
+    };
+  };
 }

@@ -11,11 +11,7 @@
   lib,
   ...
 }: {
-  imports = lib.lists.singleton (self + /etc/shared/01-settings/etcs.nix);
-
-  hardware.enableRedistributableFirmware = true;
-
-  hardware.cpu.amd.updateMicrocode = true;
+  imports = lib.lists.singleton (self + "/etc/shared/01-settings/etcs.nix");
 
   # POWER MANAGEMENT
   # ----------------

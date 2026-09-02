@@ -111,53 +111,99 @@ in {
           }
         ];
 
-        auth-zone = [
-          {
-            zonefile = "${
-              pkgs.writeText "intra.net.internal.zone" ''
-                @	IN  	SOA 	aether.ns.intra.net.internal.	noc.aether.ns.intra.net.internal. (
-                	2026071901
-                	3600
-                	1800
-                	604800
-                	86400
-                )
+        auth-zone = let
+          ip = {
+            dns = sigil.self.addresses.ula;
+            web = sigil.containers.intra.e079b57e-4727-4408-8c33-39abaae975d9.addresses.ula;
+          };
+        in [
+          (pkgs.custom.writeAuthZone "intra.net.internal" {
+            AAAA = [ip.web];
 
-                @             IN    NS    aether.ns.intra.net.internal.
+            SOA = {
+              nameServer = "aether.ns.intra.net.internal.";
+              minimum = 86400;
+              serial = 2026082701;
+              retry = 1800;
+              expire = 604800;
+              refresh = 3600;
+              adminEmail = "noc@aether.ns.intra.net.internal";
+            };
 
-                aether.ns     IN    AAAA  ${sigil.self.addresses.ula}
+            NS = ["aether.ns.intra.net.internal."];
 
-                @             IN    AAAA  ${sigil.containers.intra."e079b57e-4727-4408-8c33-39abaae975d9".addresses.ula}
-                directory     IN    AAAA  ${sigil.containers.intra."e079b57e-4727-4408-8c33-39abaae975d9".addresses.ula}
-                forge.dev     IN    AAAA  ${sigil.containers.intra."e079b57e-4727-4408-8c33-39abaae975d9".addresses.ula}
-                pocket-id     IN    AAAA  ${sigil.containers.intra."e079b57e-4727-4408-8c33-39abaae975d9".addresses.ula}
-              ''
-            }";
-            name = "intra.net.internal";
-          }
-          {
-            zonefile = "${
-              pkgs.writeText "hosts.net.internal.zone" ''
-                @	IN  	SOA 	aether.ns.hosts.net.internal.	noc.aether.ns.hosts.net.internal. (
-                	2026071901
-                	3600
-                	1800
-                	604800
-                	86400
-                )
+            subdomains = mkMerge [
+              {
+                "aether.ns" = {
+                  AAAA = [
+                    ip.dns
+                  ];
+                };
+              }
+              {
+                "directory" = {
+                  AAAA = [
+                    ip.web
+                  ];
+                };
+                "forge.dev" = {
+                  AAAA = [
+                    ip.web
+                  ];
+                };
+                "pocket-id" = {
+                  AAAA = [
+                    ip.web
+                  ];
+                };
+              }
+            ];
+          })
+          (pkgs.custom.writeAuthZone "hosts.net.internal" {
+            SOA = {
+              nameServer = "aether.ns.hosts.net.internal.";
+              minimum = 86400;
+              serial = 2026082701;
+              retry = 1800;
+              expire = 604800;
+              refresh = 3600;
+              adminEmail = "noc@aether.ns.hosts.net.internal";
+            };
 
-                @             IN    NS    aether.ns.hosts.net.internal.
+            NS = ["aether.ns.hosts.net.internal."];
 
-                aether.ns     IN    AAAA  ${sigil.self.addresses.ula}
-
-                aether        IN    AAAA  fda0:9527:68ee:4f8a:f7f3:176c:41e0:4098
-                albedo        IN    AAAA  fda0:9527:68ee:4f8a:ad9c:4066:9123:5d9a
-                keqing        IN    AAAA  fda0:9527:68ee:4f8a:afbf:7002:aa5f:a363
-                lumine        IN    AAAA  fda0:9527:68ee:4f8a:46a1:b595:357f:c251
-              ''
-            }";
-            name = "hosts.net.internal";
-          }
+            subdomains = mkMerge [
+              {
+                "aether.ns" = {
+                  AAAA = [
+                    ip.dns
+                  ];
+                };
+              }
+              {
+                "aether" = {
+                  AAAA = [
+                    "fda0:9527:68ee:4f8a:f7f3:176c:41e0:4098"
+                  ];
+                };
+                "albedo" = {
+                  AAAA = [
+                    "fda0:9527:68ee:4f8a:ad9c:4066:9123:5d9a"
+                  ];
+                };
+                "keqing" = {
+                  AAAA = [
+                    "fda0:9527:68ee:4f8a:afbf:7002:aa5f:a363"
+                  ];
+                };
+                "lumine" = {
+                  AAAA = [
+                    "fda0:9527:68ee:4f8a:46a1:b595:357f:c251"
+                  ];
+                };
+              }
+            ];
+          })
         ];
 
         # Control socket is used

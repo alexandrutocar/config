@@ -14,7 +14,7 @@
 }: let
   inherit (lib.lists) singleton;
 in {
-  imports = singleton (self + /etc/shared/01-settings/net.nix);
+  imports = singleton (self + "/etc/shared/01-settings/net.nix");
 
   # SYSTEMD NETWORK
   # ------- -------

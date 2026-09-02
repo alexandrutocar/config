@@ -279,7 +279,7 @@ prefix     = [ "sigil" "containers" <group> <mid> ];   # good error messages
 system     = null;                                     # pkgs comes from the host
 modules    = config.modules                            # user-supplied
           ++ recursive ./_container                    # the static guest baseline
-          ++ [ read-only.nix, self + /nix/nixos,
+          ++ [ read-only.nix, self + "/nix/nixos",
                { nixpkgs.pkgs = pkgs; system.stateVersion = "26.05"; } ];
 specialArgs = { inherit lib; sigil = { self = …; containers = …; }; };
 ```

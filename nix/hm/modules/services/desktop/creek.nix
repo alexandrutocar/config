@@ -92,7 +92,7 @@ in {
 
   config = let
     inherit (lib.extra.colors) hexToBin;
-    inherit (lib.lists) singleton;
+    inherit (lib.lists) optionals singleton;
     inherit (lib.meta) getExe;
     inherit (lib.modules) mkIf;
     inherit (lib.strings) concatStringsSep;
@@ -111,17 +111,14 @@ in {
 
         Service = {
           ExecStart = let
-            args =
-              if cfg.settings != {}
-              then [
-                "-fn ${cfg.settings.font-name}:size=${toString cfg.settings.font-size}"
-                "-hg ${toString cfg.settings.size}"
-                "-nf ${hexToBin cfg.settings.foreground-color}"
-                "-nb ${hexToBin cfg.settings.background-color}"
-                "-ff ${hexToBin cfg.settings.focused-foreground-color}"
-                "-fb ${hexToBin cfg.settings.focused-background-color}"
-              ]
-              else [];
+            args = optionals (cfg.settings != {}) [
+              "-fn ${cfg.settings.font-name}:size=${toString cfg.settings.font-size}"
+              "-hg ${toString cfg.settings.size}"
+              "-nf ${hexToBin cfg.settings.foreground-color}"
+              "-nb ${hexToBin cfg.settings.background-color}"
+              "-ff ${hexToBin cfg.settings.focused-foreground-color}"
+              "-fb ${hexToBin cfg.settings.focused-background-color}"
+            ];
           in
             getExe (
               pkgs.custom.writeShell "creek.bash" {

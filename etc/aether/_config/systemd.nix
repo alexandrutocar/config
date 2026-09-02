@@ -3,16 +3,10 @@
 # █▀ █▄█ █▀ ▀█▀ █▀▀ █▀▄▀█ █▀▄
 # ▄█ ░█░ ▄█ ░█░ ██▄ █░▀░█ █▄▀
 #
-# systemd, logs, nspawn, firewall, network-address-translation (nat)...
+# systemd, logs...
 #
 # ────────────────────────────────────────────────────────────────────────
-{
-  self,
-  lib,
-  ...
-}: {
-  imports = lib.lists.singleton (self + /etc/shared/01-settings/systemd.nix);
-
+_: {
   boot.initrd.systemd.emergencyAccess = "$y$j9T$/wz/tR9.fA4bxAhxqDwtU1$F88.5ajoPgSryf8FUODs.nu1kNwyin3pTUruSE.ahI6";
 
   environment = {

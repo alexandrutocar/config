@@ -33,7 +33,7 @@
 }: let
   inherit (lib.attrsets) mapAttrsToList;
   inherit (lib.debug) traceSeq;
-  inherit (lib.strings) concatStringsSep concatMapStringsSep literalExpression;
+  inherit (lib.strings) concatLines concatMapStringsSep literalExpression;
   inherit (lib.trivial) boolToYesNo;
   inherit (lib) isAttrs isBool isList isInt isString;
 
@@ -49,17 +49,17 @@
     else if isBool v
     then (toOption indent n (boolToYesNo v))
     else if isString v
-    then (toOption indent n v)
+    then (toOption indent n ''"${v}"'')
     else if isList v
     then (concatMapStringsSep "\n" (toConf indent n) v)
     else if isAttrs v
-    then (concatStringsSep "\n" (["${indent}${n}:"] ++ (mapAttrsToList (toConf "${indent}  ") v)))
+    then (concatLines (["${indent}${n}:"] ++ (mapAttrsToList (toConf "${indent}  ") v)))
     else throw (traceSeq v "services.nsd.settings: unexpected type");
 
-  confNoServer = concatStringsSep "\n" (
+  confNoServer = concatLines (
     (mapAttrsToList (toConf "") (removeAttrs cfg.settings ["server"])) ++ [""]
   );
-  confServer = concatStringsSep "\n" (
+  confServer = concatLines (
     mapAttrsToList (toConf "  ") cfg.settings.server
   );
 
@@ -70,10 +70,7 @@
   '';
 
   confFile =
-    pkgs.runCommand "nsd-checkconf"
-    {
-      preferLocalBuild = true;
-    }
+    pkgs.runCommandLocal "nsd-checkconf" {}
     ''
       cp ${confFileUnchecked} nsd.conf
 
@@ -177,8 +174,8 @@ in {
               interface = [ "127.0.0.1" ];
             };
             zone = [{
-              name = \'\'"ueuie.dev"\'\';
-              zonefile = \'\'"/var/lib/nsd/zones/%s.zone"\'\';
+              name = "ueuie.dev";
+              zonefile = "/var/lib/nsd/zones/%s.zone";
             }];
             remote-control.control-enable = true;
           };
@@ -199,17 +196,17 @@ in {
     mkIf cfg.enable {
       services.nsd.settings = {
         server = {
-          chroot = ''"${cfg.stateDir}"'';
+          chroot = "${cfg.stateDir}";
           username = "${cfg.user}";
 
           # Directory for 'zonefile:' files.
-          zonesdir = ''"${cfg.stateDir}"'';
+          zonesdir = "${cfg.stateDir}";
 
           # List of dynamically added zones.
-          pidfile = ''"${cfg.pidFile}"'';
-          xfrdfile = ''"${cfg.stateDir}/var/xfrd.state"'';
-          xfrdir = ''"${cfg.stateDir}/tmp"'';
-          zonelistfile = ''"${cfg.stateDir}/var/zone.list"'';
+          pidfile = "${cfg.pidFile}";
+          xfrdfile = "${cfg.stateDir}/var/xfrd.state";
+          xfrdir = "${cfg.stateDir}/tmp";
+          zonelistfile = "${cfg.stateDir}/var/zone.list";
         };
 
         remote-control = {
