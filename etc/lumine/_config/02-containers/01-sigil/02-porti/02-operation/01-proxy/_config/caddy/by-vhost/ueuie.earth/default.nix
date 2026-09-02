@@ -42,6 +42,13 @@ in {
         @icons path /favicon.svg /img/icons/*
         header @icons Cache-Control "max-age=3600, must-revalidate"
 
+        # Redirects
+        @en path /en /en/
+        redir @en /en/notes 301
+        
+        @de path /de /de/
+        redir @de /de/notizen 301
+
         # Compression
         encode zstd gzip
         file_server { precompressed br gzip zstd }
