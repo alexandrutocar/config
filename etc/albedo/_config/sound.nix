@@ -24,12 +24,13 @@
   hardware.bluetooth = {
     settings = {
       General = {
-        ControllerMode = "dual";
-        FastConnectable = "true";
-        Experimental = "true";
-      };
-      Policy = {
-        AutoEnable = "true";
+        Experimental = true;
+
+        # ────────────────────────────────────────────────────────────────────────
+        # NOTE: Try disabling the option if any issues arise (spec. connecting to
+        #       older devices which do may not implement the privacy features).
+        # ────────────────────────────────────────────────────────────────────────
+        Privacy = "on";
       };
     };
   };
