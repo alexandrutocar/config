@@ -25,6 +25,33 @@ in {
 
         root * ${pkgs.notes}
 
+        # Content Negotiation
+        @index-md {
+          header_regexp Accept text/markdown
+          path /
+        }
+
+        @md {
+          header_regexp Accept text/markdown
+
+          # Notes
+          path /en/notes /en/notes/*
+          path /de/notizen /de/notizen/*
+        }
+
+        route @md {
+          uri strip_suffix /
+          rewrite * {path}.md
+          header Content-Type "text/markdown; charset=utf-8"
+          file_server { precompressed br gzip zstd }
+        }
+
+        route @index-md {
+          rewrite * index.md
+          header Content-Type "text/markdown; charset=utf-8"
+          file_server { precompressed br gzip zstd }
+        }
+
         # Security Headers
         header {
           Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
@@ -45,7 +72,7 @@ in {
         # Redirects
         @en path /en /en/
         redir @en /en/notes 301
-        
+
         @de path /de /de/
         redir @de /de/notizen 301
 
