@@ -16,7 +16,6 @@ in {
   imports = singleton (self + "/etc/shared/01-settings/administration.nix");
 
   environment.persistence = {
-    #
     "/state" = {
       directories = [
         "/var/lib/nixos"
