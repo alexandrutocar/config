@@ -24,29 +24,67 @@ in {
         }
 
         root * ${pkgs.notes}
+
+        # Content Negotiation
+        @index-md {
+          header_regexp Accept text/markdown
+          path /
+        }
+
+        @md {
+          header_regexp Accept text/markdown
+
+          # Notes
+          path /en/notes /en/notes/*
+          path /de/notizen /de/notizen/*
+        }
+
+        route @md {
+          uri strip_suffix /
+          rewrite * {path}.md
+          header Content-Type "text/markdown; charset=utf-8"
+          file_server { precompressed br gzip zstd }
+        }
+
+        route @index-md {
+          rewrite * index.md
+          header Content-Type "text/markdown; charset=utf-8"
+          file_server { precompressed br gzip zstd }
+        }
+
+        # Security Headers
+        header {
+          Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+          X-Content-Type-Options "nosniff"
+          X-Frame-Options "DENY"
+        }
+
+        # Hashed Assets
+        header /_astro/* Cache-Control "public, max-age=31536000, immutable"
+
+        # HTML Pages
+        header ?Cache-Control "no-cache"
+
+        # Icons
+        @icons path /favicon.svg /img/icons/*
+        header @icons Cache-Control "max-age=3600, must-revalidate"
+
+        # Redirects
+        @en path /en /en/
+        redir @en /en/notes 301
+
+        @de path /de /de/
+        redir @de /de/notizen 301
+
+        # Compression
         encode zstd gzip
+        file_server { precompressed br gzip zstd }
 
-        @assets path /_astro/*
-        header @assets Cache-Control "public, max-age=31536000, immutable"
-
-        @nonassets not path /_astro/*
-        header @nonassets ?Cache-Control "no-cache"
-
-        @static file {
-          try_files {path} {path}/index.html {path}.html
-        }
-
-        handle @static {
-          rewrite * {file_match.relative}
-          file_server
-        }
-        
+        # Error Handling
         handle_errors {
-          @404 {
-              expression {http.error.status_code} == 404
-          }
+          @404 { expression {http.error.status_code} == 404 }
           rewrite @404 /404.html
-          file_server
+          file_server { precompressed br gzip zstd }
         }
       '';
     };
