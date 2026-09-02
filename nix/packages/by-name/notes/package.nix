@@ -1,6 +1,8 @@
 {
+  fetchFromForgejo,
   fetchFromGitHub,
   callPackage,
+  certs,
 }: let
   deno2nix = let
     src = fetchFromGitHub {
@@ -22,21 +24,24 @@ in
     inherit denoWorkspacePath;
 
     pname = "notes";
-    version = "0.0.1";
+    version = "unstable-2026083104";
 
-    src = fetchGit {
-      url = "file:///home/alex/.tracked/web";
-      rev = "1c8e172eea5cd11e31e5795a80b2999d1f25dddf";
+    src = fetchFromForgejo {
+      domain = "forge.dev.intra.net.internal";
+      owner = "alex";
+      repo = "web";
+      rev = "6649ed43fe30eb6836c447e32e3403393f39363c";
+      hash = "sha256-vtpSo6OR6nACXPnhihzKrMPAr4oukJyqE58dybVaNis=";
+      curlOptsList = ["--cacert" "${certs}/etc/ssl/anchor/intra.net.pem"];
     };
 
     env = {
       ASTRO_TELEMETRY_DISABLED = "1";
     };
 
-    denoDepsHash = "sha256-0ZAEtiB3vqijTLhDjWi+h7x0hJPPGrR2Q5o0JlTvtPI=";
+    denoDepsHash = "sha256-2ttUoNWk+4PDWAKsRMgNlNponxr6oeFYp0mSkGVZuqQ=";
 
     installPhase = ''
-      mkdir -p $out
       cp -r ${denoWorkspacePath}/.build/. $out/
     '';
   }
