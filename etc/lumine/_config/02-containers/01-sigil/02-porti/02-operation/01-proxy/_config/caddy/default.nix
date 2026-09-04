@@ -1,8 +1,4 @@
-{
-  pkgs,
-  lib,
-  ...
-}: let
+{lib, ...}: let
   inherit (lib.modules) mkForce;
 in {
   services.caddy = {
@@ -26,6 +22,4 @@ in {
       ];
     };
   };
-
-  environment.systemPackages = with pkgs; [dig];
 }
