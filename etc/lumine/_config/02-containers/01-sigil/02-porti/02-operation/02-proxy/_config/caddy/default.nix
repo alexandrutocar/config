@@ -1,14 +1,8 @@
-{
-  pkgs,
-  lib,
-  ...
-}: let
+{lib, ...}: let
   inherit (lib.modules) mkForce;
 in {
   services.caddy = {
     enable = true;
-
-    email = "acme@ueuie.earth";
   };
 
   services.resolved.enable = false;
@@ -26,6 +20,4 @@ in {
       ];
     };
   };
-
-  environment.systemPackages = with pkgs; [dig];
 }
