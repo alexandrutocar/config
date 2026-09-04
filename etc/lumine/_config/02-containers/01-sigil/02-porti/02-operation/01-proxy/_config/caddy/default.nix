@@ -3,8 +3,6 @@
 in {
   services.caddy = {
     enable = true;
-
-    email = "acme@ueuie.earth";
   };
 
   services.resolved.enable = false;
