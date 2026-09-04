@@ -6,87 +6,37 @@
 }: let
   serverName = "ueuie.earth";
 in {
-  services.caddy.virtualHosts = {
-    "ueuie.earth" = {
-      listenAddresses = ["${sigil.self.addresses.gua}"];
+  services.caddy = {
+    inherit (pkgs.notes.caddy) extraConfig;
 
-      logFormat = ''
-        output file ${config.services.caddy.logDir}/${serverName}.access.log
-        format json
-      '';
+    virtualHosts = {
+      "https://${serverName}" = {
+        listenAddresses = [
+          "${sigil.self.addresses.gua}"
+        ];
 
-      extraConfig = ''
-        tls {
-          issuer acme {
-            email hostmaster@${serverName}
-            disable_http_challenge
+        logFormat = ''
+          output file ${config.services.caddy.logDir}/${serverName}.access.log
+          format json
+        '';
+
+        extraConfig = ''
+          tls {
+            issuer acme {
+              email hostmaster@${serverName}
+              disable_http_challenge
+            }
           }
-        }
 
-        root * ${pkgs.notes}
+          import ${pkgs.notes.caddy.importBlock}
 
-        # Content Negotiation
-        @index-md {
-          header_regexp Accept text/markdown
-          path /
-        }
-
-        @md {
-          header_regexp Accept text/markdown
-
-          # Notes
-          path /en/notes /en/notes/*
-          path /de/notizen /de/notizen/*
-        }
-
-        route @md {
-          uri strip_suffix /
-          rewrite * {path}.md
-          header Content-Type "text/markdown; charset=utf-8"
-          file_server { precompressed br gzip zstd }
-        }
-
-        route @index-md {
-          rewrite * index.md
-          header Content-Type "text/markdown; charset=utf-8"
-          file_server { precompressed br gzip zstd }
-        }
-
-        # Security Headers
-        header {
-          Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-          X-Content-Type-Options "nosniff"
-          X-Frame-Options "DENY"
-        }
-
-        # Hashed Assets
-        header /_astro/* Cache-Control "public, max-age=31536000, immutable"
-
-        # HTML Pages
-        header ?Cache-Control "no-cache"
-
-        # Icons
-        @icons path /favicon.svg /img/icons/*
-        header @icons Cache-Control "max-age=3600, must-revalidate"
-
-        # Redirects
-        @en path /en /en/
-        redir @en /en/notes 301
-
-        @de path /de /de/
-        redir @de /de/notizen 301
-
-        # Compression
-        encode zstd gzip
-        file_server { precompressed br gzip zstd }
-
-        # Error Handling
-        handle_errors {
-          @404 { expression {http.error.status_code} == 404 }
-          rewrite @404 /404.html
-          file_server { precompressed br gzip zstd }
-        }
-      '';
+          header {
+            Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+            X-Content-Type-Options "nosniff"
+            X-Frame-Options "DENY"
+          }
+        '';
+      };
     };
   };
 }
