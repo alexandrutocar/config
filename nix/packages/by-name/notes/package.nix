@@ -23,26 +23,27 @@
       };
     };
 in let
-  notes = let
+  notes = site: let
     denoWorkspacePath = "./src/client/apps/notes";
   in
     deno2nix.lib.buildDenoPackage {
       inherit denoWorkspacePath;
 
       pname = "notes";
-      version = "unstable-2026083104";
+      version = "unstable-451b3c4b1d4b83e5f023fca1ccbeabbd2155de68";
 
       src = fetchFromForgejo {
         domain = "forge.dev.intra.net.internal";
         owner = "alex";
         repo = "web";
-        rev = "6649ed43fe30eb6836c447e32e3403393f39363c";
-        hash = "sha256-vtpSo6OR6nACXPnhihzKrMPAr4oukJyqE58dybVaNis=";
+        rev = "451b3c4b1d4b83e5f023fca1ccbeabbd2155de68";
+        hash = "sha256-0LRaPcEVGU7xuyKY/7UfQWpRJWNMMO7OHPbBqYKbhDQ=";
         curlOptsList = ["--cacert" "${certs}/etc/ssl/anchor/intra.net.pem"];
       };
 
       env = {
         ASTRO_TELEMETRY_DISABLED = "1";
+        SITE_URL = site;
       };
 
       denoDepsHash = "sha256-2ttUoNWk+4PDWAKsRMgNlNponxr6oeFYp0mSkGVZuqQ=";
@@ -88,71 +89,72 @@ in let
       '';
     };
 in
-  lib.extendDerivation true {
-    caddy = let
-      importBlock = "notes_config";
-      extraConfig = ''
-        (${importBlock}) {
-          root * ${notes}
+  site:
+    lib.extendDerivation true {
+      caddy = let
+        importBlock = "notes_config";
+        extraConfig = ''
+          (${importBlock}) {
+            root * ${notes site}
 
-          # Content Negotiation
-          @index-md {
-            header_regexp Accept text/markdown
-            path /
-          }
+            # Content Negotiation
+            @index-md {
+              header_regexp Accept text/markdown
+              path /
+            }
 
-          @md {
-            header_regexp Accept text/markdown
+            @md {
+              header_regexp Accept text/markdown
 
-            # Notes
-            path /en/notes /en/notes/*
-            path /de/notizen /de/notizen/*
-          }
+              # Notes
+              path /en/notes /en/notes/*
+              path /de/notizen /de/notizen/*
+            }
 
-          route @md {
-            uri strip_suffix /
-            rewrite * {path}.md
-            header Content-Type "text/markdown; charset=utf-8"
+            route @md {
+              uri strip_suffix /
+              rewrite * {path}.md
+              header Content-Type "text/markdown; charset=utf-8"
+              file_server { precompressed br gzip zstd }
+            }
+
+            route @index-md {
+              rewrite * index.md
+              header Content-Type "text/markdown; charset=utf-8"
+              file_server { precompressed br gzip zstd }
+            }
+
+            # Hashed Assets
+            header /_astro/* Cache-Control "public, max-age=31536000, immutable"
+
+            # HTML Pages
+            header ?Cache-Control "no-cache"
+
+            # Icons
+            @icons path /favicon.svg /img/icons/*
+            header @icons Cache-Control "max-age=3600, must-revalidate"
+
+            # Redirects
+            @en path /en /en/
+            redir @en /en/notes 301
+
+            @de path /de /de/
+            redir @de /de/notizen 301
+
+            # Compression
+            encode zstd gzip
             file_server { precompressed br gzip zstd }
+
+            # Error Handling
+            handle_errors {
+              @404 { expression {http.error.status_code} == 404 }
+              rewrite @404 /404.html
+              file_server { precompressed br gzip zstd }
+            }
           }
-
-          route @index-md {
-            rewrite * index.md
-            header Content-Type "text/markdown; charset=utf-8"
-            file_server { precompressed br gzip zstd }
-          }
-
-          # Hashed Assets
-          header /_astro/* Cache-Control "public, max-age=31536000, immutable"
-
-          # HTML Pages
-          header ?Cache-Control "no-cache"
-
-          # Icons
-          @icons path /favicon.svg /img/icons/*
-          header @icons Cache-Control "max-age=3600, must-revalidate"
-
-          # Redirects
-          @en path /en /en/
-          redir @en /en/notes 301
-
-          @de path /de /de/
-          redir @de /de/notizen 301
-
-          # Compression
-          encode zstd gzip
-          file_server { precompressed br gzip zstd }
-
-          # Error Handling
-          handle_errors {
-            @404 { expression {http.error.status_code} == 404 }
-            rewrite @404 /404.html
-            file_server { precompressed br gzip zstd }
-          }
-        }
-      '';
-    in {
-      inherit importBlock extraConfig;
-    };
-  }
-  notes
+        '';
+      in {
+        inherit importBlock extraConfig;
+      };
+    }
+    (notes site)
