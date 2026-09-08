@@ -40,7 +40,6 @@ php.buildComposerProject (finalAttrs: {
   };
 
   __structuredAttrs = true;
-  strictDeps = true;
 
   vendorHash = "sha256-9g3v1/NfFkSNhQPV8SeiWnKsdJb2w2pbJtWxji2TNNU=";
 
@@ -55,11 +54,11 @@ php.buildComposerProject (finalAttrs: {
     rm -rf "$out/share"
   '';
 
-  meta = with lib; {
+  meta = {
     changelog = "https://github.com/tchapi/davis/releases/tag/v${finalAttrs.version}";
     description = "Simple CardDav and CalDav server inspired by Baïkal";
     homepage = "https://github.com/tchapi/davis";
-    license = licenses.mit;
-    maintainers = with maintainers; [ramblurr];
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [ramblurr];
   };
 })
