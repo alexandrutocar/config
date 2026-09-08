@@ -59,6 +59,6 @@ php.buildComposerProject (finalAttrs: {
     description = "Simple CardDav and CalDav server inspired by Baïkal";
     homepage = "https://github.com/tchapi/davis";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ramblurr];
+    maintainers = with lib.maintainers; [alexandrutocar];
   };
 })
