@@ -1,6 +1,6 @@
 {
   description = ''
-    Reproducible configuration for Aether (Server), Albedo (Laptop), Lumine (Remote Server) and Beidou (Air-Gapped Bootable).
+    Reproducible configuration for Aether (Server), Albedo (Laptop) and Lumine (VPS).
   '';
 
   inputs = {
