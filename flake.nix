@@ -7,7 +7,7 @@
     # ────────────────────────────────────────────────────────────────────────
     # NOTE: For server systems (hosts).
     # ────────────────────────────────────────────────────────────────────────
-    nixpkgs-nixos-unstable-small = {
+    smallest = {
       url = "github:nixos/nixpkgs?rev=090e478bd64824e2122328df47a7efb74fdaf0c1"; # nixos-unstable-small
     };
 
@@ -15,26 +15,29 @@
     # NOTE: For desktop-oriented systems (workstations) and software
     #       with long build times (e.g. Firefox, Chromium, Electron).
     # ────────────────────────────────────────────────────────────────────────
-    nixpkgs-nixos-unstable = {
-      url = "github:nixos/nixpkgs?rev=34ab99075ac4f7e40cf037eef32cb1c360bb85e9"; # ~nixos-unstable
+    unstable = {
+      url = "github:nixos/nixpkgs?rev=34ab99075ac4f7e40cf037eef32cb1c360bb85e9"; # nixos-unstable
     };
 
     # ────────────────────────────────────────────────────────────────────────
     impermanence = {
       url = "github:nix-community/impermanence";
+      inputs.nixpkgs.follows = "unstable";
     };
 
     "dns.nix" = {
       url = "github:nix-community/dns.nix";
-      inputs.nixpkgs.follows = "nixpkgs-nixos-unstable-small";
+      inputs.nixpkgs.follows = "unstable";
     };
 
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
+      inputs.nixpkgs.follows = "unstable";
     };
 
     home-manager = {
       url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "unstable";
     };
   };
 
@@ -62,7 +65,7 @@
           inputs."dns.nix".lib;
       };
 
-    lib = mkLib inputs.nixpkgs-nixos-unstable-small;
+    lib = mkLib inputs.smallest;
 
     mkPackages = system: pkgs:
       import pkgs {
@@ -85,12 +88,6 @@
 
             # Custom options.
             ./nix/nixos
-
-            # Make `nix run nixpkgs#nixpkgs` use the same
-            # package repository as the one used here.
-            # {
-            #   nix.registry.nixpkgs.flake = lib.mkForce nixpkgs;
-            # }
 
             # Ensure device has expected name in wireless, wired and bluetooth networks.
             {
@@ -143,14 +140,14 @@
   in {
     # `nix develop`
     devShells = forSystems (system: let
-      pkgs = mkPackages system inputs.nixpkgs-nixos-unstable-small;
+      pkgs = mkPackages system inputs.smallest;
     in {
       default = import ./nix/dev-shell/default.nix pkgs;
     });
 
     # `nix fmt`
     formatter = forSystems (
-      system: (mkPackages system inputs.nixpkgs-nixos-unstable-small).alejandra
+      system: (mkPackages system inputs.smallest).alejandra
     );
 
     overlays = let
@@ -189,48 +186,46 @@
       }
       // (patches (./nix + "/fixes?"));
 
-    nixosConfigurations = {
-      aether = let
-        nixpkgs = inputs.nixpkgs-nixos-unstable-small;
-      in
-        mkSystem "aether" {
-          inherit nixpkgs;
-          modules = [
-            ./etc/aether
-          ];
-        };
+    nixosConfigurations = let
+      inherit (lib.attrsets) mergeAttrsList;
+      inherit (lib.lists) singleton;
+    in
+      mergeAttrsList [
+        # Hosts/Servers
+        # -------------
+        (let
+          nixpkgs = inputs.smallest;
+        in {
+          aether = mkSystem "aether" {
+            inherit nixpkgs;
+            modules = singleton ./etc/aether;
+          };
 
-      albedo = let
-        nixpkgs = inputs.nixpkgs-nixos-unstable;
-      in
-        mkSystem "albedo" {
-          inherit nixpkgs;
-          modules =
-            [
-              ./etc/albedo
-            ]
-            ++ (mkHome "alex" {
-              inherit nixpkgs;
-              imports = [
-                ./dot/albedo/by-user/alex
-              ];
-            });
-        };
-
-      lumine = let
-        nixpkgs = inputs.nixpkgs-nixos-unstable;
-      in
-        mkSystem "lumine" {
-          inherit nixpkgs;
-          modules = [
-            ./etc/lumine
-          ];
-        };
-    };
+          lumine = mkSystem "lumine" {
+            inherit nixpkgs;
+            modules = singleton ./etc/lumine;
+          };
+        })
+        # Workstations
+        # ------------
+        (let
+          nixpkgs = inputs.unstable;
+        in {
+          albedo = mkSystem "albedo" {
+            inherit nixpkgs;
+            modules =
+              (singleton ./etc/albedo)
+              ++ (mkHome "alex" {
+                inherit nixpkgs;
+                imports = singleton ./dot/albedo/by-user/alex;
+              });
+          };
+        })
+      ];
 
     packages = forSystems (
       system: let
-        pkgs = mkPackages system inputs.nixpkgs-nixos-unstable-small;
+        pkgs = mkPackages system inputs.smallest;
       in
         packagesFromDirectoryRecursive {
           callPackage = callPackageWith (pkgs // {inherit lib;});
