@@ -83,6 +83,7 @@ in {
         LDAP_ATTRIBUTE_USER_EMAIL = "mail";
         LDAP_ATTRIBUTE_USER_FIRST_NAME = "firstname";
         LDAP_ATTRIBUTE_USER_LAST_NAME = "lastname";
+        LDAP_ATTRIBUTE_USER_PROFILE_PICTURE = "avatar";
 
         LDAP_ATTRIBUTE_GROUP_UNIQUE_IDENTIFIER = "uuid";
         LDAP_ATTRIBUTE_GROUP_NAME = "displayname";
