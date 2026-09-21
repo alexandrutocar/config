@@ -25,7 +25,7 @@ in {
             J++iYmaM+U9lYIs/J3BFad9OtUFyx+gtfxz9GKBtFvI/eFS7VFje5Y6O1qwbuWOEy5cNrVFt8fhlK2L
             kSXzdUpHaGNzMirEycI+pdZA==
           '';
-          # tr -dc 'a-f0-9' < /dev/urandom | head -c 64; echo -n | systemd-creds encrypt --with-key=host --name=app-secret - -
+          # tr -dc 'a-f0-9' < /dev/urandom | head -c 64 | systemd-creds encrypt --with-key=host --name=app-secret - -
           app-secret = ''
             Whxqht+dQJax1aZeCGLxmiAAAAABAAAADAAAABAAAAC7D/MV+q0hrqNzu0MAAAAAmqMxWdr+ze/Y9j+
             KjKpNbKEI+PXKvNfPpxwsrhmJfd919Qb+rdaMN65MS61V+iDgpSf09n0y67T10US4/ewayz27KIp67f
