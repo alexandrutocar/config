@@ -157,6 +157,13 @@ in {
                   ];
                 };
               }
+              (let
+                AAAA = [ip.web];
+              in {
+                "music" = {
+                  inherit AAAA;
+                };
+              })
             ];
           })
           (pkgs.custom.writeAuthZone "hosts.net.internal" {

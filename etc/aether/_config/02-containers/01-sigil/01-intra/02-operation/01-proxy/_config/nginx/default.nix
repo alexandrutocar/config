@@ -59,6 +59,7 @@ _: {
     firewall = {
       allowedTCPPorts = [
         443
+        80
       ];
     };
   };
