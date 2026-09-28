@@ -17,12 +17,9 @@ in {
                     Bind =
                       [
                         "/archive/bibliotheca/music:/mnt/audio/music:idmap"
-                        "/archive/bibliotheca/podcast:/mnt/audio/podcast:idmap"
-                        "/archive/bibliotheca/playlists:/mnt/audio/playlists:idmap"
                       ]
                       ++ [
-                        "/state/var/lib/machines/${mid}/var/lib/gonic/gonic.db:/var/lib/gonic/gonic.db:idmap"
-                        "/state/var/lib/machines/${mid}/var/cache/gonic:/var/cache/gonic:idmap"
+                        "/state/var/lib/machines/${mid}/var/lib/navidrome/:/var/lib/navidrome/:idmap"
                       ];
                   };
                 };
