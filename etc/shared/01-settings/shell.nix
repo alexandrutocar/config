@@ -269,7 +269,10 @@ in {
     glib # virtual filesystems
 
     # Version Control
-    git-annex
+    # ────────────────────────────────────────────────────────────────────────
+    # NOTE: Remove when https://github.com/NixOS/nixpkgs/pull/566678 lands.
+    # ────────────────────────────────────────────────────────────────────────
+    # git-annex
 
     # Encryption & Keys
     openssl
