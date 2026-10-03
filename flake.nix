@@ -1,6 +1,6 @@
 {
   description = ''
-    Reproducible configuration for Albedo (Laptop), Beidou (Server), and Lumine (VPS).
+    Reproducible configuration for Albedo (Laptop), Beidou (Server), and Collei (VPS).
   '';
 
   inputs = {
@@ -201,9 +201,9 @@
             modules = singleton ./etc/beidou;
           };
 
-          lumine = mkSystem "lumine" {
+          collei = mkSystem "collei" {
             inherit nixpkgs;
-            modules = singleton ./etc/lumine;
+            modules = singleton ./etc/collei;
           };
         })
         # Workstations

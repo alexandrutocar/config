@@ -198,14 +198,14 @@ in {
                     "fda0:9527:68ee:4f8a:f7f3:176c:41e0:4098"
                   ];
                 };
+                "collei" = {
+                  AAAA = [
+                    "fda0:9527:68ee:4f8a:46a1:b595:357f:c251"
+                  ];
+                };
                 "keqing" = {
                   AAAA = [
                     "fda0:9527:68ee:4f8a:afbf:7002:aa5f:a363"
-                  ];
-                };
-                "lumine" = {
-                  AAAA = [
-                    "fda0:9527:68ee:4f8a:46a1:b595:357f:c251"
                   ];
                 };
               }

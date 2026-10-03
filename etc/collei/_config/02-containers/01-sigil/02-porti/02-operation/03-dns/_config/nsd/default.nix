@@ -29,7 +29,7 @@ in {
 
         hide-version = true;
 
-        identity = "AETHER";
+        identity = "COLLEI";
 
         metrics-enable = true;
         metrics-interface = sigil.self.addresses.ula;

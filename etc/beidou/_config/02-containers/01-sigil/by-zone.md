@@ -11,8 +11,8 @@ Then each net lives in its own subnet:
 - `hosts` -> `4f8a` 
   - `albedo` -> `fda0:9527:68ee:4f8a:ad9c:4066:9123:5d9a/128`
   - `beidou` -> `fda0:9527:68ee:4f8a:f7f3:176c:41e0:4098/128`
+  - `collei` -> `fda0:9527:68ee:4f8a:46a1:b595:357f:c251/128`
   - `keqing` -> `fda0:9527:68ee:4f8a:afbf:7002:aa5f:a363/128`
-  - `lumine` -> `fda0:9527:68ee:4f8a:46a1:b595:357f:c251/128`
 - `intra` -> `f1b6`
 - `inter` -> `c84c`
 ...

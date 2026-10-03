@@ -9,8 +9,8 @@ _: {
       circle = [
         "albedo"
         "beidou"
+        "collei"
         "keqing"
-        "lumine"
       ];
       anchor = builtins.head circle;
       spokes = builtins.tail circle;

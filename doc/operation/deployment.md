@@ -13,5 +13,5 @@ nixos-rebuild dry-activate --flake .#beidou --build-host root@beidou.hosts.net.i
 ```
 
 ```bash
-nixos-rebuild dry-activate --flake .#lumine --build-host root@lumine.hosts.net.internal --target-host root@lumine.hosts.net.internal --refresh --show-trace 2>&1 | tee trace.log
+nixos-rebuild dry-activate --flake .#collei --build-host root@collei.hosts.net.internal --target-host root@collei.hosts.net.internal --refresh --show-trace 2>&1 | tee trace.log
 ```

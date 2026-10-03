@@ -23,7 +23,7 @@ _: {
 
           # [DHCP]
           dhcpConfig = {
-            Hostname = "Lumine";
+            Hostname = "Collei";
             SendHostname = true;
           };
         };
