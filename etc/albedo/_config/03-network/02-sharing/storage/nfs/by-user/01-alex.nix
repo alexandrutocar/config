@@ -20,7 +20,7 @@ in {
         mountConfig = {
           Options = "noatime";
         };
-        what = "aether.hosts.net.internal:${share}";
+        what = "beidou.hosts.net.internal:${share}";
       }
     ];
   };
