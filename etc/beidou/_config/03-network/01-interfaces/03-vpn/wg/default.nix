@@ -33,6 +33,17 @@ _: let
         "fda0:9527:68ee:4f8a:46a1:b595:357f:c251/128"
       ];
     };
+    fischl = {
+      PersistentKeepalive = 25;
+
+      PresharedKeyFile = "/var/lib/wg/x0/p4.pre";
+
+      PublicKeyFile = "/var/lib/wg/x0/p4.pub";
+
+      AllowedIPs = [
+        "fda0:9527:68ee:4f8a:712a:ed72:b041:27c3/128"
+      ];
+    };
     keqing = {
       PersistentKeepalive = 25;
 
@@ -67,6 +78,7 @@ in {
           wireguardPeers = [
             circle.beidou
             circle.collei
+            circle.fischl
             circle.keqing
           ];
         };
@@ -86,10 +98,13 @@ in {
               Destination = "fda0:9527:68ee:4f8a:ad9c:4066:9123:5d9a/128";
             }
             {
-              Destination = "fda0:9527:68ee:4f8a:afbf:7002:aa5f:a363/128";
+              Destination = "fda0:9527:68ee:4f8a:46a1:b595:357f:c251/128";
             }
             {
-              Destination = "fda0:9527:68ee:4f8a:46a1:b595:357f:c251/128";
+              Destination = "fda0:9527:68ee:4f8a:712a:ed72:b041:27c3/128";
+            }
+            {
+              Destination = "fda0:9527:68ee:4f8a:afbf:7002:aa5f:a363/128";
             }
           ];
         };

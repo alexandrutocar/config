@@ -203,6 +203,11 @@ in {
                     "fda0:9527:68ee:4f8a:46a1:b595:357f:c251"
                   ];
                 };
+                "fischl" = {
+                  AAAA = [
+                    "fda0:9527:68ee:4f8a:712a:ed72:b041:27c3"
+                  ];
+                };
                 "keqing" = {
                   AAAA = [
                     "fda0:9527:68ee:4f8a:afbf:7002:aa5f:a363"
