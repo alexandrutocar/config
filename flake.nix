@@ -1,6 +1,6 @@
 {
   description = ''
-    Reproducible configuration for Aether (Server), Albedo (Laptop) and Lumine (VPS).
+    Reproducible configuration for Albedo (Laptop), Beidou (Server), and Collei (VPS).
   '';
 
   inputs = {
@@ -196,14 +196,14 @@
         (let
           nixpkgs = inputs.smallest;
         in {
-          aether = mkSystem "aether" {
+          beidou = mkSystem "beidou" {
             inherit nixpkgs;
-            modules = singleton ./etc/aether;
+            modules = singleton ./etc/beidou;
           };
 
-          lumine = mkSystem "lumine" {
+          collei = mkSystem "collei" {
             inherit nixpkgs;
-            modules = singleton ./etc/lumine;
+            modules = singleton ./etc/collei;
           };
         })
         # Workstations

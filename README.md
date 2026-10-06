@@ -1,25 +1,21 @@
 <!-- -->
-# Reproducible configuration for Aether (Server), Albedo (Laptop) and Lumine (VPS).
+# Reproducible configuration for Albedo (Laptop), Beidou (Server), and Collei (VPS).
 
 > [!NOTE]
 > Mirrors exist on [Codeberg](https://codeberg.org/alexandrutocar/config) and [GitHub](https://github.com/alexandrutocar/config). Issue tracking, milestone planning, and pull requests all take place on a private [Forgejo](https://forgejo.org) instance.
 
 The contained configuration is opinionated and works for me. It introduces its own conventions (e.g. `import = recursive <...>`) and systems (e.g. `services.sigil`), so be warned. If anything overly strange takes place, it is usually explained inline. If it is not, then try looking up the definition – either inside this repository, [home-manager](https://github.com/nix-community/home-manager) or [nixpkgs](https://github.com/nixos/nixpkgs) repositories. If you've exhausted all options and still have questions, or if you would like to share your thoughts – feel free to reach out on social media or [via email](mailto:alexandru.tocar@outlook.com).
 
-- [Reproducible configuration for Aether (Server), Albedo (Laptop) and Lumine (VPS).](#reproducible-configuration-for-aether-server-albedo-laptop-and-lumine-vps)
+- [Reproducible configuration for Albedo (Laptop), Beidou (Server), and Collei (VPS).](#reproducible-configuration-for-albedo-laptop-beidou-server-and-collei-vps)
   - [Screenshots](#screenshots)
-    - [Aether](#aether)
     - [Albedo](#albedo)
-    - [Lumine](#lumine)
+    - [Beidou](#beidou)
+    - [Collei](#collei)
   - [Deployment](#deployment)
   - [Structure](#structure)
   - [Genesis](#genesis)
 
 ## Screenshots
-
-### Aether
-
-![Screenshots of a terminal session showing service units running in each systemd-nspawn machine on Aether.](.assets/screenshots/aether/machinectl-list-system-units.png)
 
 ### Albedo
 
@@ -27,28 +23,32 @@ The contained configuration is opinionated and works for me. It introduces its o
 
 ![Screenshot of Albedo's desktop environment with separate terminal windows showing system characteristics, media player, file browser and document reader.](.assets/screenshots/albedo/fetch-docs-media-files.png)
 
-### Lumine
+### Beidou
 
-![Screenshots of a terminal session showing service units running in each systemd-nspawn machine on Lumine.](.assets/screenshots/lumine/machinectl-list-system-units.png)
+![Screenshots of a terminal session showing service units running in each systemd-nspawn machine on Beidou.](.assets/screenshots/beidou/machinectl-list-system-units.png)
+
+### Collei
+
+![Screenshots of a terminal session showing service units running in each systemd-nspawn machine on Collei.](.assets/screenshots/collei/machinectl-list-system-units.png)
 
 ## Deployment
 
 Usual nix tooling is used for building, testing and deploying host configuration.
 
 ```
-nixos-rebuild build --flake .#<host> --target-host root@<host>.hosts.net.internal --build-host root@aether.hosts.net.internal --show-trace 2>&1 | tee trace.log
+nixos-rebuild build --flake .#<host> --target-host root@<host>.hosts.net.internal --build-host root@beidou.hosts.net.internal --show-trace 2>&1 | tee trace.log
 ```
 
 ```
-nixos-rebuild test --flake .#<host> --target-host root@<host>.hosts.net.internal --build-host root@aether.hosts.net.internal --show-trace 2>&1 | tee trace.log
+nixos-rebuild test --flake .#<host> --target-host root@<host>.hosts.net.internal --build-host root@beidou.hosts.net.internal --show-trace 2>&1 | tee trace.log
 ```
 
 ```
-nixos-rebuild switch --flake .#<host> --target-host root@<host>.hosts.net.internal --build-host root@aether.hosts.net.internal --show-trace 2>&1 | tee trace.log
+nixos-rebuild switch --flake .#<host> --target-host root@<host>.hosts.net.internal --build-host root@beidou.hosts.net.internal --show-trace 2>&1 | tee trace.log
 ```
 
 > [!NOTE]
-> When [Aether](./etc/aether/) is down or unreachable, a different build-host can be specified instead. In some cases, the builders list should be reset with `--builders ''`.
+> When [Beidou](./etc/beidou/) is down or unreachable, a different build-host can be specified instead. In some cases, the builders list should be reset with `--builders ''`.
 
 In case a test does not go to plan, it can be reverted to previous configuration if 
 

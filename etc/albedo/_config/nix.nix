@@ -33,7 +33,7 @@ in {
 
     buildMachines = [
       {
-        hostName = "aether.hosts.net.internal";
+        hostName = "beidou.hosts.net.internal";
         speedFactor = 5800;
         sshUser = "builder";
         maxJobs = 4;
