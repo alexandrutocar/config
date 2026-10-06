@@ -205,6 +205,11 @@
             inherit nixpkgs;
             modules = singleton ./etc/collei;
           };
+
+          fischl = mkSystem "fischl" {
+            inherit nixpkgs;
+            modules = singleton ./etc/fischl;
+          };
         })
         # Workstations
         # ------------
