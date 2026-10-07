@@ -5,7 +5,7 @@ in {
     network = let
       name = "wg0";
       marker = 1010;
-      endpoint = mkHost "[fd4b:ad02:1b77:1:0020:61fc:3462:bf01]" 50010;
+      endpoint = mkHost "212.201.75.101" 50010;
     in {
       netdevs = {
         "25-${name}" = {
