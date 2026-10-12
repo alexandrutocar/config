@@ -1,5 +1,6 @@
 {
   config,
+  pkgs,
   lib,
   ...
 }: let
@@ -11,15 +12,14 @@ in {
     };
   };
 
-  security = {
-    wrappers = {
-      forgejo = {
-        source = getExe config.services.forgejo.package;
-        owner = "root";
-        group = "root";
-        permissions = "u+rx,g+rx,o+rx";
-      };
-    };
+  environment.etc."ssh/forgejo-keys" = {
+    mode = "0755";
+    text = ''
+      #!${pkgs.runtimeShell}
+      exec ${getExe config.services.forgejo.package} \
+        --config ${config.services.forgejo.customDir}/conf/app.ini \
+        keys "$@"
+    '';
   };
 
   users = {
@@ -34,7 +34,7 @@ in {
 
       extraConfig = ''
         Match User git
-          AuthorizedKeysCommand /run/wrappers/bin/forgejo --config ${config.services.forgejo.customDir}/conf/app.ini keys -u %u -t %t -k %k
+          AuthorizedKeysCommand /etc/${config.environment.etc."ssh/forgejo-keys".target} -u %u -t %t -k %k
           AuthorizedKeysCommandUser git
       '';
 
