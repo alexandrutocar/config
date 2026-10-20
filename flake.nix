@@ -106,6 +106,9 @@
                   allowUnfreePredicate = pkg:
                     builtins.elem (lib.getName pkg) [
                       "fcitx5-black-simplicity"
+                      "nvidia-kernel-modules"
+                      "nvidia-settings"
+                      "nvidia-x11"
                       "obsidian"
                     ];
                 };
