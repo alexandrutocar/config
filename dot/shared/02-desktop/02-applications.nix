@@ -9,19 +9,23 @@ _: {
       }
     '';
     extraConfig = {
-      gtk-application-prefer-dark-theme = true;
       gtk-dialogs-use-header = false;
     };
   in {
     enable = true;
+    colorScheme = "dark";
 
     gtk3 = {
       inherit extraCss extraConfig;
     };
     gtk4 = {
       inherit extraCss extraConfig;
-      theme = null;
     };
+  };
+
+  qt = {
+    enable = true;
+    style.name = "adwaita-dark";
   };
 
   # DEFAULT
