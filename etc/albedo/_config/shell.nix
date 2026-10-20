@@ -13,6 +13,7 @@
   ...
 }: let
   inherit (lib.lists) singleton;
+  inherit (lib.modules) mkMerge;
 in {
   imports = singleton (self + "/etc/shared/01-settings/shell.nix");
 
@@ -24,7 +25,7 @@ in {
     # SECURE SHELL
     # ------------
     ssh = {
-      extraConfig = let
+      hosts = let
         algorithms = {
           key = [
             "ssh-ed25519-cert-v01@openssh.com"
@@ -49,36 +50,46 @@ in {
             "aes128-gcm@openssh.com"
           ];
         };
-      in ''
-        Host *
-          # Allow (Strictly) Public Key Authentication
-          PubkeyAuthentication yes
+      in {
+        "*" = mkMerge [
+          {
+            order = 0;
+          }
+          {
+            # Allow (Strictly) Public Key Authentication
+            PubkeyAuthentication = true;
 
-          # Restrict Authentication Methods
-          ChallengeResponseAuthentication no
-          PasswordAuthentication no
+            # Restrict Authentication Methods
+            ChallengeResponseAuthentication = false;
+            PasswordAuthentication = false;
 
-          # Limit Algorithms and Ciphers
-          KexAlgorithms ${builtins.concatStringsSep "," algorithms.kex}
-          MACs ${builtins.concatStringsSep "," algorithms.mac}
-          Ciphers ${builtins.concatStringsSep "," algorithms.enc}
-          HostKeyAlgorithms ${builtins.concatStringsSep "," algorithms.key}
+            # Limit Algorithms and Ciphers
+            KexAlgorithms = builtins.concatStringsSep "," algorithms.kex;
+            MACs = builtins.concatStringsSep "," algorithms.mac;
+            Ciphers = builtins.concatStringsSep "," algorithms.enc;
+            HostKeyAlgorithms = builtins.concatStringsSep "," algorithms.key;
 
-          # Disable Agent Forwarding
-          ForwardAgent no
-          ForwardX11 no
+            # Disable Agent Forwarding
+            ForwardAgent = false;
+            ForwardX11 = false;
 
-          # Strict Host-Key Checking
-          StrictHostKeyChecking ask
-          UserKnownHostsFile ~/.ssh/known_hosts
+            # Strict Host-Key Checking
+            StrictHostKeyChecking = "ask";
 
-          # Reduce Connection Attack Surface
-          ServerAliveInterval 60
-          ServerAliveCountMax 3
-
-        Host *.onion
-          ProxyCommand ${pkgs.socat}/bin/socat - SOCKS4A:localhost:%h:%p,socksport=9050
-      '';
+            # Reduce Connection Attack Surface
+            ServerAliveInterval = 60;
+            ServerAliveCountMax = 3;
+          }
+        ];
+        "*.onion" = mkMerge [
+          {
+            order = 1;
+          }
+          {
+            ProxyCommand = "${pkgs.socat}/bin/socat - SOCKS4A:localhost:%h:%p,socksport=9050";
+          }
+        ];
+      };
     };
 
     # NIX INDEX
