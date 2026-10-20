@@ -101,6 +101,17 @@
             }
 
             {
+              nixpkgs = {
+                config = {
+                  allowUnfreePredicate = pkg:
+                    builtins.elem (lib.getName pkg) [
+                      "obsidian"
+                    ];
+                };
+              };
+            }
+
+            {
               system.stateVersion = "26.05";
             }
           ]
