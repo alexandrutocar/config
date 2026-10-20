@@ -55,6 +55,10 @@ in {
         cfg.package
       ];
 
+      programs.dconf = {
+        enable = true;
+      };
+
       xdg.portal = {
         enable = true;
 
