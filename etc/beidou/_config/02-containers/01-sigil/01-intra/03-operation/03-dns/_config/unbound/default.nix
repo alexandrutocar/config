@@ -151,6 +151,11 @@ in {
                     ip.web
                   ];
                 };
+                "ollama.ai" = {
+                  AAAA = [
+                    ip.web
+                  ];
+                };
                 "pocket-id" = {
                   AAAA = [
                     ip.web

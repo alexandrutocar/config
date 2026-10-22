@@ -121,6 +121,15 @@
                           "nvidia-settings"
                           "nvidia-x11"
                         ]
+                        # CUDA
+                        # ----
+                        [
+                          "cuda_cccl"
+                          "cuda_cudart"
+                          "cuda_nvcc"
+                          "cuda_nvrtc"
+                          "libcublas"
+                        ]
                       ]
                     );
                 };
