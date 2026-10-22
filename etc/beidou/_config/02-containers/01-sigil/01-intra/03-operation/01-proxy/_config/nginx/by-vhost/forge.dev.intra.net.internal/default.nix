@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.cs.systemd) mkSetCredentialEncrypted;
+  inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
   inherit (lib.extra.net) ipv6;
 in let
   extraConfig = ''
@@ -20,7 +20,7 @@ in let
 
   sslCertificate = "${pkgs.certs}/etc/ssl/server/intra.net.internal/forge.dev.intra.net.internal.pem";
 
-  sslCertificateKey = "/run/credentials/nginx.service/forge.dev.intra.net.internal-key.pem";
+  sslCertificateKey = "${credentialsDirectory "nginx"}/forge.dev.intra.net.internal-key.pem";
 in {
   systemd.services.nginx.serviceConfig = {
     SetCredentialEncrypted = mkSetCredentialEncrypted {

@@ -161,6 +161,8 @@ final: super: let
     systemd = {
       mkSetCredentialEncrypted = attrs:
         super.mapAttrsToList (name: payload: "${name}:${final.extra.strings.lines.asOne payload}") attrs;
+
+      credentialsDirectory = unit: "/run/credentials/${unit}.service";
     };
   };
 

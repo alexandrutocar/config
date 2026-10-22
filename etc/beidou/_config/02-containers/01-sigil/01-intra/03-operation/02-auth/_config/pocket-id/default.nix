@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.cs.systemd) mkSetCredentialEncrypted;
+  inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
   inherit (lib.modules) mkMerge;
 in {
   networking = {
@@ -58,7 +58,7 @@ in {
       }
       # Service
       {
-        ENCRYPTION_KEY_FILE = "/run/credentials/pocket-id.service/encryption_key";
+        ENCRYPTION_KEY_FILE = "${credentialsDirectory "pocket-id"}/encryption_key";
 
         APP_URL = "https://pocket-id.intra.net.internal";
 
@@ -72,7 +72,7 @@ in {
 
         LDAP_BASE = "dc=intra,dc=net,dc=internal";
         LDAP_BIND_DN = "cn=pocket-id,ou=people,dc=intra,dc=net,dc=internal";
-        LDAP_BIND_PASSWORD_FILE = "/run/credentials/pocket-id.service/ldap_bind_dn_password";
+        LDAP_BIND_PASSWORD_FILE = "${credentialsDirectory "pocket-id"}/ldap_bind_dn_password";
 
         # Filters
         LDAP_USER_SEARCH_FILTER = "(&(objectClass=person)(!(memberOf=cn=service,ou=groups,dc=intra,dc=net,dc=internal)))";

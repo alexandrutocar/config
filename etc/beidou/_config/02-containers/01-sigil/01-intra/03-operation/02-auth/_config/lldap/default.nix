@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.cs.systemd) mkSetCredentialEncrypted;
+  inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
 in {
   networking = {
     firewall = {
@@ -53,16 +53,16 @@ in {
         http_port = 8080;
         http_url = "https://directory.intra.net.internal";
 
-        key_seed_file = "/run/credentials/lldap.service/key_seed";
+        key_seed_file = "${credentialsDirectory "lldap"}/key_seed";
 
-        jwt_secret_file = "/run/credentials/lldap.service/jwt_secret";
+        jwt_secret_file = "${credentialsDirectory "lldap"}/jwt_secret";
 
         ldap_host = "::";
         ldap_port = 3890;
         ldap_base_dn = "dc=intra,dc=net,dc=internal";
         ldap_user_dn = "Alex";
         ldap_user_email = "alex@intra.net.internal";
-        ldap_user_pass_file = "/run/credentials/lldap.service/ldap_user_pass";
+        ldap_user_pass_file = "${credentialsDirectory "lldap"}/ldap_user_pass";
       };
     };
   };

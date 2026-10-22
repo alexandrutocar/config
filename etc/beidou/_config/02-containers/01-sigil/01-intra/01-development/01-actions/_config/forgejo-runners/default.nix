@@ -1,17 +1,15 @@
 {lib, ...}: let
-  inherit (lib.extra.cs.systemd) mkSetCredentialEncrypted;
+  inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
 in {
   services.forgejo-runner = {
     instances = {
-      achird = let
-        CREDENTIALS_DIRECTORY = "/run/credentials/forgejo-runner-achird.service";
-      in {
+      achird = {
         enable = true;
         settings = {
           server = {
             connections = {
               default = {
-                token_url = "file:${CREDENTIALS_DIRECTORY}/token";
+                token_url = "file:${credentialsDirectory "forgejo-runner-achird"}/token";
                 url = "https://forge.dev.intra.net.internal";
                 uuid = "dae07cdb-1906-47c7-bb40-a0cc1642dd43";
               };
@@ -19,15 +17,13 @@ in {
           };
         };
       };
-      adhara = let
-        CREDENTIALS_DIRECTORY = "/run/credentials/forgejo-runner-adhara.service";
-      in {
+      adhara = {
         enable = true;
         settings = {
           server = {
             connections = {
               default = {
-                token_url = "file:${CREDENTIALS_DIRECTORY}/token";
+                token_url = "file:${credentialsDirectory "forgejo-runner-adhara"}/token";
                 url = "https://forge.dev.intra.net.internal";
                 uuid = "b62cfe7e-b2cd-4644-bc03-973f4267768b";
               };
@@ -35,15 +31,13 @@ in {
           };
         };
       };
-      alioth = let
-        CREDENTIALS_DIRECTORY = "/run/credentials/forgejo-runner-alioth.service";
-      in {
+      alioth = {
         enable = true;
         settings = {
           server = {
             connections = {
               default = {
-                token_url = "file:${CREDENTIALS_DIRECTORY}/token";
+                token_url = "file:${credentialsDirectory "forgejo-runner-alioth"}/token";
                 url = "https://forge.dev.intra.net.internal";
                 uuid = "acc4ec70-0a64-44df-aec1-6b278695bea1";
               };
