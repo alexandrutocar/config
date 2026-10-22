@@ -156,6 +156,11 @@ in {
                     ip.web
                   ];
                 };
+                "workflows" = {
+                  AAAA = [
+                    ip.web
+                  ];
+                };
               }
               (let
                 AAAA = [ip.web];
