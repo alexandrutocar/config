@@ -18,7 +18,7 @@
       cudaCapabilities = ["6.1"];
     };
     overlays = [
-      (final: prev: {
+      (final: _: {
         cudaPackages = final.cudaPackages_12;
       })
     ];

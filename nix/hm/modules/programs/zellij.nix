@@ -191,7 +191,7 @@ in {
 
   config = let
     inherit (lib.attrsets) listToAttrs mapAttrs' nameValuePair;
-    inherit (lib.lists) concatLists optional optionals;
+    inherit (lib.lists) concatLists optionals;
     inherit (lib.meta) getExe;
     inherit (lib.modules) mkIf mkMerge mkOrder;
     inherit (lib.strings) isStorePath removePrefix;
