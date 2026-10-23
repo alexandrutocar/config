@@ -161,6 +161,11 @@ in {
                     ip.web
                   ];
                 };
+                "proxy.uni" = {
+                  AAAA = [
+                    ip.web
+                  ];
+                };
                 "workflows" = {
                   AAAA = [
                     ip.web
