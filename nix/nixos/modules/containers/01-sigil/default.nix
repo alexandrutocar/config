@@ -6,7 +6,7 @@
   lib,
   self,
   ...
-}: let
+} @ host: let
   globalConfig = config;
   cfg = config.services.sigil;
 in let
@@ -208,6 +208,7 @@ in {
                             ];
 
                           specialArgs = {
+                            hostConfig = host.config;
                             sigil = {
                               self = infosFor config;
                               containers =

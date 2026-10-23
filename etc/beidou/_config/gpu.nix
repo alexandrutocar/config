@@ -6,21 +6,34 @@
 # gpu, nvidia, cuda...
 #
 # ────────────────────────────────────────────────────────────────────────
-{
-  config,
-  lib,
-  ...
-}: {
-  boot.blacklistedKernelModules = ["nouveau"];
-
+{config, ...}: {
   services = {
     xserver = {
       videoDrivers = ["nvidia"];
     };
   };
 
+  nixpkgs = {
+    config = {
+      cudaCapabilities = ["6.1"];
+    };
+    overlays = [
+      (final: _: {
+        cudaPackages = final.cudaPackages_12;
+      })
+    ];
+  };
+
   hardware = {
-    nvidia = let
+    graphics = {
+      enable = true;
+    };
+
+    nvidia = {
+      nvidiaSettings = false;
+
+      open = false;
+
       package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
         version = "580.142";
         sha256_64bit = "sha256-IJFfzz/+icNVDPk7YKBKKFRTFQ2S4kaOGRGkNiBEdWM=";
@@ -29,19 +42,6 @@
         settingsSha256 = "sha256-BnrIlj5AvXTfqg/qcBt2OS9bTDDZd3uhf5jqOtTMTQM=";
         persistencedSha256 = "sha256-il403KPFAnDbB+dITnBGljhpsUPjZwmLjGt8iPKuBqw=";
       };
-    in {
-      inherit package;
-
-      open = false;
-
-      prime = {
-        intelBusId = "PCI:0:2:0";
-        nvidiaBusId = "PCI:1:0:0";
-      };
-    };
-
-    graphics = {
-      enable = true;
     };
   };
 }

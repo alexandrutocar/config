@@ -104,13 +104,34 @@
               nixpkgs = {
                 config = {
                   allowUnfreePredicate = pkg:
-                    builtins.elem (lib.getName pkg) [
-                      "fcitx5-black-simplicity"
-                      "nvidia-kernel-modules"
-                      "nvidia-settings"
-                      "nvidia-x11"
-                      "obsidian"
-                    ];
+                    builtins.elem (lib.getName pkg) (
+                      builtins.concatLists [
+                        # DIVERSE
+                        # -------
+                        [
+                          "fcitx5-black-simplicity"
+                          "n8n"
+                          "n8n-task-runner-launcher"
+                          "obsidian"
+                        ]
+                        # NVIDIA
+                        # ------
+                        [
+                          "nvidia-kernel-modules"
+                          "nvidia-settings"
+                          "nvidia-x11"
+                        ]
+                        # CUDA
+                        # ----
+                        [
+                          "cuda_cccl"
+                          "cuda_cudart"
+                          "cuda_nvcc"
+                          "cuda_nvrtc"
+                          "libcublas"
+                        ]
+                      ]
+                    );
                 };
               };
             }

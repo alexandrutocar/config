@@ -133,7 +133,7 @@ in {
             intra = {
               ${mid} = [
                 {
-                  target = config.services.sigil.settings.containers.intra.a8e714de-f158-49fc-958a-9176f25d2973; # intra/collaboration/dav
+                  target = config.services.sigil.settings.containers.intra.a8e714de-f158-49fc-958a-9176f25d2973; # intra/sharing/dav
                 }
                 {
                   target = config.services.sigil.settings.containers.intra.c38a828e-58a7-49af-894d-ba02f936d211; # intra/operation/auth
@@ -174,7 +174,7 @@ identifiers are `[a-zA-Z_][a-zA-Z0-9_'-]*` — hyphens and digits are legal, but
 first character**. A MID starting with a digit must be written `."0f3c…"`. Using `${mid}`
 sidesteps the question.
 
-**Annotate targets.** MIDs carry no meaning; the `# intra/collaboration/dav` trailing
+**Annotate targets.** MIDs carry no meaning; the `# intra/sharing/dav` trailing
 comments are the only thing making the link list readable. Treat this as required.
 
 **Declare each adjacency once.** BIDs are direction-free (§4), so the bridge is identical no

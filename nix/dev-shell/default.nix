@@ -1,9 +1,4 @@
-{
-  mkShell,
-  fetchFromGitHub,
-  rustPlatform,
-  ...
-} @ pkgs:
+{mkShell, ...} @ pkgs:
 mkShell {
   buildInputs = with pkgs; [
     shellcheck
