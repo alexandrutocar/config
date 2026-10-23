@@ -14,7 +14,7 @@ in let
 
   kTLS = true;
 
-  # onlySSL = true;
+  onlySSL = true;
 
   serverName = "music.intra.net.internal";
 
@@ -38,7 +38,7 @@ in {
 
   services.nginx.virtualHosts = {
     "music.intra.net.internal" = {
-      inherit extraConfig kTLS serverName sslCertificate sslCertificateKey;
+      inherit extraConfig kTLS onlySSL serverName sslCertificate sslCertificateKey;
 
       listen = [
         {
@@ -46,14 +46,13 @@ in {
           port = 443;
           ssl = true;
         }
-        {
-          addr = ipv6.enclose sigil.self.addresses.ula;
-          port = 80;
-        }
       ];
 
       locations = {
         "/" = {
+          extraConfig = ''
+            proxy_buffering off;
+          '';
           proxyPass = "http://${ipv6.enclose sigil.containers.intra."fecc0d40-eb4e-43d4-b0ef-c0627fcce582".addresses.ula}:8080";
         };
       };
