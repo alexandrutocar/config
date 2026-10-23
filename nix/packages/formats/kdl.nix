@@ -22,7 +22,7 @@
 # ────────────────────────────────────────────────────────────────────────
 # NOTE: This format should be removed when the pull request or
 #       a replacement thereof is merged.
-#       
+#
 #       Taken from: https://github.com/NixOS/nixpkgs/pull/426828
 # ────────────────────────────────────────────────────────────────────────
 {
