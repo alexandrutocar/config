@@ -33,6 +33,10 @@
               path = ./certs/server/intra.net.internal/pocket-id.intra.net.internal.pem;
             }
             {
+              name = "proxy.uni.intra.net.internal";
+              path = ./certs/server/intra.net.internal/proxy.uni.intra.net.internal.pem;
+            }
+            {
               name = "workflows.intra.net.internal";
               path = ./certs/server/intra.net.internal/workflows.intra.net.internal.pem;
             }
