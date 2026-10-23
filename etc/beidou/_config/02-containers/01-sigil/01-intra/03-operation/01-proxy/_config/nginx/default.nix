@@ -57,11 +57,7 @@ _: {
 
   networking = {
     firewall = {
-      allowedTCPPorts = [
-        443
-        80
-        11434
-      ];
+      allowedTCPPorts = [443 11434];
     };
   };
 }
