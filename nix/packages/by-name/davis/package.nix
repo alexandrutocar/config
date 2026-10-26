@@ -30,13 +30,13 @@
 }:
 php.buildComposerProject (finalAttrs: {
   pname = "davis";
-  version = "5.5.0";
+  version = "5.5.1";
 
   src = fetchFromGitHub {
     owner = "tchapi";
     repo = "davis";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-WCAh4oa8pf37U+GNyxkkYDhg3e9qrFaEdvMjootH5es=";
+    hash = "sha256-3cbqEXNJhmuN4eZOyLw8cI01YJOpDYxhv7f7V9EKTg8=";
   };
 
   __structuredAttrs = true;
