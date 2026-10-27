@@ -1,11 +1,24 @@
 {lib, ...}: let
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
+in let
+  container = {
+    network = "host";
+    options = "-v /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro";
+    valid_volumes = ["/etc/ssl/certs/ca-certificates.crt"];
+  };
+  runner = {
+    labels = [
+      "docker:docker://data.forgejo.org/oci/node:20-bookworm"
+    ];
+  };
 in {
   services.forgejo-runner = {
     instances = {
       achird = {
         enable = true;
         settings = {
+          inherit container runner;
+
           server = {
             connections = {
               default = {
@@ -20,6 +33,8 @@ in {
       adhara = {
         enable = true;
         settings = {
+          inherit container runner;
+
           server = {
             connections = {
               default = {
@@ -34,6 +49,8 @@ in {
       alioth = {
         enable = true;
         settings = {
+          inherit container runner;
+
           server = {
             connections = {
               default = {

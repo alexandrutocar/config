@@ -17,6 +17,13 @@ in {
               modules = recursive ./_config;
 
               nspawn = {
+                config = {
+                  filesConfig = {
+                    Bind = [
+                      "/state/var/lib/machines/${mid}/var/lib/containers:/var/lib/containers:idmap"
+                    ];
+                  };
+                };
                 flags = mkAfter [
                   "--load-credential=credential.secret:%d/credential.secret"
                 ];
