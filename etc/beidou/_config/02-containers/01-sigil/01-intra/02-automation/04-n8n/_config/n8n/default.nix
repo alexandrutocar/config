@@ -36,6 +36,17 @@ in {
         };
       };
     };
+
+    tmpfiles = {
+      settings = {
+        "10-n8n.assets" = {
+          ${config.services.n8n.settings.restrict-file-access-to}.d = {
+            inherit (config.services.n8n) group user;
+            mode = "0750";
+          };
+        };
+      };
+    };
   };
 
   services = {
