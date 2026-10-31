@@ -100,42 +100,6 @@
             }
 
             {
-              nixpkgs = {
-                config = {
-                  allowUnfreePredicate = pkg:
-                    builtins.elem (lib.getName pkg) (
-                      builtins.concatLists [
-                        # DIVERSE
-                        # -------
-                        [
-                          "fcitx5-black-simplicity"
-                          "n8n"
-                          "n8n-task-runner-launcher"
-                          "obsidian"
-                        ]
-                        # NVIDIA
-                        # ------
-                        [
-                          "nvidia-kernel-modules"
-                          "nvidia-settings"
-                          "nvidia-x11"
-                        ]
-                        # CUDA
-                        # ----
-                        [
-                          "cuda_cccl"
-                          "cuda_cudart"
-                          "cuda_nvcc"
-                          "cuda_nvrtc"
-                          "libcublas"
-                        ]
-                      ]
-                    );
-                };
-              };
-            }
-
-            {
               system.stateVersion = "26.05";
             }
           ]
@@ -154,7 +118,7 @@
       inherit (lib.extra.files.list) recursive;
     in [
       inputs.home-manager.nixosModules.home-manager
-      (_: {
+      {
         home-manager = {
           # Custom options.
           sharedModules = recursive ./nix/modules/home-manager;
@@ -170,7 +134,7 @@
             inherit imports;
           };
         };
-      })
+      }
     ];
   in {
     # `nix develop`
