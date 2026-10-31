@@ -11,8 +11,8 @@ in {
           porti = {
             ${mid} = {
               nspawn = {
-                config = {
-                  filesConfig = {
+                settings = {
+                  Files = {
                     Bind = [
                       "/state/var/lib/machines/${mid}/var/lib/caddy:/var/lib/caddy:idmap"
                     ];

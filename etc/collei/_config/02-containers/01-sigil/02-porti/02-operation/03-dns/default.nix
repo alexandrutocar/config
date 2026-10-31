@@ -12,8 +12,8 @@ in {
             ${mid} = {
               modules = recursive ./_config;
               nspawn = {
-                config = {
-                  networkConfig = {
+                settings = {
+                  Network = {
                     Port = [
                       "tcp:53:53"
                       "udp:53:53"

@@ -17,8 +17,8 @@ in {
               modules = recursive ./_config;
 
               nspawn = {
-                config = {
-                  filesConfig = {
+                settings = {
+                  Files = {
                     Bind = [
                       "/state/var/lib/machines/${mid}/var/lib/containers:/var/lib/containers:idmap"
                     ];

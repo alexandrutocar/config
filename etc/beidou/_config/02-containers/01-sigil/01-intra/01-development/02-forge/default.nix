@@ -17,8 +17,8 @@ in {
               modules = recursive ./_config;
 
               nspawn = {
-                config = {
-                  filesConfig = {
+                settings = {
+                  Files = {
                     Bind = [
                       "/state/var/lib/machines/${mid}/var/lib/forgejo:/var/lib/forgejo:idmap"
                       "/state/var/lib/machines/${mid}/etc/ssh/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key:idmap"

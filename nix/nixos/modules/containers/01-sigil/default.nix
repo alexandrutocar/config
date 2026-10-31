@@ -155,10 +155,10 @@ in {
                       };
 
                       nspawn = {
-                        config = mkOption {
-                          type = options.systemd.nspawn.type.nestedTypes.elemType;
+                        settings = mkOption {
+                          inherit ((options.systemd.nspawn.type.getSubOptions []).settings) type;
                           default = {};
-                          description = "Nspawn configuration `systemd.nspawn.<name>`.";
+                          description = "Nspawn configuration (same as `systemd.nspawn.settings`).";
                         };
                         flags = mkOption {
                           type = listOf str;
@@ -523,30 +523,32 @@ in {
               # -------------
               systemd = {
                 nspawn = containers.lib.mapToAttrs (container: {
-                  ${container.mid} = mkMerge [
-                    container.nspawn.config
-                    {
-                      execConfig = {
-                        PrivateUsers = "pick";
-                        LinkJournal = "try-host";
-                        Parameters = "${container.evaluation.config.system.build.toplevel}/init";
-                        Ephemeral = true;
-                        Timezone = "off";
-                        Boot = false;
-                        KillSignal = "SIGRTMIN+3";
-                      };
-                      filesConfig = {
-                        PrivateUsersOwnership = "chown";
-                        BindReadOnly = [
-                          "/nix/store:/nix/store:idmap"
-                        ];
-                      };
-                      networkConfig = {
-                        Private = true;
-                        VirtualEthernet = true;
-                      };
-                    }
-                  ];
+                  ${container.mid} = {
+                    settings = mkMerge [
+                      container.nspawn.settings
+                      {
+                        Exec = {
+                          PrivateUsers = "pick";
+                          LinkJournal = "try-host";
+                          Parameters = "${container.evaluation.config.system.build.toplevel}/init";
+                          Ephemeral = true;
+                          Timezone = "off";
+                          Boot = false;
+                          KillSignal = "SIGRTMIN+3";
+                        };
+                        Files = {
+                          PrivateUsersOwnership = "chown";
+                          BindReadOnly = [
+                            "/nix/store:/nix/store:idmap"
+                          ];
+                        };
+                        Network = {
+                          Private = true;
+                          VirtualEthernet = true;
+                        };
+                      }
+                    ];
+                  };
                 });
               };
             }
