@@ -67,8 +67,6 @@ In case a test does not go to plan, it can be reverted to previous configuration
 |   |____default.nix
 |   |____report.json # <- facter's report
 |____nix
-  |____dev-shell
-  | |____default.nix
   |____fixes? # <- package fixes
   |____hm # <- updated and new modules for Home Manager
   |____lib # <- lib(s) updates and .extra lib 

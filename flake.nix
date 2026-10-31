@@ -178,7 +178,21 @@
     devShells = forSystems (system: let
       pkgs = mkPackages system inputs.smallest;
     in {
-      default = import ./nix/dev-shell/default.nix pkgs;
+      default = pkgs.mkShell {
+        buildInputs = with pkgs; [
+          shellcheck
+          alejandra
+
+          deadnix
+          vulnix
+
+          nixd
+          shfmt
+          statix
+
+          opentofu
+        ];
+      };
     });
 
     # `nix fmt`
