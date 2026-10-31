@@ -19,7 +19,7 @@
       "inputs": {
         "flake-utils": "flake-utils",
         "nixpkgs": [
-          "unstable"
+          "nixos-unstable"
         ]
       },
       "locked": {
@@ -70,7 +70,7 @@
     "home-manager": {
       "inputs": {
         "nixpkgs": [
-          "unstable"
+          "nixos-unstable"
         ]
       },
       "locked": {
@@ -112,7 +112,7 @@
       "inputs": {
         "home-manager": "home-manager_2",
         "nixpkgs": [
-          "unstable"
+          "nixos-unstable"
         ]
       },
       "locked": {
@@ -133,7 +133,7 @@
       "inputs": {
         "crane": "crane",
         "nixpkgs": [
-          "unstable"
+          "nixos-unstable"
         ],
         "pre-commit": "pre-commit",
         "rust-overlay": "rust-overlay"
@@ -180,8 +180,8 @@
         "home-manager": "home-manager",
         "impermanence": "impermanence",
         "lanzaboote": "lanzaboote",
-        "smallest": "smallest",
-        "unstable": "unstable"
+        "nixos-unstable": "nixos-unstable",
+        "nixos-unstable-small": "nixos-unstable-small"
       }
     },
     "rust-overlay": {
@@ -205,7 +205,7 @@
         "type": "github"
       }
     },
-    "smallest": {
+    "nixos-unstable-small": {
       "locked": {
         "lastModified": 1793312669,
         "narHash": "sha256-Unl0OWUgLUBTOcCIM18U0UfIWXIf1JHXyMrpAqF88LE=",
@@ -216,12 +216,12 @@
       },
       "original": {
         "owner": "nixos",
+        "ref": "nixos-unstable-small",
         "repo": "nixpkgs",
-        "rev": "6da3f247f92c898cfebde206192bb8dac7472ab4",
         "type": "github"
       }
     },
-    "unstable": {
+    "nixos-unstable": {
       "locked": {
         "lastModified": 1793110635,
         "narHash": "sha256-dhoW6VgFWlaodSY5jrBn+CF2FLmaUvDVgM7+C7T2+NM=",
@@ -232,8 +232,8 @@
       },
       "original": {
         "owner": "nixos",
+        "ref": "nixos-unstable",
         "repo": "nixpkgs",
-        "rev": "31ecbaca1bdefa45dffc409f0250bd8039ea0010",
         "type": "github"
       }
     }

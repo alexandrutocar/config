@@ -7,37 +7,37 @@
     # ────────────────────────────────────────────────────────────────────────
     # NOTE: For server systems (hosts).
     # ────────────────────────────────────────────────────────────────────────
-    smallest = {
-      url = "github:nixos/nixpkgs?rev=6da3f247f92c898cfebde206192bb8dac7472ab4"; # nixos-unstable-small
+    nixos-unstable-small = {
+      url = "github:nixos/nixpkgs/nixos-unstable-small";
     };
 
     # ────────────────────────────────────────────────────────────────────────
     # NOTE: For desktop-oriented systems (workstations) and software
     #       with long build times (e.g. Firefox, Chromium, Electron).
     # ────────────────────────────────────────────────────────────────────────
-    unstable = {
-      url = "github:nixos/nixpkgs?rev=31ecbaca1bdefa45dffc409f0250bd8039ea0010"; # nixos-unstable
+    nixos-unstable = {
+      url = "github:nixos/nixpkgs/nixos-unstable";
     };
 
     # ────────────────────────────────────────────────────────────────────────
     impermanence = {
       url = "github:nix-community/impermanence";
-      inputs.nixpkgs.follows = "unstable";
+      inputs.nixpkgs.follows = "nixos-unstable";
     };
 
     "dns.nix" = {
       url = "github:nix-community/dns.nix";
-      inputs.nixpkgs.follows = "unstable";
+      inputs.nixpkgs.follows = "nixos-unstable";
     };
 
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
-      inputs.nixpkgs.follows = "unstable";
+      inputs.nixpkgs.follows = "nixos-unstable";
     };
 
     home-manager = {
       url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "unstable";
+      inputs.nixpkgs.follows = "nixos-unstable";
     };
   };
 
@@ -65,7 +65,7 @@
           inputs."dns.nix".lib;
       };
 
-    lib = mkLib inputs.smallest;
+    lib = mkLib inputs.nixos-unstable-small;
 
     mkPackages = system: pkgs:
       import pkgs {
@@ -175,7 +175,7 @@
   in {
     # `nix develop`
     devShells = forSystems (system: let
-      pkgs = mkPackages system inputs.smallest;
+      pkgs = mkPackages system inputs.nixos-unstable-small;
     in {
       default = pkgs.mkShell {
         buildInputs = with pkgs; [
@@ -196,7 +196,7 @@
 
     # `nix fmt`
     formatter = forSystems (
-      system: (mkPackages system inputs.smallest).alejandra
+      system: (mkPackages system inputs.nixos-unstable-small).alejandra
     );
 
     overlays = let
@@ -241,7 +241,7 @@
         # Hosts/Servers
         # -------------
         (let
-          nixpkgs = inputs.smallest;
+          nixpkgs = inputs.nixos-unstable-small;
         in {
           beidou = mkSystem "beidou" {
             inherit nixpkgs;
@@ -261,7 +261,7 @@
         # Workstations
         # ------------
         (let
-          nixpkgs = inputs.unstable;
+          nixpkgs = inputs.nixos-unstable;
         in {
           albedo = mkSystem "albedo" {
             inherit nixpkgs;
@@ -277,7 +277,7 @@
 
     packages = forSystems (
       system: let
-        pkgs = mkPackages system inputs.smallest;
+        pkgs = mkPackages system inputs.nixos-unstable-small;
       in
         packagesFromDirectoryRecursive {
           callPackage = callPackageWith (pkgs // {inherit lib;});
