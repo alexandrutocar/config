@@ -190,11 +190,11 @@ in {
                           modules =
                             config.modules
                             ++ recursive ./_container
+                            ++ (recursive (self + "/nix/modules/nixos"))
                             ++ [
                               (_: {
                                 imports = [
                                   (modulesPath + "/misc/nixpkgs/read-only.nix")
-                                  (self + "/nix/nixos")
                                 ];
                                 config = {
                                   nixpkgs = {
@@ -209,11 +209,13 @@ in {
 
                           specialArgs = {
                             hostConfig = host.config;
+
                             sigil = {
                               self = infosFor config;
                               containers =
                                 mapAttrs (_: mapAttrs (_: infosFor)) cfg.settings.containers;
                             };
+
                             inherit lib;
                           };
                         };

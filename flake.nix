@@ -79,15 +79,14 @@
       modules,
     }: let
       lib = mkLib nixpkgs;
+    in let
+      inherit (lib.extra.files.list) recursive;
     in
       lib.nixosSystem {
         modules =
           [
             inputs.impermanence.nixosModules.impermanence
             inputs.lanzaboote.nixosModules.lanzaboote
-
-            # Custom options.
-            ./nix/nixos
 
             # Ensure device has expected name in wireless, wired and bluetooth networks.
             {
@@ -140,7 +139,7 @@
               system.stateVersion = "26.05";
             }
           ]
-          ++ modules;
+          ++ (recursive ./nix/modules/nixos) ++ modules;
         specialArgs = {
           inherit lib self inputs;
         };
@@ -151,14 +150,14 @@
       imports ? [],
     }: let
       lib = mkLib nixpkgs;
+    in let
+      inherit (lib.extra.files.list) recursive;
     in [
       inputs.home-manager.nixosModules.home-manager
       (_: {
         home-manager = {
-          sharedModules = [
-            # Custom options.
-            ./nix/hm/modules
-          ];
+          # Custom options.
+          sharedModules = recursive ./nix/modules/home-manager;
 
           useUserPackages = true;
           useGlobalPkgs = true;

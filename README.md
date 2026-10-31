@@ -68,9 +68,10 @@ In case a test does not go to plan, it can be reverted to previous configuration
 |   |____report.json # <- facter's report
 |____nix
   |____fixes? # <- package fixes
-  |____hm # <- updated and new modules for Home Manager
   |____lib # <- lib(s) updates and .extra lib 
-  |____nixos # <- updated and new modules for NixOS
+  |____modules # <- updated and new modules for NixOS
+  | |____home-manager # <- updated and new modules for Home Manager
+  | |____nixos # <- updated and new modules for NixOS
   |____packages # <- new packages
 ```
 
