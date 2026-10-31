@@ -41,14 +41,14 @@ services.sigil
 ├── enable
 └── settings
     ├── containers.<group>.<mid>
-    │   ├── mid            str      (default: attribute name)
-    │   ├── group          str      (default: enclosing attribute name)
-    │   ├── addresses.gua  nullOr str  (derived; overridable, null = no GUA)
-    │   ├── addresses.ula  nullOr str  (derived; overridable, null = no ULA)
-    │   ├── nspawn.config  systemd.nspawn.<name> submodule
-    │   ├── nspawn.flags   listOf str   (CLI flags for systemd-nspawn)
-    │   ├── modules        listOf deferredModule  ← your guest NixOS config
-    │   └── evaluation     readOnly     ← the evaluated guest system
+    │   ├── mid               str      (default: attribute name)
+    │   ├── group             str      (default: enclosing attribute name)
+    │   ├── addresses.gua     nullOr str  (derived; overridable, null = no GUA)
+    │   ├── addresses.ula     nullOr str  (derived; overridable, null = no ULA)
+    │   ├── nspawn.settings   systemd.nspawn.<name>.settings submodule
+    │   ├── nspawn.flags      listOf str   (CLI flags for systemd-nspawn)
+    │   ├── modules           listOf deferredModule  ← your guest NixOS config
+    │   └── evaluation        readOnly     ← the evaluated guest system
     └── network
         ├── links.<group>.<source-mid> = [ { target = <container>; } … ]
         │   └── each element also exposes readOnly: source, bid, pid
@@ -502,7 +502,7 @@ use `policy` and key off `pid`.
 * **The duplicate-MID assertion message says "ULA collision"** but the check is on MIDs. It is
   broader than the message suggests.
 * **`Ephemeral=true`** — guest root filesystems do not persist. Anything stateful needs an
-  explicit bind mount via `nspawn.config.filesConfig`.
+  explicit bind mount via `nspawn.settings.Files`.
 * **Shadowing.** `self` in `__toString = self: self.mid` shadows the flake `self`; the inner
   `group` in `policies.incoming` is a group's *attrset*, not a group name. Both are correct,
   both read badly.

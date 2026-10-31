@@ -12,8 +12,8 @@ in {
             ${mid} = {
               modules = recursive ./_config;
               nspawn = {
-                config = {
-                  filesConfig = {
+                settings = {
+                  Files = {
                     Bind =
                       [
                         "/archive/bibliotheca/music:/mnt/audio/music:idmap"
