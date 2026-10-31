@@ -44,7 +44,7 @@ in {
   in {
     enable = mkEnableOption "river";
 
-    package = mkPackageOption pkgs "river" {};
+    package = mkPackageOption pkgs "river-classic" {};
   };
 
   config = let

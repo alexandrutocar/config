@@ -212,8 +212,6 @@
           inherit (self.packages.${final.stdenv.hostPlatform.system}) certs davis notes;
         };
 
-        aliases = import (./nix + "/fixes?/aliases.nix");
-
         tools = final: _: {
           custom.writeAuthZone = import ./nix/packages/tools/write-auth-zone/package.nix final;
           custom.writeShell = import ./nix/packages/tools/write-shell/package.nix final;
