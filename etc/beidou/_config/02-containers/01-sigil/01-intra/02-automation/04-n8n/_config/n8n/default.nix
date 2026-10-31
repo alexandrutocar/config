@@ -58,6 +58,10 @@ in {
           NODE_ENV = "production";
         }
         {
+          NO_PROXY = ".intra.net.internal,localhost,::1";
+          HTTPS_PROXY = "http://[fda0:9527:68ee:4f8a:f7f3:176c:41e0:4098]:8888";
+        }
+        {
           listen-address = sigil.self.addresses.ula;
           proxy-hops = 1;
           host = "workflows.intra.net.internal";

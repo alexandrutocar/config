@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  config,
+  pkgs,
+  ...
+}: {
   networking = {
     firewall = {
       allowedTCPPorts = [8888];
@@ -14,7 +18,9 @@
 
         Port = 8888;
 
-        Allow = [];
+        Allow = [
+          config.services.sigil.settings.containers.intra."a4205b50-197a-40c8-8057-fe1394630e91".addresses.ula # intra/automation/n8n
+        ];
 
         ConnectPort = [
           443 # HTTPS
