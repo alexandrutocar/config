@@ -233,7 +233,7 @@
               (singleton ./etc/albedo)
               ++ (mkHome "alex" {
                 inherit nixpkgs;
-                imports = singleton ./dot/albedo/by-user/alex;
+                imports = singleton ./dot/albedo/alex;
               });
           };
         })

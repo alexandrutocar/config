@@ -58,8 +58,7 @@ In case a test does not go to plan, it can be reverted to previous configuration
 |____doc
 |____dot
 | |____<host>
-|   |____by-user
-|     |____<user>
+|   |____<user>
 |       |____default.nix
 |____etc
 | |____<host>
