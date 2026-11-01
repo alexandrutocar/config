@@ -196,12 +196,10 @@ in {
                                 imports = [
                                   (modulesPath + "/misc/nixpkgs/read-only.nix")
                                 ];
+                                
                                 config = {
                                   nixpkgs = {
                                     inherit pkgs;
-                                  };
-                                  system = {
-                                    stateVersion = "26.05";
                                   };
                                 };
                               })
@@ -209,6 +207,8 @@ in {
 
                           specialArgs = {
                             hostConfig = host.config;
+
+                            hostName = config.mid;
 
                             sigil = {
                               self = infosFor config;
