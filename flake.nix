@@ -57,7 +57,7 @@
     # Library
     # -------
     libOverlay = final: prev:
-      import ./nix/lib final prev
+      import ./nix/libraries final prev
       // {
         dns = inputs."dns.nix".lib;
       };
