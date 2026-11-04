@@ -5,7 +5,6 @@
   ...
 }: let
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
-  inherit (lib.extra.net) ipv6;
 in {
   networking = {
     firewall = {
@@ -45,13 +44,13 @@ in {
     in {
       streamConfig = ''
         upstream uni_proxy {
-          server ${ipv6.enclose sigil.containers.intra."b6cab864-64cc-454d-8647-30348af279da".addresses.ula}:8888;
+          server [${sigil.containers.intra."b6cab864-64cc-454d-8647-30348af279da".addresses.ula}]:8888;
         }
 
         server {
           listen 8443 ssl default_server;
 
-          listen ${ipv6.enclose sigil.self.addresses.ula}:8443 ssl default_server;
+          listen [${sigil.self.addresses.ula}]:8443 ssl default_server;
 
           allow ${sigil.containers.intra."a4205b50-197a-40c8-8057-fe1394630e91".addresses.ula}/128;
           allow fda0:9527:68ee:4f8a:ad9c:4066:9123:5d9a/128;
@@ -67,7 +66,7 @@ in {
 
         server {
           listen 8443 ssl;
-          listen ${ipv6.enclose sigil.self.addresses.ula}:8443 ssl;
+          listen [${sigil.self.addresses.ula}]:8443 ssl;
           server_name ${serverName};
 
           ssl_certificate_key ${sslCertificateKey};
@@ -76,7 +75,7 @@ in {
 
           ssl_conf_command Options KTLS;
 
-          proxy_bind ${ipv6.enclose sigil.self.addresses.ula};
+          proxy_bind [${sigil.self.addresses.ula}];
           proxy_pass uni_proxy;
         }
       '';
@@ -96,7 +95,7 @@ in {
 
           listen = [
             {
-              addr = ipv6.enclose sigil.self.addresses.ula;
+              addr = "[${sigil.self.addresses.ula}]";
               port = 443;
               ssl = true;
             }

@@ -341,17 +341,6 @@ final: super: let
       };
     };
 
-    ipv6 = {
-      enclose = address: "[" + address + "]";
-    };
-
-    ipv4 = {
-      convert = {
-        toInt = o0: o1: o2: o3: o0 * 16777216 + o1 * 65536 + o2 * 256 + o3;
-        fromInt = number: "${toString (number / 16777216)}.${toString (math.mod (number / 65536) 256)}.${toString (math.mod (number / 256) 256)}.${toString (math.mod number 256)}";
-      };
-    };
-
     port = {
       prefix = {
         destination = {

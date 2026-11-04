@@ -5,7 +5,6 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.net) ipv6;
   inherit (lib.modules) mkMerge;
 in {
   networking = {
@@ -27,7 +26,7 @@ in {
       settings = mkMerge [
         {
           DataFolder = "/var/lib/navidrome";
-          Address = ipv6.enclose sigil.self.addresses.ula;
+          Address = "[${sigil.self.addresses.ula}]";
           Port = 8080;
         }
         {
