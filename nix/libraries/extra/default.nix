@@ -161,7 +161,6 @@ final: super: let
     systemd = {
       mkSetCredentialEncrypted = attrs:
         super.mapAttrsToList (name: payload: "${name}:${final.extra.strings.lines.asOne payload}") attrs;
-
       credentialsDirectory = unit: "/run/credentials/${unit}.service";
     };
   };
@@ -259,8 +258,32 @@ final: super: let
 
   # NETWORK
   # -------
-  net = {
-    mkHost' = domain: port: "${domain}@${toString port}";
+  net = let
+    inherit (super.strings) concatStringsSep;
+  in {
+    interface = {
+      /*
+      * Builds an interface string of the form "host@port".
+      *
+      * Example:
+      *   mkInterface "example.com" 8080 -> "example.com@8080"
+      *   mkInterface "example.com" "80" -> "example.com@80"
+      *   mkInterface "::1" 443          -> "::1@443"
+      *
+      * Implementation details:
+      * - Joins host and the stringified port with "@" via concatStringsSep.
+      * - port is rendered with toString, so integers and strings both work.
+      * - Neither part is escaped or validated. Unlike mkAuthority, IPv6 hosts are
+      *   not bracketed.
+      *
+      * Edge cases:
+      * - A null port is not omitted: toString null is "", so the result is "host@".
+      * - An empty host yields "@port".
+      * - A host that itself contains "@" is passed through as is, so the result
+      *   is ambiguous to parse back apart.
+      */
+      mkInterface = host: port: concatStringsSep "@" [host (toString port)];
+    };
 
     mkHost = domain: port: "${domain}:${toString port}";
 

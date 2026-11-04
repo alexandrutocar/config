@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.net) mkHost';
+  inherit (lib.extra.net.interface) mkInterface;
   inherit (lib.modules) mkForce;
 in {
   networking = {
@@ -22,7 +22,7 @@ in {
         chroot = mkForce "";
 
         interface = [
-          (mkHost' sigil.self.addresses.gua 53)
+          (mkInterface sigil.self.addresses.gua 53)
         ];
 
         server-count = 1;

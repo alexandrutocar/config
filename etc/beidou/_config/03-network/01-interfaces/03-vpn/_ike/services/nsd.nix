@@ -3,7 +3,7 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.net) mkHost';
+  inherit (lib.extra.net.interface) mkInterface;
   inherit (lib.modules) mkForce;
   inherit (lib.strings) concatMapStrings;
 in {
@@ -16,7 +16,7 @@ in {
           chroot = mkForce ''""'';
 
           interface = [
-            (mkHost' "0.0.0.0" 53)
+            (mkInterface "0.0.0.0" 53)
           ];
 
           server-count = 1;

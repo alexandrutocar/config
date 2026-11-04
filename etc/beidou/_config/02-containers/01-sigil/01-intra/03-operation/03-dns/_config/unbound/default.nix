@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.net) mkHost';
+  inherit (lib.extra.net.interface) mkInterface;
   inherit (lib.modules) mkMerge;
 in {
   networking = {
@@ -27,7 +27,7 @@ in {
         server = mkMerge [
           {
             interface = [
-              (mkHost' sigil.self.addresses.ula 53)
+              (mkInterface sigil.self.addresses.ula 53)
             ];
 
             do-udp = true;
