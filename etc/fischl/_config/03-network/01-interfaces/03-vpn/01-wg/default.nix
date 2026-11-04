@@ -1,11 +1,11 @@
 {lib, ...}: let
-  inherit (lib.extra.net) mkHost;
+  inherit (lib.extra.net.url.authority) mkAuthority;
 in {
   systemd = {
     network = let
       name = "wg0";
       marker = 1010;
-      endpoint = mkHost "212.201.75.101" 50010;
+      endpoint = mkAuthority "212.201.75.101" 50010 {};
     in {
       netdevs = {
         "25-${name}" = {

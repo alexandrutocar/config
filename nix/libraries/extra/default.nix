@@ -259,7 +259,7 @@ final: super: let
   # NETWORK
   # -------
   net = let
-    inherit (super.strings) concatStringsSep;
+    inherit (super.strings) concatStrings concatStringsSep escapeURL hasInfix hasPrefix optionalString;
   in {
     interface = {
       /*
@@ -285,7 +285,61 @@ final: super: let
       mkInterface = host: port: concatStringsSep "@" [host (toString port)];
     };
 
-    mkHost = domain: port: "${domain}:${toString port}";
+    url = {
+      authority = {
+        /*
+        * Builds the authority component of a URL: [userinfo@]host[:port].
+        *
+        * Example:
+        *   mkAuthority "example.com" 8080 "alice"                                  -> "alice@example.com:8080"
+        *   mkAuthority "example.com" null { username = "alice"; password = "p@ss"; } -> "alice:p%40ss@example.com"
+        *   mkAuthority "::1" 443 null                                              -> "[::1]:443"
+        *   mkAuthority "example.com" null null                                     -> "example.com"
+        *
+        * Implementation details:
+        * - user may be a string (shorthand for { username = "..."; }), an attrset
+        *   with a username and an optional password, or null / {} for no userinfo.
+        * - Username and password are percent-encoded with escapeURL. The host is not escaped.
+        * - A password is only emitted when a username is also present.
+        * - A host containing ":" that does not already start with "[" is treated as an
+        *   IPv6 literal and wrapped in brackets.
+        * - port is rendered with toString, so integers and strings both work.
+        *   A null port is omitted.
+        *
+        * Edge cases:
+        * - A user attrset without a username yields no userinfo, even if a password is set.
+        * - An empty-string username is not treated as absent, so it yields a leading "@".
+        *   Likewise, an empty password yields "user:@".
+        * - An already-bracketed IPv6 host is passed through unchanged (no double brackets).
+        * - Does not validate the host or port; malformed input is passed through as is.
+        */
+        mkAuthority = host: port: user: let
+          userPart = let
+            # Accept a plain string as shorthand for { name = "..."; }
+            _parsed =
+              if builtins.isString user
+              then {username = user;}
+              else user;
+
+            hasUser = _parsed != null && _parsed != {} && (_parsed.username or null) != null;
+            hasPass = hasUser && (_parsed.password or null) != null;
+          in
+            optionalString hasUser (
+              escapeURL _parsed.username
+              + optionalString hasPass ":${escapeURL _parsed.password}"
+              + "@"
+            );
+
+          hostPart =
+            if hasInfix ":" host && !(hasPrefix "[" host)
+            then "[${host}]"
+            else host;
+
+          portPart = optionalString (port != null) ":${toString port}";
+        in
+          concatStrings [userPart hostPart portPart];
+      };
+    };
 
     ipv6 = {
       enclose = address: "[" + address + "]";
