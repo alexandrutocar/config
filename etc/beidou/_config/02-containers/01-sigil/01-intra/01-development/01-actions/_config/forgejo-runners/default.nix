@@ -1,5 +1,12 @@
-{lib, ...}: let
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}: let
+  inherit (lib.alias) networks;
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
+  inherit (lib.extra.ip) toCompressed;
 in let
   container = {
     network = "host";
@@ -9,9 +16,29 @@ in let
   runner = {
     labels = [
       "docker:docker://data.forgejo.org/oci/node:20-bookworm"
+      "host:host"
     ];
+    envs = {
+      HTTPS_PROXY = "http://[${networks.aether.internal.net.hosts.beidou |> toCompressed}]:8888";
+      NO_PROXY = "forge.dev.intra.net.internal,workflows.intra.net.internal";
+      NIX_CONFIG = "experimental-features = ca-derivations flakes nix-command parse-toml-timestamps pipe-operators";
+    };
   };
+  path = with pkgs; [
+    config.nix.package
+    nodejs-slim
+    skopeo
+    jq
+    curl
+    diffutils
+    gitMinimal
+  ];
 in {
+  environment.systemPackages = with pkgs; [
+    nodejs
+    skopeo
+  ];
+
   services.forgejo-runner = {
     instances = {
       achird = {
@@ -67,6 +94,7 @@ in {
 
   systemd.services = {
     forgejo-runner-achird = {
+      inherit path;
       serviceConfig = {
         SetCredentialEncrypted = mkSetCredentialEncrypted {
           # echo -n '<token>' | systemd-creds encrypt --with-key=host --name=token - -
@@ -79,6 +107,7 @@ in {
       };
     };
     forgejo-runner-adhara = {
+      inherit path;
       serviceConfig = {
         SetCredentialEncrypted = mkSetCredentialEncrypted {
           # echo -n '<token>' | systemd-creds encrypt --with-key=host --name=token - -
@@ -91,6 +120,7 @@ in {
       };
     };
     forgejo-runner-alioth = {
+      inherit path;
       serviceConfig = {
         SetCredentialEncrypted = mkSetCredentialEncrypted {
           # echo -n '<token>' | systemd-creds encrypt --with-key=host --name=token - -

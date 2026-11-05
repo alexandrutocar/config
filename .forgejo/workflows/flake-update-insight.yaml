@@ -1,0 +1,138 @@
+# ────────────────────────────────────────────────────────────────────────
+# Flake Update Insight
+#
+# Daily flake update on ci/flake-update-insight, with every host evaluated
+# before and after the update; the report goes to the n8n webhook, which
+# writes the ci/flake-update-insight -> main PR checklist.
+#
+#   prepare ──┬── before (per host) ──────────────────┐
+#             └── update ── after (per host) ─────────┴── report
+#
+# "before" doesn't depend on the update, so it runs alongside it. Matrix
+# jobs only run in parallel when runners have spare capacity (runner
+# `capacity` setting, or several runners).
+#
+# Scripts: .forgejo/workflows/flake-update-insight/
+# Secrets: FLAKE_UPDATE_INSIGHT_WEBHOOK (webhook url)
+#
+# Local test run with act on this machine (pushes to a test branch, doesn't
+# send; the token needs push access):
+#   act workflow_dispatch -W .forgejo/workflows/flake-update-insight.yml \
+#     -P nix=-self-hosted -s GITHUB_TOKEN=<token> \
+#     --env INSIGHT_BRANCH=ci/flake-update-insight-test --input send=false
+# ────────────────────────────────────────────────────────────────────────
+
+name: Flake Update Insight
+
+on:
+  schedule:
+    - cron: "37 3 * * *"
+  workflow_dispatch:
+    inputs:
+      send:
+        description: Send the report to the webhook
+        type: boolean
+        default: true
+
+env:
+  INSIGHT: .forgejo/workflows/flake-update-insight/flake-update-insight.sh
+  WORK_DIR: .insight
+  MAIN_BRANCH: main
+  INSIGHT_BRANCH: ci/flake-update-insight
+  GIT_AUTHOR_NAME: pierro
+  GIT_AUTHOR_EMAIL: pierro@noreply.intra.net.internal
+  GIT_COMMITTER_NAME: pierro
+  GIT_COMMITTER_EMAIL: pierro@noreply.intra.net.internal
+
+jobs:
+  prepare:
+    runs-on: host
+    outputs:
+      base: ${{ steps.prepare.outputs.base }}
+      fresh: ${{ steps.prepare.outputs.fresh }}
+      hosts: ${{ steps.prepare.outputs.hosts }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.MAIN_BRANCH }}
+          fetch-depth: 0 # merge checks need the history
+      - id: prepare
+        run: ${{ env.INSIGHT }} prepare
+
+  before:
+    runs-on: host
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        host: ${{ fromJSON(needs.prepare.outputs.hosts) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.base }}
+      - run: ${{ env.INSIGHT }} collect prev ${{ needs.prepare.outputs.base }} ${{ matrix.host }}
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: before-${{ matrix.host }}
+          path: .insight
+          include-hidden-files: true
+
+  update:
+    runs-on: host
+    needs: prepare
+    outputs:
+      next: ${{ steps.update.outputs.next }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.base }}
+      - id: update
+        run: ${{ env.INSIGHT }} update ${{ needs.prepare.outputs.base }}
+
+  after:
+    runs-on: host
+    needs: [prepare, update]
+    if: needs.update.outputs.next != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        host: ${{ fromJSON(needs.prepare.outputs.hosts) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.update.outputs.next }}
+      - run: ${{ env.INSIGHT }} collect next ${{ needs.update.outputs.next }} ${{ matrix.host }}
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: after-${{ matrix.host }}
+          path: .insight
+          include-hidden-files: true
+
+  report:
+    runs-on: host
+    needs: [prepare, before, update, after]
+    # A failed host job only leaves its records out of the report.
+    if: always() && needs.update.result == 'success' && needs.update.outputs.next != ''
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.update.outputs.next }}
+          fetch-depth: 2 # the update commit and its parent, the base
+      - uses: actions/download-artifact@v3
+        with:
+          path: .artifacts
+      - name: Merge records
+        run: mkdir -p .insight && cp -r .artifacts/*/. .insight/
+      - run: ${{ env.INSIGHT }} report ${{ needs.prepare.outputs.base }} ${{ needs.update.outputs.next }} ${{ needs.prepare.outputs.fresh }}
+        env:
+          WEBHOOK_URL: ${{ secrets.FLAKE_UPDATE_INSIGHT_WEBHOOK }}
+          DO_NOT_SEND: ${{ github.event.inputs.send == 'false' && '1' || '0' }}
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: report
+          path: .insight/payload.json
+          include-hidden-files: true
+
