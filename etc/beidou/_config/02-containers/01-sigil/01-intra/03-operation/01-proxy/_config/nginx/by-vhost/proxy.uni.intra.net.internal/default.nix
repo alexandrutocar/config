@@ -4,7 +4,10 @@
   lib,
   ...
 }: let
+  inherit (lib.alias) networks;
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
+  inherit (lib.extra.ip) toCIDR;
+  inherit (lib.extra.ip.address) singleHostRoute;
 in {
   networking = {
     firewall = {
@@ -53,7 +56,7 @@ in {
           listen [${sigil.self.addresses.ula}]:8443 ssl default_server;
 
           allow ${sigil.containers.intra."a4205b50-197a-40c8-8057-fe1394630e91".addresses.ula}/128;
-          allow fda0:9527:68ee:4f8a:ad9c:4066:9123:5d9a/128;
+          allow ${(networks.aether.internal.net.hosts.albedo |> singleHostRoute |> toCIDR)};
           deny all;
 
           ssl_certificate_key ${sslCertificateKey};

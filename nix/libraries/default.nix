@@ -21,5 +21,6 @@ in
   assert !(libExtended ? extra) || throw "lib: ./nixos/extra.nix would shadow lib.extra";
     libExtended
     // {
+      alias = import ./alias final;
       extra = import ./extra final super;
     }

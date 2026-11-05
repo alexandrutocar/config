@@ -1,4 +1,7 @@
 {lib, ...}: let
+  inherit (lib.alias) networks;
+  inherit (lib.extra.ip) toCIDR;
+  inherit (lib.extra.ip.address) singleHostRoute;
   inherit (lib.extra.net.url.authority) mkAuthority;
 in {
   systemd = {
@@ -29,7 +32,7 @@ in {
               Endpoint = endpoint;
 
               AllowedIPs = [
-                "fda0:9527:68ee::/48"
+                (networks.aether.internal.net._meta.network |> toCIDR)
               ];
 
               RouteTable = "off";
@@ -47,7 +50,7 @@ in {
           };
 
           address = [
-            "fda0:9527:68ee:4f8a:46a1:b595:357f:c251/128"
+            (networks.aether.internal.net.hosts.collei |> singleHostRoute |> toCIDR)
           ];
 
           networkConfig = {
@@ -83,7 +86,7 @@ in {
 
           routes = [
             {
-              Destination = "fda0:9527:68ee::/48";
+              Destination = networks.aether.internal.net._meta.network |> toCIDR;
               Table = marker;
               Scope = "link";
             }

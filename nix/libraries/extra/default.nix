@@ -1,4 +1,8 @@
 final: super: let
+  adts = {
+    ip = import ./adts/ip final super {scope = "lib.extra.ip";};
+  };
+in let
   # CERTIFICATES
   # ------------
   certificates = let
@@ -170,6 +174,8 @@ final: super: let
   types = let
     inherit (super.types) strMatching;
   in {
+    ip = adts.ip.types;
+
     colors = {
       /**
       * Color type definitions for validating string formats.
@@ -196,6 +202,8 @@ final: super: let
   # MATH
   # ----
   math = let
+    inherit (super.lists) elemAt genList;
+  in let
     _mod = a: b: a - b * (a / b);
 
     _pow = base: exp:
@@ -243,6 +251,40 @@ final: super: let
     pow = _pow;
 
     /*
+    * Returns 2^n for n in [0, 62].
+    *
+    * Example:
+    *   pow2 0  -> 1
+    *   pow2 10 -> 1024
+    *   pow2 62 -> 4611686018427387904
+    *
+    * Implementation details:
+    * - Backed by a precomputed table of 63 entries built with genList, where
+    *   each entry is twice the previous one (entry 0 is 1).
+    * - The table refers to itself, which works because Nix lists are lazy:
+    *   an element is only evaluated when first demanded, and its value is then cached.
+    * - The table is built once, when pow2 is defined, and shared by every call.
+    *   A lookup is a plain elemAt, so there is no repeated multiplication.
+    * - The range stops at 62 because 2^63 does not fit in a signed 64-bit
+    *   integer (see maxInt).
+    *
+    * Edge cases:
+    * - Throws if n < 0 or n > 62 (elemAt index out of bounds).
+    * - Throws if n is not an integer.
+    */
+    pow2 = let
+      table = genList (n:
+        if n == 0
+        then 1
+        else 2 * elemAt table (n - 1))
+      63;
+    in
+      n: elemAt table n;
+
+    # Largest signed 64-bit integer (2^63 - 1), the maximum value a Nix integer can hold.
+    maxInt = 9223372036854775807;
+
+    /*
     * Computes the remainder of dividing a by b (a mod b).
     *
     * Example:
@@ -254,6 +296,44 @@ final: super: let
     * - Subtracts that multiple from a to obtain the remainder.
     */
     mod = _mod;
+
+    /*
+    * Computes the floor of a divided by b (rounds towards negative infinity).
+    *
+    * Example:
+    *   lib.math.floorDiv 7 2 -> 3
+    *   lib.math.floorDiv (-7) 2 -> -4
+    *
+    * Implementation:
+    * - Nix' `/` truncates towards zero.
+    * - When the remainder is non-zero and its sign differs from b's, the
+    *   truncated quotient is one too large, so it is decremented.
+    */
+    floorDiv = a: b: let
+      q = a / b;
+      r = a - q * b;
+    in
+      if r != 0 && (r < 0) != (b < 0)
+      then q - 1
+      else q;
+
+    /*
+    * Limits x to the inclusive interval [lo, hi].
+    *
+    * Example:
+    *   lib.math.clamp 0 8 12 -> 8
+    *   lib.math.clamp 0 8 (-3) -> 0
+    *   lib.math.clamp 0 8 5 -> 5
+    *
+    * Implementation:
+    * - Returns lo below the interval, hi above it and x otherwise.
+    */
+    clamp = lo: hi: x:
+      if x < lo
+      then lo
+      else if x > hi
+      then hi
+      else x;
   };
 
   # NETWORK
@@ -567,4 +647,6 @@ final: super: let
   };
 in {
   inherit certificates colors cs facter files math net options strings types;
+
+  ip = removeAttrs adts.ip ["types"];
 }

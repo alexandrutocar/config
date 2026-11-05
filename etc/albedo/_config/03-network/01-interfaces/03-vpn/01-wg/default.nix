@@ -10,6 +10,9 @@
 #
 # ────────────────────────────────────────────────────────────────────────
 {lib, ...}: let
+  inherit (lib.alias) networks;
+  inherit (lib.extra.ip) toCIDR;
+  inherit (lib.extra.ip.address) singleHostRoute;
   inherit (lib.extra.net.url.authority) mkAuthority;
   inherit (lib.modules) mkMerge;
 in {
@@ -42,7 +45,7 @@ in {
                   Endpoint = endpoint;
 
                   AllowedIPs = [
-                    "fda0:9527:68ee::/48"
+                    (networks.aether.internal.net._meta.network |> toCIDR)
                   ];
 
                   RouteTable = "off";
@@ -60,7 +63,7 @@ in {
               };
 
               address = [
-                "fda0:9527:68ee:4f8a:ad9c:4066:9123:5d9a/128"
+                (networks.aether.internal.net.hosts.albedo |> singleHostRoute |> toCIDR)
               ];
 
               networkConfig = {
@@ -96,7 +99,7 @@ in {
 
               routes = [
                 {
-                  Destination = "fda0:9527:68ee::/48";
+                  Destination = networks.aether.internal.net._meta.network |> toCIDR;
                   Table = marker;
                   Scope = "link";
                 }

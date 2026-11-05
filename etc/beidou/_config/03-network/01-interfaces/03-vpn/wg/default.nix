@@ -9,7 +9,11 @@
 # TAGS: VPN, WireGuard
 #
 # ────────────────────────────────────────────────────────────────────────
-_: let
+{lib, ...}: let
+  inherit (lib.alias) networks;
+  inherit (lib.extra.ip) toCIDR;
+  inherit (lib.extra.ip.address) singleHostRoute;
+in let
   circle = {
     beidou = {
       PersistentKeepalive = 25;
@@ -19,7 +23,7 @@ _: let
       PublicKeyFile = "/var/lib/wg/x0/p1.pub";
 
       AllowedIPs = [
-        "fda0:9527:68ee:4f8a:ad9c:4066:9123:5d9a/128"
+        (networks.aether.internal.net.hosts.albedo |> singleHostRoute |> toCIDR)
       ];
     };
     collei = {
@@ -30,7 +34,7 @@ _: let
       PublicKeyFile = "/var/lib/wg/x0/p3.pub";
 
       AllowedIPs = [
-        "fda0:9527:68ee:4f8a:46a1:b595:357f:c251/128"
+        (networks.aether.internal.net.hosts.collei |> singleHostRoute |> toCIDR)
       ];
     };
     fischl = {
@@ -41,7 +45,7 @@ _: let
       PublicKeyFile = "/var/lib/wg/x0/p4.pub";
 
       AllowedIPs = [
-        "fda0:9527:68ee:4f8a:712a:ed72:b041:27c3/128"
+        (networks.aether.internal.net.hosts.fischl |> singleHostRoute |> toCIDR)
       ];
     };
     keqing = {
@@ -52,7 +56,7 @@ _: let
       PublicKeyFile = "/var/lib/wg/x0/p2.pub";
 
       AllowedIPs = [
-        "fda0:9527:68ee:4f8a:afbf:7002:aa5f:a363/128"
+        (networks.aether.internal.net.hosts.keqing |> singleHostRoute |> toCIDR)
       ];
     };
   };
@@ -95,16 +99,16 @@ in {
 
           routes = [
             {
-              Destination = "fda0:9527:68ee:4f8a:ad9c:4066:9123:5d9a/128";
+              Destination = networks.aether.internal.net.hosts.albedo |> singleHostRoute |> toCIDR;
             }
             {
-              Destination = "fda0:9527:68ee:4f8a:46a1:b595:357f:c251/128";
+              Destination = networks.aether.internal.net.hosts.collei |> singleHostRoute |> toCIDR;
             }
             {
-              Destination = "fda0:9527:68ee:4f8a:712a:ed72:b041:27c3/128";
+              Destination = networks.aether.internal.net.hosts.fischl |> singleHostRoute |> toCIDR;
             }
             {
-              Destination = "fda0:9527:68ee:4f8a:afbf:7002:aa5f:a363/128";
+              Destination = networks.aether.internal.net.hosts.keqing |> singleHostRoute |> toCIDR;
             }
           ];
         };
