@@ -434,9 +434,9 @@ final: super: {scope}: let
     * Without "/length" the address is a single host (/32 or /128).
     *
     * Example:
-    *   lib.drafts.adt.net.ip.address.fromString 6 "fd00::1/64"
+    *   lib.extra.ip.address.fromString 6 "fd00::1/64"
     *     -> { _type = "ip-address"; prefixLength = 64; version = 6; words = [ 64768 0 0 0 0 0 0 1 ]; }
-    *   lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.address.fromString 4 "10.0.0.1") -> "10.0.0.1/32"
+    *   lib.extra.ip.toCIDR (lib.extra.ip.address.fromString 4 "10.0.0.1") -> "10.0.0.1/32"
     *
     * Edge cases:
     * - Host bits are allowed; use network.fromCIDR for a network.
@@ -447,7 +447,7 @@ final: super: {scope}: let
     * Builds address data from an address (plain string or address data) and a prefix length.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.address.fromParts 6 "fd00::1" 64 == lib.drafts.adt.net.ip.address.fromString 6 "fd00::1/64" -> true
+    *   lib.extra.ip.address.fromParts 6 "fd00::1" 64 == lib.extra.ip.address.fromString 6 "fd00::1/64" -> true
     *
     * Implementation:
     * - The prefix length of given address data is replaced.
@@ -461,8 +461,8 @@ final: super: {scope}: let
     * Builds a single-host address from a word vector / a non-negative integer.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.toCompressed (lib.drafts.adt.net.ip.address.fromWords 4 [ 10 0 0 1 ]) -> "10.0.0.1"
-    *   lib.drafts.adt.net.ip.toCompressed (lib.drafts.adt.net.ip.address.fromInt 6 65536) -> "::1:0"
+    *   lib.extra.ip.toCompressed (lib.extra.ip.address.fromWords 4 [ 10 0 0 1 ]) -> "10.0.0.1"
+    *   lib.extra.ip.toCompressed (lib.extra.ip.address.fromInt 6 65536) -> "::1:0"
     *
     * Implementation:
     * - fromInt divides repeatedly by the word base, least significant word first.
@@ -500,7 +500,7 @@ final: super: {scope}: let
     * Re-validates untrusted plain data (e.g. after builtins.fromJSON).
     *
     * Example:
-    *   lib.drafts.adt.net.ip.address.fromData (builtins.fromJSON (builtins.toJSON a)) == a -> true
+    *   lib.extra.ip.address.fromData (builtins.fromJSON (builtins.toJSON a)) == a -> true
     */
     fromData = v: _guard ["address" "fromData"] (_expectAddress v);
 
@@ -508,8 +508,8 @@ final: super: {scope}: let
     * Checks, without throwing, whether fromString accepts a value.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.address.isParsable 4 "10.0.0.1/24" -> true
-    *   lib.drafts.adt.net.ip.address.isParsable 4 "10.0.0.256" -> false
+    *   lib.extra.ip.address.isParsable 4 "10.0.0.1/24" -> true
+    *   lib.extra.ip.address.isParsable 4 "10.0.0.256" -> false
     */
     isParsable = version: v: _succeeds (fromString version v);
 
@@ -517,7 +517,7 @@ final: super: {scope}: let
     * Each word of the address as text, most significant first.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.address.toGroups (lib.drafts.adt.net.ip.address.fromString 6 "2001:db8::1")
+    *   lib.extra.ip.address.toGroups (lib.extra.ip.address.fromString 6 "2001:db8::1")
     *     -> [ "2001" "db8" "0" "0" "0" "0" "0" "1" ]
     */
     toGroups = a:
@@ -530,7 +530,7 @@ final: super: {scope}: let
     * The numeric value of the address (the prefix length is ignored).
     *
     * Example:
-    *   lib.drafts.adt.net.ip.address.toInt (lib.drafts.adt.net.ip.address.fromString 4 "10.0.0.1/8") -> 167772161
+    *   lib.extra.ip.address.toInt (lib.extra.ip.address.fromString 4 "10.0.0.1/8") -> 167772161
     *
     * Edge cases:
     * - Throws for IPv6 addresses that do not fit into a 64-bit Nix integer.
@@ -553,8 +553,8 @@ final: super: {scope}: let
     * length (/32, /128), as needed for gateways, DNS servers and peer endpoints.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.address.singleHostRoute (lib.drafts.adt.net.ip.address.fromString 6 "fd00::1/64")) -> "fd00::1/128"
-    *   lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.address.withPrefixLength 48 (lib.drafts.adt.net.ip.address.fromString 6 "fd00::1/64")) -> "fd00::1/48"
+    *   lib.extra.ip.toCIDR (lib.extra.ip.address.singleHostRoute (lib.extra.ip.address.fromString 6 "fd00::1/64")) -> "fd00::1/128"
+    *   lib.extra.ip.toCIDR (lib.extra.ip.address.withPrefixLength 48 (lib.extra.ip.address.fromString 6 "fd00::1/64")) -> "fd00::1/48"
     */
     inherit withPrefixLength;
     singleHostRoute = a:
@@ -567,8 +567,8 @@ final: super: {scope}: let
     * The network the address is on, and the host part (as a single-host address).
     *
     * Example:
-    *   lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.address.getNetwork (lib.drafts.adt.net.ip.address.fromString 6 "fd00::1/64")) -> "fd00::/64"
-    *   lib.drafts.adt.net.ip.toCompressed (lib.drafts.adt.net.ip.address.getHostPart (lib.drafts.adt.net.ip.address.fromString 4 "192.168.1.10/24")) -> "0.0.0.10"
+    *   lib.extra.ip.toCIDR (lib.extra.ip.address.getNetwork (lib.extra.ip.address.fromString 6 "fd00::1/64")) -> "fd00::/64"
+    *   lib.extra.ip.toCompressed (lib.extra.ip.address.getHostPart (lib.extra.ip.address.fromString 4 "192.168.1.10/24")) -> "0.0.0.10"
     */
     getNetwork = a:
       _guard ["address" "getNetwork"] (let
@@ -587,8 +587,8 @@ final: super: {scope}: let
     * staying within the address' network.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.address.next (lib.drafts.adt.net.ip.address.fromString 6 "fd00::1/64")) -> "fd00::2/64"
-    *   lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.address.add (lib.drafts.adt.net.ip.address.fromString 4 "10.0.0.255/16") 1) -> "10.0.1.0/16"
+    *   lib.extra.ip.toCIDR (lib.extra.ip.address.next (lib.extra.ip.address.fromString 6 "fd00::1/64")) -> "fd00::2/64"
+    *   lib.extra.ip.toCIDR (lib.extra.ip.address.add (lib.extra.ip.address.fromString 4 "10.0.0.255/16") 1) -> "10.0.1.0/16"
     *
     * Edge cases:
     * - Throws when the result leaves the network. A single host (/32, /128) is
@@ -604,7 +604,7 @@ final: super: {scope}: let
     * Loads a JSON file holding a list of address strings and/or address data.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.address.importJSON 6 ./hosts.json  # [ "fd00::1/64", "fd00::2", ... ]
+    *   lib.extra.ip.address.importJSON 6 ./hosts.json  # [ "fd00::1/64", "fd00::2", ... ]
     */
     importJSON = version: path:
       map
@@ -703,7 +703,7 @@ final: super: {scope}: let
     * Parses CIDR notation into network data.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.network.fromCIDR 6 "fda0:9527:6cee::/48") -> "fda0:9527:6cee::/48"
+    *   lib.extra.ip.toCIDR (lib.extra.ip.network.fromCIDR 6 "fda0:9527:6cee::/48") -> "fda0:9527:6cee::/48"
     *
     * Edge cases:
     * - Throws if host bits are set and names the correct network.
@@ -715,7 +715,7 @@ final: super: {scope}: let
     * Builds network data from a prefix (string or address data) and a prefix length.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.network.fromParts 6 "fda0:9527:6cee" 48 == lib.drafts.adt.net.ip.network.fromCIDR 6 "fda0:9527:6cee::/48" -> true
+    *   lib.extra.ip.network.fromParts 6 "fda0:9527:6cee" 48 == lib.extra.ip.network.fromCIDR 6 "fda0:9527:6cee::/48" -> true
     *
     * Implementation:
     * - IPv6 strings may be abbreviated: missing trailing groups are zero.
@@ -727,7 +727,7 @@ final: super: {scope}: let
     * Re-validates untrusted plain network data (e.g. after builtins.fromJSON).
     *
     * Example:
-    *   lib.drafts.adt.net.ip.network.fromData (builtins.fromJSON (builtins.toJSON n)) == n -> true
+    *   lib.extra.ip.network.fromData (builtins.fromJSON (builtins.toJSON n)) == n -> true
     */
     fromData = v: _guard ["network" "fromData"] (_expectNetwork v);
 
@@ -735,8 +735,8 @@ final: super: {scope}: let
     * Checks, without throwing, whether fromCIDR accepts a value.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.network.isParsable 4 "10.0.0.0/8" -> true
-    *   lib.drafts.adt.net.ip.network.isParsable 4 "10.0.0.1/8" -> false
+    *   lib.extra.ip.network.isParsable 4 "10.0.0.0/8" -> true
+    *   lib.extra.ip.network.isParsable 4 "10.0.0.1/8" -> false
     */
     isParsable = version: v: _succeeds (fromCIDR version v);
 
@@ -744,7 +744,7 @@ final: super: {scope}: let
     * The groups touched by the prefix, rounded up to whole groups.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.network.toPrefixGroups (lib.drafts.adt.net.ip.network.fromCIDR 6 "fda0:9527:6cee::/48") -> "fda0:9527:6cee"
+    *   lib.extra.ip.network.toPrefixGroups (lib.extra.ip.network.fromCIDR 6 "fda0:9527:6cee::/48") -> "fda0:9527:6cee"
     *
     * Edge cases:
     * - For IPv6, fromParts accepts the result again; IPv4 has no abbreviated syntax.
@@ -761,7 +761,7 @@ final: super: {scope}: let
     * First (network) and last address of a network, as addresses on that network.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.network.getLastAddress (lib.drafts.adt.net.ip.network.fromCIDR 4 "10.0.0.0/30")) -> "10.0.0.3/30"
+    *   lib.extra.ip.toCIDR (lib.extra.ip.network.getLastAddress (lib.extra.ip.network.fromCIDR 4 "10.0.0.0/30")) -> "10.0.0.3/30"
     */
     getNetworkAddress = n:
       _guard ["network" "getNetworkAddress"] (let
@@ -778,8 +778,8 @@ final: super: {scope}: let
     * Network mask (network bits set) and host mask (host bits set), as single-host addresses.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.toCompressed (lib.drafts.adt.net.ip.network.getNetmask (lib.drafts.adt.net.ip.network.fromCIDR 4 "192.168.4.0/22")) -> "255.255.252.0"
-    *   lib.drafts.adt.net.ip.toCompressed (lib.drafts.adt.net.ip.network.getHostmask (lib.drafts.adt.net.ip.network.fromCIDR 4 "192.168.4.0/22")) -> "0.0.3.255"
+    *   lib.extra.ip.toCompressed (lib.extra.ip.network.getNetmask (lib.extra.ip.network.fromCIDR 4 "192.168.4.0/22")) -> "255.255.252.0"
+    *   lib.extra.ip.toCompressed (lib.extra.ip.network.getHostmask (lib.extra.ip.network.fromCIDR 4 "192.168.4.0/22")) -> "0.0.3.255"
     */
     getNetmask = n:
       _guard ["network" "getNetmask"] (let
@@ -798,7 +798,7 @@ final: super: {scope}: let
     * Number of host bits (the counterpart of prefixLength).
     *
     * Example:
-    *   lib.drafts.adt.net.ip.network.getHostLength (lib.drafts.adt.net.ip.network.fromCIDR 4 "10.0.0.0/8") -> 24
+    *   lib.extra.ip.network.getHostLength (lib.extra.ip.network.fromCIDR 4 "10.0.0.0/8") -> 24
     */
     getHostLength = n:
       _guard ["network" "getHostLength"] (let
@@ -811,7 +811,7 @@ final: super: {scope}: let
     * interface identifier) as a plain string or address data.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.network.hostAddress (lib.drafts.adt.net.ip.network.fromCIDR 6 "fda0:9527:68ee:4f8a::/64") "::20:61fc:3462:bf01")
+    *   lib.extra.ip.toCIDR (lib.extra.ip.network.hostAddress (lib.extra.ip.network.fromCIDR 6 "fda0:9527:68ee:4f8a::/64") "::20:61fc:3462:bf01")
     *     -> "fda0:9527:68ee:4f8a:20:61fc:3462:bf01/64"
     *
     * Implementation:
@@ -835,7 +835,7 @@ final: super: {scope}: let
     * whole network (so fd00::/64 contains fd00::1/64 and fd00::1/128, not fd00::1/48).
     *
     * Example:
-    *   lib.drafts.adt.net.ip.network.contains (lib.drafts.adt.net.ip.network.fromCIDR 4 "10.0.0.0/8") (lib.drafts.adt.net.ip.address.fromString 4 "10.1.2.3") -> true
+    *   lib.extra.ip.network.contains (lib.extra.ip.network.fromCIDR 4 "10.0.0.0/8") (lib.extra.ip.address.fromString 4 "10.1.2.3") -> true
     *
     * Edge cases:
     * - Data of different versions is never contained (false, not an error).
@@ -846,7 +846,7 @@ final: super: {scope}: let
     * Whether two networks share at least one address.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.network.overlaps (lib.drafts.adt.net.ip.network.fromCIDR 4 "10.0.0.0/8") (lib.drafts.adt.net.ip.network.fromCIDR 4 "10.2.0.0/16") -> true
+    *   lib.extra.ip.network.overlaps (lib.extra.ip.network.fromCIDR 4 "10.0.0.0/8") (lib.extra.ip.network.fromCIDR 4 "10.2.0.0/16") -> true
     *
     * Implementation:
     * - CIDR blocks are nested or disjoint, so overlap means containment either way.
@@ -862,7 +862,7 @@ final: super: {scope}: let
     * The adjacent network of the same length after / before the given one.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.network.next (lib.drafts.adt.net.ip.network.fromCIDR 4 "10.0.0.0/24")) -> "10.0.1.0/24"
+    *   lib.extra.ip.toCIDR (lib.extra.ip.network.next (lib.extra.ip.network.fromCIDR 4 "10.0.0.0/24")) -> "10.0.1.0/24"
     */
     next = step "next" 1;
     prev = step "prev" (-1);
@@ -871,7 +871,7 @@ final: super: {scope}: let
     * The enclosing network with a shorter prefix length.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.network.supernet (lib.drafts.adt.net.ip.network.fromCIDR 4 "10.1.2.0/24") 8) -> "10.0.0.0/8"
+    *   lib.extra.ip.toCIDR (lib.extra.ip.network.supernet (lib.extra.ip.network.fromCIDR 4 "10.1.2.0/24") 8) -> "10.0.0.0/8"
     */
     supernet = n: newLen:
       _guard ["network" "supernet"] (let
@@ -885,7 +885,7 @@ final: super: {scope}: let
     * The i-th (0-based) /newLen subnet of a network, in O(1).
     *
     * Example:
-    *   lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.network.subnetAt (lib.drafts.adt.net.ip.network.fromCIDR 6 "fda0:9527:68ee::/48") 64 (lib.fromHexString "4f8a"))
+    *   lib.extra.ip.toCIDR (lib.extra.ip.network.subnetAt (lib.extra.ip.network.fromCIDR 6 "fda0:9527:68ee::/48") 64 (lib.fromHexString "4f8a"))
     *     -> "fda0:9527:68ee:4f8a::/64"
     *
     * Edge cases:
@@ -897,7 +897,7 @@ final: super: {scope}: let
     * All /newLen subnets of a network, in ascending order.
     *
     * Example:
-    *   map lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.network.subnets (lib.drafts.adt.net.ip.network.fromCIDR 4 "10.0.0.0/23") 24)
+    *   map lib.extra.ip.toCIDR (lib.extra.ip.network.subnets (lib.extra.ip.network.fromCIDR 4 "10.0.0.0/23") 24)
     *     -> [ "10.0.0.0/24" "10.0.1.0/24" ]
     *
     * Edge cases:
@@ -920,7 +920,7 @@ final: super: {scope}: let
     * networks (any versions), sorted ascending.
     *
     * Example:
-    *   map lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.network.aggregate (map (lib.drafts.adt.net.ip.network.fromCIDR 4) [ "10.0.1.0/24" "10.0.0.0/24" ]))
+    *   map lib.extra.ip.toCIDR (lib.extra.ip.network.aggregate (map (lib.extra.ip.network.fromCIDR 4) [ "10.0.1.0/24" "10.0.0.0/24" ]))
     *     -> [ "10.0.0.0/23" ]
     *
     * Implementation:
@@ -942,7 +942,7 @@ final: super: {scope}: let
     * Loads a JSON file holding a list of CIDR strings and/or network data.
     *
     * Example:
-    *   lib.drafts.adt.net.ip.network.importJSON 4 ./bogons.json  # [ "10.0.0.0/8", ... ]
+    *   lib.extra.ip.network.importJSON 4 ./bogons.json  # [ "10.0.0.0/8", ... ]
     */
     importJSON = version: path:
       map
@@ -986,8 +986,8 @@ final: super: {scope}: let
     *     servers, peer endpoints); "fd00::1/64" is rejected, "fd00::1" accepted.
     *
     * Example:
-    *   options.dns = lib.mkOption { type = lib.types.listOf (lib.drafts.adt.net.ip.types.singleHostAddress 6); };
-    *   options.addresses = lib.mkOption { type = lib.types.listOf (lib.drafts.adt.net.ip.types.address 6); };
+    *   options.dns = lib.mkOption { type = lib.types.listOf (lib.extra.ip.types.singleHostAddress 6); };
+    *   options.addresses = lib.mkOption { type = lib.types.listOf (lib.extra.ip.types.address 6); };
     */
     addressData = dataType "ipAddress" "IP address" _isAddress;
     networkData = dataType "ipNetwork" "IP network" _isNetwork;
@@ -1007,7 +1007,7 @@ in {
   * Both handlers are mandatory (a missing/extra name is a Nix argument error).
   *
   * Example:
-  *   lib.drafts.adt.net.ip.caseOf { address = a: "host"; network = n: "net"; } (lib.drafts.adt.net.ip.network.fromCIDR 4 "10.0.0.0/8")
+  *   lib.extra.ip.caseOf { address = a: "host"; network = n: "net"; } (lib.extra.ip.network.fromCIDR 4 "10.0.0.0/8")
   *     -> "net"
   */
   caseOf = handlers: v: builtins.addErrorContext "while evaluating ${scope}.caseOf" (_caseOf handlers v);
@@ -1016,8 +1016,8 @@ in {
   * Kind and version predicates; never throw.
   *
   * Example:
-  *   lib.drafts.adt.net.ip.isAddress (lib.drafts.adt.net.ip.address.fromString 6 "::1") -> true
-  *   lib.drafts.adt.net.ip.isIPv4 (lib.drafts.adt.net.ip.network.fromCIDR 6 "::/0") -> false
+  *   lib.extra.ip.isAddress (lib.extra.ip.address.fromString 6 "::1") -> true
+  *   lib.extra.ip.isIPv4 (lib.extra.ip.network.fromCIDR 6 "::/0") -> false
   */
   isAddress = _isAddress;
   isNetwork = _isNetwork;
@@ -1029,8 +1029,8 @@ in {
   * IP version (4 or 6) and prefix length of any IP data.
   *
   * Example:
-  *   lib.drafts.adt.net.ip.getVersion (lib.drafts.adt.net.ip.address.fromString 6 "::1") -> 6
-  *   lib.drafts.adt.net.ip.getPrefixLength (lib.drafts.adt.net.ip.address.fromString 6 "::1") -> 128
+  *   lib.extra.ip.getVersion (lib.extra.ip.address.fromString 6 "::1") -> 6
+  *   lib.extra.ip.getPrefixLength (lib.extra.ip.address.fromString 6 "::1") -> 128
   */
   getVersion = v: _guard ["getVersion"] (_expectIP v).version;
   getPrefixLength = v: _guard ["getPrefixLength"] (_expectIP v).prefixLength;
@@ -1039,8 +1039,8 @@ in {
   * "address/length" in canonical form, for addresses and networks.
   *
   * Example:
-  *   lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.address.fromString 4 "10.0.0.1") -> "10.0.0.1/32"
-  *   lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.network.fromCIDR 6 "fda0:9527:68ee::/48") -> "fda0:9527:68ee::/48"
+  *   lib.extra.ip.toCIDR (lib.extra.ip.address.fromString 4 "10.0.0.1") -> "10.0.0.1/32"
+  *   lib.extra.ip.toCIDR (lib.extra.ip.network.fromCIDR 6 "fda0:9527:68ee::/48") -> "fda0:9527:68ee::/48"
   */
   toCIDR = v: _guard ["toCIDR"] (_cidr (_expectIP v));
 
@@ -1049,8 +1049,8 @@ in {
   * Compare toCompressed results to compare addresses regardless of prefix length.
   *
   * Example:
-  *   lib.drafts.adt.net.ip.toCompressed (lib.drafts.adt.net.ip.address.fromString 6 "2001:DB8:0:0::1/64") -> "2001:db8::1"
-  *   lib.drafts.adt.net.ip.toExploded (lib.drafts.adt.net.ip.address.fromString 6 "2001:db8::1") -> "2001:0db8:0000:0000:0000:0000:0000:0001"
+  *   lib.extra.ip.toCompressed (lib.extra.ip.address.fromString 6 "2001:DB8:0:0::1/64") -> "2001:db8::1"
+  *   lib.extra.ip.toExploded (lib.extra.ip.address.fromString 6 "2001:db8::1") -> "2001:0db8:0000:0000:0000:0000:0000:0001"
   *
   * Edge cases:
   * - toExploded equals toCompressed for IPv4.
@@ -1067,8 +1067,8 @@ in {
   * The address part as the host of a URI (RFC 3986): IPv6 in brackets, IPv4 as is.
   *
   * Example:
-  *   lib.drafts.adt.net.ip.toURIHost (lib.drafts.adt.net.ip.address.fromString 6 "2001:DB8::1/64") -> "[2001:db8::1]"
-  *   lib.drafts.adt.net.ip.toURIHost (lib.drafts.adt.net.ip.address.fromString 4 "10.0.0.1") -> "10.0.0.1"
+  *   lib.extra.ip.toURIHost (lib.extra.ip.address.fromString 6 "2001:DB8::1/64") -> "[2001:db8::1]"
+  *   lib.extra.ip.toURIHost (lib.extra.ip.address.fromString 4 "10.0.0.1") -> "10.0.0.1"
   */
   toURIHost = v:
     _guard ["toURIHost"] (let
@@ -1083,7 +1083,7 @@ in {
   * then networks before addresses.
   *
   * Example:
-  *   map lib.drafts.adt.net.ip.toCIDR (lib.drafts.adt.net.ip.sort [ (lib.drafts.adt.net.ip.address.fromString 4 "10.0.0.1") (lib.drafts.adt.net.ip.network.fromCIDR 4 "10.0.0.0/8") ])
+  *   map lib.extra.ip.toCIDR (lib.extra.ip.sort [ (lib.extra.ip.address.fromString 4 "10.0.0.1") (lib.extra.ip.network.fromCIDR 4 "10.0.0.0/8") ])
   *     -> [ "10.0.0.0/8" "10.0.0.1/32" ]
   */
   compare = a: b: _guard ["compare"] (_compare a b);

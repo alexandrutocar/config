@@ -13,7 +13,7 @@ in let
           * Finds a disk in a facter report by its unix device name.
           *
           * Example:
-          *   lib.report.disk.find.by-unix-name "/dev/sda" report -> { unix_device_names = [...]; resources = [...]; ... }
+          *   lib.extra.facter.report.disk.find.by-unix-name "/dev/sda" report -> { unix_device_names = [...]; resources = [...]; ... }
           *
           * Implementation details:
           * - Searches report.hardware.disk for a disk whose unix_device_names list contains the given name.
@@ -34,7 +34,7 @@ in let
           * Finds a disk in a facter report by its /dev/disk/by-id identifier.
           *
           * Example:
-          *   lib.report.disk.find.by-id "ata-SAMSUNG_..." report -> { unix_device_names = [...]; resources = [...]; ... }
+          *   lib.extra.facter.report.disk.find.by-id "ata-SAMSUNG_..." report -> { unix_device_names = [...]; resources = [...]; ... }
           *
           * Implementation details:
           * - Prepends "/dev/disk/by-id/" to the given id and delegates to by-unix-name.
@@ -52,7 +52,7 @@ in let
         * Finds a resource of a given type within a disk's resource list.
         *
         * Example:
-        *   lib.report.disk.resources.find.by-type "size" disk -> { type = "size"; value_1 = 512; value_2 = 1073741824; }
+        *   lib.extra.facter.report.disk.resources.find.by-type "size" disk -> { type = "size"; value_1 = 512; value_2 = 1073741824; }
         *
         * Implementation details:
         * - Filters disk.resources for entries whose type field matches the given type.
@@ -73,7 +73,7 @@ in let
         * Returns the total size of a disk (in bytes) from a facter report, identified by its by-id name.
         *
         * Example:
-        *   lib.report.disk.extra.size "ata-SAMSUNG_..." report -> 512110190592
+        *   lib.extra.facter.report.disk.extra.size "ata-SAMSUNG_..." report -> 512110190592
         *
         * Implementation details:
         * - Locates the disk via find.by-id, then retrieves its "size" resource.
@@ -97,7 +97,7 @@ in let
         * Returns the total physical memory size (in bytes) across all memory modules in a facter report.
         *
         * Example:
-        *   lib.report.memory.extra.size report -> 34359738368
+        *   lib.extra.facter.report.memory.extra.size report -> 34359738368
         *
         * Implementation details:
         * - Iterates over report.hardware.memory (one entry per memory module).
@@ -198,7 +198,7 @@ in let
     * Generates a numeric sequence from `from` to `to` inclusive.
     *
     * Example:
-    *   lib.math.seq 3 7 -> [3,4,5,6,7]
+    *   lib.extra.math.seq 3 7 -> [3,4,5,6,7]
     *
     * Notes:
     * - Returns an empty list if `from` > `to`.
@@ -209,8 +209,8 @@ in let
     * Computes the power of a base raised to an exponent (base^exp).
     *
     * Example:
-    *   lib.math.pow 2 3 -> 8
-    *   lib.math.pow 5 0 -> 1
+    *   lib.extra.math.pow 2 3 -> 8
+    *   lib.extra.math.pow 5 0 -> 1
     *
     * Implementation:
     * - Uses recursion.
@@ -256,8 +256,8 @@ in let
     * Computes the remainder of dividing a by b (a mod b).
     *
     * Example:
-    *   lib.math.mod 7 3 -> 1
-    *   lib.math.mod 10 5 -> 0
+    *   lib.extra.math.mod 7 3 -> 1
+    *   lib.extra.math.mod 10 5 -> 0
     *
     * Implementation:
     * - Uses integer division to compute the largest multiple of b not exceeding a.
@@ -269,8 +269,8 @@ in let
     * Computes the floor of a divided by b (rounds towards negative infinity).
     *
     * Example:
-    *   lib.math.floorDiv 7 2 -> 3
-    *   lib.math.floorDiv (-7) 2 -> -4
+    *   lib.extra.math.floorDiv 7 2 -> 3
+    *   lib.extra.math.floorDiv (-7) 2 -> -4
     *
     * Implementation:
     * - Nix' `/` truncates towards zero.
@@ -289,9 +289,9 @@ in let
     * Limits x to the inclusive interval [lo, hi].
     *
     * Example:
-    *   lib.math.clamp 0 8 12 -> 8
-    *   lib.math.clamp 0 8 (-3) -> 0
-    *   lib.math.clamp 0 8 5 -> 5
+    *   lib.extra.math.clamp 0 8 12 -> 8
+    *   lib.extra.math.clamp 0 8 (-3) -> 0
+    *   lib.extra.math.clamp 0 8 5 -> 5
     *
     * Implementation:
     * - Returns lo below the interval, hi above it and x otherwise.
@@ -491,7 +491,7 @@ in let
       * Lists all scripts in subdirectories as attribute sets.
       *
       * Example:
-      *   lib.filesystem.listScripts pkgs ./scripts
+      *   lib.extra.files.special.scripts pkgs ./scripts
       *
       * Implementation:
       * - Only considers directories.
@@ -513,7 +513,7 @@ in let
       * Lists all files and default.nix in subdirectories (shallow only).
       *
       * Example:
-      *   lib.filesystem.listFilesShallow ./services
+      *   lib.extra.files.special.shallow ./services
       *
       * Notes:
       * - Non-recursive beyond immediate subdirectories.
@@ -544,7 +544,7 @@ in let
     * Converts a hex color string to a binary-prefixed color string.
     *
     * Example:
-    *   lib.colors.hexToBin "#FF00AA" -> "0xff00aa"
+    *   lib.extra.colors.hexToBin "#FF00AA" -> "0xff00aa"
     *
     * Implementation details:
     * - Removes the leading '#' character.
@@ -561,7 +561,7 @@ in let
     * Converts a binary-prefixed color string to a hex color string.
     *
     * Example:
-    *   lib.colors.binToHex "0xff00aa" -> "#ff00aa"
+    *   lib.extra.colors.binToHex "0xff00aa" -> "#ff00aa"
     *
     * Implementation details:
     * - Removes the leading '0x' prefix.
@@ -578,7 +578,7 @@ in let
     * Converts a hex color string to a plain color string (without the leading '#').
     *
     * Example:
-    *   lib.colors.hexToPlain "#FF00AA" -> "ff00aa"
+    *   lib.extra.colors.hexToPlain "#FF00AA" -> "ff00aa"
     *
     * Implementation details:
     * - Removes the leading '#' character.
@@ -595,7 +595,7 @@ in let
     * Converts a plain color string to a hex color string (with leading '#').
     *
     * Example:
-    *   lib.colors.plainToHex "ff00aa" -> "#ff00aa"
+    *   lib.extra.colors.plainToHex "ff00aa" -> "#ff00aa"
     *
     * Implementation details:
     * - Converts all letters to lowercase.
