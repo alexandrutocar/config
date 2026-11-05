@@ -16,12 +16,17 @@ in {
   };
 
   services = {
-    navidrome = {
-      enable = true;
+    navidrome = let
+      package = pkgs.navidrome.withPlugins (
+        plugins:
+          with plugins; [
+            listenbrainz-daily-playlist
+          ]
+      );
+    in {
+      inherit package;
 
-      plugins = with pkgs.pkgsCross.wasi32.navidromePlugins; [
-        listenbrainz-daily-playlist
-      ];
+      enable = true;
 
       settings = mkMerge [
         {
