@@ -33,6 +33,11 @@
       inputs.nixpkgs.follows = "nixos-unstable-small";
     };
 
+    devenv = {
+      url = "github:cachix/devenv";
+      inputs.nixpkgs.follows = "nixos-unstable-small";
+    };
+
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
       inputs = {
@@ -94,20 +99,62 @@
         directory = ./nix/packages/by-name;
       };
   in {
-    devShells = forEachSystem ({mkShell, ...} @ pkgs: {
-      default = mkShell {
-        packages = with pkgs; [
-          shellcheck
-          alejandra
+    devShells = forEachSystem (pkgs: {
+      default = inputs.devenv.lib.mkShell {
+        inherit inputs pkgs;
+        modules = [
+          (_: {
+            languages = {
+              nix = {
+                enable = true;
+              };
 
-          deadnix
-          vulnix
+              shell = {
+                enable = true;
+              };
+            };
 
-          nixd
-          shfmt
-          statix
+            git-hooks = {
+              hooks = {
+                # nix
+                alejandra = {
+                  enable = true;
+                };
 
-          opentofu
+                deadnix = {
+                  enable = true;
+                };
+
+                statix = {
+                  enable = true;
+                  settings = {
+                    config = let
+                      tomlFormat = pkgs.formats.toml {};
+                    in
+                      toString (
+                        pkgs.writeTextFile {
+                          name = "statix.toml";
+                          text = tomlFormat.generate "statix.toml" {
+                            disabled = [
+                              "collapsible_let_in"
+                            ];
+                          };
+                        }
+                      );
+                  };
+                };
+
+                # shell
+                shfmt = {
+                  enable = true;
+                };
+
+                shellcheck = {
+                  enable = true;
+                };
+              };
+            };
+          })
         ];
       };
     });
