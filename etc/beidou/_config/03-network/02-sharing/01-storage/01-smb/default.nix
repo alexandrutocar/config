@@ -1,12 +1,6 @@
 # spell-checker: ignore catia getwd oplocks streams_xattr
 # ────────────────────────────────────────────────────────────────────────
-#
-# █▀ █▀▄▀█ █▄▄
-# ▄█ █░▀░█ █▄█
-#
-# TAGS: Samba, SMB/CIFS
 # NOTE: SMB is the only supported protocol by iOS' built-in Files.
-#
 # ────────────────────────────────────────────────────────────────────────
 _: {
   environment.persistence = {

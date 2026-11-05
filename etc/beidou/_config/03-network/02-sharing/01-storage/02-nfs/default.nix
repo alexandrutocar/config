@@ -1,12 +1,6 @@
 # spell-checker: ignore fsid nohide
 # ────────────────────────────────────────────────────────────────────────
-#
-# █▄░█ █▀▀ █▀
-# █░▀█ █▀░ ▄█
-#
-# TAGS: Network File System, NFS
 # NOTE: NFS is the most reliable network file sharing protocol for Linux.
-#
 # ────────────────────────────────────────────────────────────────────────
 {lib, ...}: let
   inherit (lib.alias) networks;
