@@ -407,32 +407,23 @@ in {
     };
   in let
     links = rec {
-      collected = let
-        value = cfg.settings.network.links;
-      in
-        builtins.trace "All Links: \n${toJSON {} value}" value;
-      policies = let
-        value = concatLists (concatMap attrValues (attrValues collected));
-      in
-        builtins.trace "All Policies: \n${toJSON {} value}" value;
-      bridges = let
-        value = attrValues (foldl' (acc: link:
-          if acc ? ${link.bid}
-          then acc
-          else
-            acc
-            // {
-              ${link.bid} = {
-                inherit (link) bid;
-                ports = [
-                  link.source
-                  link.target
-                ];
-              };
-            }) {}
-        policies);
-      in
-        builtins.trace "All Bridges: \n${toJSON {} value}" value;
+      collected = cfg.settings.network.links;
+      policies = concatLists (concatMap attrValues (attrValues collected));
+      bridges = attrValues (foldl' (acc: link:
+        if acc ? ${link.bid}
+        then acc
+        else
+          acc
+          // {
+            ${link.bid} = {
+              inherit (link) bid;
+              ports = [
+                link.source
+                link.target
+              ];
+            };
+          }) {}
+      policies);
 
       lib = {
         bridge = {
