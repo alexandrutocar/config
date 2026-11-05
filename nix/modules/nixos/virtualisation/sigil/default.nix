@@ -619,13 +619,16 @@ in {
                 )
                 links.bridges;
 
-              # fold into { <mid> = { networkConfig.VirtualEthernetExtra = [ … all its links … ]; }; }
+              # fold into { <mid> = { settings.Network.VirtualEthernetExtra = [ … all its links … ]; }; }
               byMID = foldl' (acc: e:
                 acc
                 // {
                   ${e.mid} = {
-                    networkConfig.VirtualEthernetExtra =
-                      (acc.${e.mid}.networkConfig.VirtualEthernetExtra or []) ++ [e.extra];
+                    settings = {
+                      Network = {
+                        VirtualEthernetExtra = (acc.${e.mid}.settings.Network.VirtualEthernetExtra or []) ++ [e.extra];
+                      };
+                    };
                   };
                 }) {}
               entries;
