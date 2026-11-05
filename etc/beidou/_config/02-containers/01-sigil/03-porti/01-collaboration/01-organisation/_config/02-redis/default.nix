@@ -2,16 +2,20 @@
   networking = {
     firewall = {
       allowedTCPPorts = [
-        config.services.redis.port
+        config.services.redis.servers.stalwart.port
       ];
     };
   };
 
   services = {
     redis = {
-      enable = true;
+      servers = {
+        stalwart = {
+          enable = true;
 
-      bind = "::";
+          bind = "::";
+        };
+      };
     };
   };
 }
