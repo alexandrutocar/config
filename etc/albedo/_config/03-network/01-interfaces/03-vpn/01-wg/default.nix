@@ -9,12 +9,20 @@
 # vpn, wireguard, client...
 #
 # ────────────────────────────────────────────────────────────────────────
-{lib, ...}: let
+{
+  self,
+  lib,
+  ...
+}: let
   inherit (lib.alias) networks;
   inherit (lib.extra.ip) toCIDR;
   inherit (lib.extra.ip.address) singleHostRoute;
   inherit (lib.extra.net.url.authority) mkAuthority;
   inherit (lib.modules) mkMerge;
+in let
+  containers.beidou = {
+    inherit (self.nixosConfigurations.beidou.config.services.sigil.settings.containers.intra) cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a;
+  };
 in {
   systemd = let
     mkWireGuardVPN = definitions:
@@ -70,7 +78,7 @@ in {
                 DNSDefaultRoute = true;
 
                 DNS = [
-                  "fda0:9527:68ee:f1b6:d826:828b:d703:cf4b"
+                  containers.beidou.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a.addresses.ula
                 ];
 
                 Domains =

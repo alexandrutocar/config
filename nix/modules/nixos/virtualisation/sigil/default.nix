@@ -216,7 +216,7 @@ in {
                                 mapAttrs (_: mapAttrs (_: infosFor)) cfg.settings.containers;
                             };
 
-                            inherit lib;
+                            inherit lib self;
                           };
                         };
                       };
