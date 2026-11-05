@@ -3,38 +3,6 @@ final: super: let
     ip = import ./adts/ip final super {scope = "lib.extra.ip";};
   };
 in let
-  # CERTIFICATES
-  # ------------
-  certificates = let
-    inherit (super.strings) concatLines;
-  in {
-    mkCertificateChain = certs: concatLines certs;
-  };
-
-  # OPTIONS
-  # -------
-  options = let
-    inherit (super.attrsets) hasAttrByPath getAttrFromPath setAttrByPath;
-    inherit (super.modules) mkIf mkMerge;
-  in {
-    mkScopedMerge = attrs: let
-      pluckFunc = attr: values:
-        mkMerge
-        (map
-          (v:
-            mkIf
-            (hasAttrByPath attr v)
-            (getAttrFromPath attr v))
-          values);
-
-      pluckFuncs = attrs: values:
-        mkMerge (map
-          (attr: setAttrByPath attr (pluckFunc attr values))
-          attrs);
-    in
-      pluckFuncs attrs;
-  };
-
   # FACTER
   # ------
   facter = {
@@ -646,7 +614,7 @@ in let
     lines.asOne = lines: super.strings.concatStrings (super.strings.splitString "\n" lines);
   };
 in {
-  inherit certificates colors cs facter files math net options strings types;
+  inherit colors cs facter files math net strings types;
 
   ip = removeAttrs adts.ip ["types"];
 }

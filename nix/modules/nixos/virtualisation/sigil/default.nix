@@ -196,7 +196,7 @@ in {
                                 imports = [
                                   (modulesPath + "/misc/nixpkgs/read-only.nix")
                                 ];
-                                
+
                                 config = {
                                   nixpkgs = {
                                     inherit pkgs;
@@ -380,7 +380,6 @@ in {
 
   config = let
     inherit (lib.attrsets) attrValues mapAttrsToList mergeAttrsList;
-    inherit (lib.generators) toJSON;
     inherit (lib.lists) all concatLists concatMap foldl' optional singleton unique;
     inherit (lib.modules) mkIf mkMerge;
   in let

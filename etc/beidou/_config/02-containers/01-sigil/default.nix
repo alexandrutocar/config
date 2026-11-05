@@ -1,4 +1,4 @@
-{lib,...}: let 
+{lib, ...}: let
   inherit (lib.alias) networks;
   inherit (lib.extra.ip) toCompressed;
   inherit (lib.extra.ip.network) toPrefixGroups;

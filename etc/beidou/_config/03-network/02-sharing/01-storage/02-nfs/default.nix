@@ -8,7 +8,7 @@
 # NOTE: NFS is the most reliable network file sharing protocol for Linux.
 #
 # ────────────────────────────────────────────────────────────────────────
-{lib,...}: let 
+{lib, ...}: let
   inherit (lib.alias) networks;
   inherit (lib.extra.ip) toCompressed;
 in {

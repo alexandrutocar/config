@@ -1,4 +1,4 @@
-final: super: let
+_: super: let
   inherit (super.types) mergeEqualOption mkOptionType;
 in {
   plistData = mkOptionType {
