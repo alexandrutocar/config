@@ -1,14 +1,11 @@
 # spell-checker: ignore fsid nohide
 # ────────────────────────────────────────────────────────────────────────
-#
-# █▄░█ █▀▀ █▀
-# █░▀█ █▀░ ▄█
-#
-# TAGS: Network File System, NFS
 # NOTE: NFS is the most reliable network file sharing protocol for Linux.
-#
 # ────────────────────────────────────────────────────────────────────────
-_: {
+{lib, ...}: let
+  inherit (lib.alias) networks;
+  inherit (lib.extra.ip) toCompressed;
+in {
   networking = {
     firewall = {
       allowedTCPPorts = [
@@ -22,7 +19,7 @@ _: {
       enable = true;
 
       exports = ''
-        /export             fda0:9527:68ee:4f8a:ad9c:4066:9123:5d9a(rw,fsid=0,no_subtree_check)
+        /export             ${(networks.aether.internal.net.hosts.albedo |> toCompressed)}(rw,fsid=0,no_subtree_check)
       '';
     };
   };

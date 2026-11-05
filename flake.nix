@@ -7,271 +7,298 @@
     # ────────────────────────────────────────────────────────────────────────
     # NOTE: For server systems (hosts).
     # ────────────────────────────────────────────────────────────────────────
-    smallest = {
-      url = "github:nixos/nixpkgs?rev=6da3f247f92c898cfebde206192bb8dac7472ab4"; # nixos-unstable-small
+    nixos-unstable-small = {
+      url = "github:nixos/nixpkgs/nixos-unstable-small";
     };
 
     # ────────────────────────────────────────────────────────────────────────
     # NOTE: For desktop-oriented systems (workstations) and software
     #       with long build times (e.g. Firefox, Chromium, Electron).
     # ────────────────────────────────────────────────────────────────────────
-    unstable = {
-      url = "github:nixos/nixpkgs?rev=31ecbaca1bdefa45dffc409f0250bd8039ea0010"; # nixos-unstable
+    nixos-unstable = {
+      url = "github:nixos/nixpkgs/nixos-unstable";
     };
 
     # ────────────────────────────────────────────────────────────────────────
     impermanence = {
       url = "github:nix-community/impermanence";
-      inputs.nixpkgs.follows = "unstable";
+      inputs = {
+        nixpkgs.follows = "nixos-unstable";
+        home-manager.follows = "";
+      };
     };
 
     "dns.nix" = {
       url = "github:nix-community/dns.nix";
-      inputs.nixpkgs.follows = "unstable";
+      inputs.nixpkgs.follows = "nixos-unstable-small";
+    };
+
+    devenv = {
+      url = "github:cachix/devenv";
+      inputs.nixpkgs.follows = "nixos-unstable-small";
     };
 
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
-      inputs.nixpkgs.follows = "unstable";
+      inputs = {
+        nixpkgs.follows = "nixos-unstable-small";
+        pre-commit.follows = "";
+      };
     };
 
     home-manager = {
       url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "unstable";
+      inputs.nixpkgs.follows = "nixos-unstable";
     };
   };
 
   outputs = {self, ...} @ inputs: let
-    inherit (lib.customisation) callPackageWith;
+    inherit (lib.attrsets) attrValues genAttrs mergeAttrsList;
     inherit (lib.filesystem) packagesFromDirectoryRecursive;
-    inherit (lib.attrsets) attrValues genAttrs;
+    inherit (lib.lists) concatLists singleton;
+    inherit (lib.extra.files.list) recursive;
+    inherit (lib.extra.files.special) patches scripts;
 
-    forSystems = genAttrs [
-      "x86_64-linux"
-    ];
-
-    mkLib = nixpkgs:
-      nixpkgs.lib.extend (final: super: let
-        custom = import (self + "/nix/lib") final super;
-        hm = inputs.home-manager.lib;
-      in
-        hm
-        // custom
-        // {
-          types = custom.types;
-        })
+    # Library
+    # -------
+    libOverlay = final: prev:
+      import ./nix/libraries final prev
       // {
-        dns =
-          inputs."dns.nix".lib;
+        dns = inputs."dns.nix".lib;
       };
 
-    lib = mkLib inputs.smallest;
+    # `nixpkgs.lib.extend` (rather than `//`) keeps flake-only attributes such
+    # as `nixosSystem` and makes them evaluate with the extended lib.
+    mkLib = nixpkgs: nixpkgs.lib.extend libOverlay;
 
-    mkPackages = system: pkgs:
-      import pkgs {
-        inherit system;
-
-        overlays = attrValues self.overlays;
-      };
-
-    mkSystem = hostname: {
-      nixpkgs,
-      modules,
-    }: let
-      lib = mkLib nixpkgs;
+    # Used only to evaluate this file; hosts get their own lib through mkSystem.
+    lib = mkLib inputs.nixos-unstable-small;
+  in let
+    # Systems
+    # -------
+    forEachSystem = let
+      systems = [
+        "x86_64-linux"
+      ];
     in
-      lib.nixosSystem {
-        modules =
-          [
-            inputs.impermanence.nixosModules.impermanence
-            inputs.lanzaboote.nixosModules.lanzaboote
+      func:
+        genAttrs systems (system:
+          func (import inputs.nixos-unstable-small {
+            inherit system;
+            # ────────────────────────────────────────────────────────────────────────
+            # NOTE: This applies all overlays defined at self.overlays
+            # ────────────────────────────────────────────────────────────────────────
+            overlays = attrValues self.overlays;
+          }));
+  in let
+    # Packages
+    # --------
+    byName = callPackage:
+      packagesFromDirectoryRecursive {
+        inherit callPackage;
+        directory = ./nix/packages/by-name;
+      };
+  in {
+    devShells = forEachSystem (pkgs: {
+      default = inputs.devenv.lib.mkShell {
+        inherit inputs pkgs;
+        modules = [
+          (_: {
+            languages = {
+              nix = {
+                enable = true;
+              };
 
-            # Custom options.
-            ./nix/nixos
+              shell = {
+                enable = true;
+              };
+            };
 
-            # Ensure device has expected name in wireless, wired and bluetooth networks.
-            {
-              networking.hostName = hostname;
-              hardware.bluetooth.settings.General.Name = hostname;
-            }
+            git-hooks = {
+              hooks = {
+                # nix
+                alejandra = {
+                  enable = true;
+                };
 
-            # Cross-system package overlays.
-            {
-              nixpkgs.overlays = attrValues self.overlays;
-            }
+                deadnix = {
+                  enable = true;
+                };
 
-            {
-              nixpkgs = {
-                config = {
-                  allowUnfreePredicate = pkg:
-                    builtins.elem (lib.getName pkg) (
-                      builtins.concatLists [
-                        # DIVERSE
-                        # -------
-                        [
-                          "fcitx5-black-simplicity"
-                          "n8n"
-                          "n8n-task-runner-launcher"
-                          "obsidian"
-                        ]
-                        # NVIDIA
-                        # ------
-                        [
-                          "nvidia-kernel-modules"
-                          "nvidia-settings"
-                          "nvidia-x11"
-                        ]
-                        # CUDA
-                        # ----
-                        [
-                          "cuda_cccl"
-                          "cuda_cudart"
-                          "cuda_nvcc"
-                          "cuda_nvrtc"
-                          "libcublas"
-                        ]
-                      ]
-                    );
+                statix = {
+                  enable = true;
+                  settings = {
+                    config = let
+                      tomlFormat = pkgs.formats.toml {};
+                    in
+                      toString (
+                        pkgs.writeTextFile {
+                          name = "statix.toml";
+                          text = tomlFormat.generate "statix.toml" {
+                            disabled = [
+                              "collapsible_let_in"
+                            ];
+                          };
+                        }
+                      );
+                  };
+                };
+
+                # shell
+                shfmt = {
+                  enable = true;
+                };
+
+                shellcheck = {
+                  enable = true;
+                };
+              };
+            };
+          })
+        ];
+      };
+    });
+
+    formatter = forEachSystem ({alejandra, ...}: alejandra);
+
+    nixosConfigurations = let
+      _mkSystemFactory = nixpkgs: let
+        lib = mkLib nixpkgs;
+      in
+        hostName: extraModules:
+          lib.nixosSystem {
+            modules = concatLists [
+              # External Modules
+              # ----------------
+              (with inputs; [
+                impermanence.nixosModules.impermanence
+                lanzaboote.nixosModules.lanzaboote
+              ])
+
+              # Custom Modules
+              # --------------
+              (recursive ./nix/modules/nixos)
+
+              # Extra Modules
+              # -------------
+              extraModules
+
+              # Host Config
+              # -----------
+              (singleton (./etc + "/${hostName}/default.nix"))
+
+              # Nixpkgs Configuration
+              # ---------------------
+              (singleton {
+                nixpkgs = {
+                  # ────────────────────────────────────────────────────────────────────────
+                  # NOTE: This applies all overlays defined at self.overlays
+                  # ────────────────────────────────────────────────────────────────────────
+                  overlays = attrValues self.overlays;
+                };
+              })
+            ];
+
+            specialArgs = {
+              inherit lib self inputs hostName;
+            };
+          };
+    in let
+      mkEndpointSystem = _mkSystemFactory inputs.nixos-unstable;
+
+      mkHeadlessServer = _mkSystemFactory inputs.nixos-unstable-small;
+    in let
+      mkHome = userList: {
+        imports = concatLists [
+          # Home-Manager Module
+          # -------------------
+          (with inputs; [
+            home-manager.nixosModules.home-manager
+          ])
+
+          # General Config
+          # --------------
+          (singleton (
+            {hostName, ...}: {
+              home-manager = {
+                useUserPackages = true;
+
+                useGlobalPkgs = true;
+
+                users = mergeAttrsList userList;
+
+                sharedModules = recursive ./nix/modules/home-manager;
+
+                extraSpecialArgs = {
+                  inherit self inputs hostName;
                 };
               };
             }
-
-            {
-              system.stateVersion = "26.05";
-            }
-          ]
-          ++ modules;
-        specialArgs = {
-          inherit lib self inputs;
-        };
+          ))
+        ];
       };
 
-    mkHome = user: {
-      nixpkgs,
-      imports ? [],
-    }: let
-      lib = mkLib nixpkgs;
-    in [
-      inputs.home-manager.nixosModules.home-manager
-      (_: {
-        home-manager = {
-          sharedModules = [
-            # Custom options.
-            ./nix/hm/modules
-          ];
+      mkUser = username: {
+        ${username} = {hostName, ...}: {
+          imports = singleton (./dot + "/${hostName}/${username}/default.nix");
 
-          useUserPackages = true;
-          useGlobalPkgs = true;
-
-          extraSpecialArgs = {
-            inherit lib self inputs;
-          };
-
-          users.${user} = _: {
-            inherit imports;
+          _module = {
+            args = {inherit username;};
           };
         };
-      })
-    ];
-  in {
-    # `nix develop`
-    devShells = forSystems (system: let
-      pkgs = mkPackages system inputs.smallest;
+      };
     in {
-      default = import ./nix/dev-shell/default.nix pkgs;
-    });
+      # ────────────────────────────────────────────────────────────────────────
+      # NOTE: Client systems with desktop environment and enduser applications.
+      # ────────────────────────────────────────────────────────────────────────
+      albedo = mkEndpointSystem "albedo" [
+        (mkHome [
+          (mkUser "alex")
+        ])
+      ];
 
-    # `nix fmt`
-    formatter = forSystems (
-      system: (mkPackages system inputs.smallest).alejandra
-    );
+      # ────────────────────────────────────────────────────────────────────────
+      # NOTE: Server systems with no graphical interface (running containers).
+      # ────────────────────────────────────────────────────────────────────────
+      beidou = mkHeadlessServer "beidou" [];
+
+      collei = mkHeadlessServer "collei" [];
+
+      fischl = mkHeadlessServer "fischl" [];
+    };
 
     overlays = let
-      inherit (lib.extra.files.special) patches scripts;
+      fixes = ./nix + "/fixes?";
     in
       {
-        lib = _: _: {
-          inherit lib;
-        };
+        packages = final: _: byName final.callPackage;
 
-        packages = final: _: {
-          inherit (self.packages.${final.stdenv.hostPlatform.system}) certs davis notes;
+        lib = _: prev: {
+          lib = prev.lib.extend libOverlay;
         };
-
-        aliases = import (./nix + "/fixes?/aliases.nix");
 
         tools = final: _: {
-          custom.writeAuthZone = import ./nix/packages/tools/write-auth-zone/package.nix final;
-          custom.writeShell = import ./nix/packages/tools/write-shell/package.nix final;
-          custom.scripts = scripts ./nix/packages/scripts final;
-        };
+          custom = {
+            writeAuthZone = import ./nix/packages/tools/write-auth-zone/package.nix final;
+            writeShell = import ./nix/packages/tools/write-shell/package.nix final;
+            scripts = scripts ./nix/packages/scripts final;
+          };
 
-        dns = final: _: {
           dns.util = inputs."dns.nix".util.${final.stdenv.hostPlatform.system};
         };
 
-        formats = final: super: {
+        formats = final: prev: {
           formats =
-            super.formats
-            // {
-              plist = import ./nix/packages/formats/plist.nix final;
-              kdl = import ./nix/packages/formats/kdl.nix final;
-              strongswan = import ./nix/packages/formats/strongswan.nix final;
-            };
+            prev.formats
+            // genAttrs [
+              "plist"
+              "kdl"
+              "strongswan"
+            ] (name: import (./nix/packages/formats + "/${name}.nix") final);
         };
       }
-      // (patches (./nix + "/fixes?"));
+      // patches fixes;
 
-    nixosConfigurations = let
-      inherit (lib.attrsets) mergeAttrsList;
-      inherit (lib.lists) singleton;
-    in
-      mergeAttrsList [
-        # Hosts/Servers
-        # -------------
-        (let
-          nixpkgs = inputs.smallest;
-        in {
-          beidou = mkSystem "beidou" {
-            inherit nixpkgs;
-            modules = singleton ./etc/beidou;
-          };
-
-          collei = mkSystem "collei" {
-            inherit nixpkgs;
-            modules = singleton ./etc/collei;
-          };
-
-          fischl = mkSystem "fischl" {
-            inherit nixpkgs;
-            modules = singleton ./etc/fischl;
-          };
-        })
-        # Workstations
-        # ------------
-        (let
-          nixpkgs = inputs.unstable;
-        in {
-          albedo = mkSystem "albedo" {
-            inherit nixpkgs;
-            modules =
-              (singleton ./etc/albedo)
-              ++ (mkHome "alex" {
-                inherit nixpkgs;
-                imports = singleton ./dot/albedo/by-user/alex;
-              });
-          };
-        })
-      ];
-
-    packages = forSystems (
-      system: let
-        pkgs = mkPackages system inputs.smallest;
-      in
-        packagesFromDirectoryRecursive {
-          callPackage = callPackageWith (pkgs // {inherit lib;});
-          directory = ./nix/packages/by-name;
-        }
-    );
+    packages = forEachSystem (pkgs: byName pkgs.callPackage);
   };
 }

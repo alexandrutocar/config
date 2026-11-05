@@ -1,11 +1,3 @@
-# ────────────────────────────────────────────────────────────────────────
-#
-# █▀ █▀█ █░█ █▄░█ █▀▄
-# ▄█ █▄█ █▄█ █░▀█ █▄▀
-#
-# sound server, session manager, policies, mixer...
-#
-# ────────────────────────────────────────────────────────────────────────
 {pkgs, ...}: {
   environment.systemPackages = with pkgs; [
     # BLUETOOTH DEVICE EXPLORER

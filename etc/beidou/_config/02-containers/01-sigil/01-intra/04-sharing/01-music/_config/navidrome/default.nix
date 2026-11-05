@@ -5,7 +5,6 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.net) ipv6;
   inherit (lib.modules) mkMerge;
 in {
   networking = {
@@ -17,17 +16,22 @@ in {
   };
 
   services = {
-    navidrome = {
-      enable = true;
+    navidrome = let
+      package = pkgs.navidrome.withPlugins (
+        plugins:
+          with plugins; [
+            listenbrainz-daily-playlist
+          ]
+      );
+    in {
+      inherit package;
 
-      plugins = with pkgs.pkgsCross.wasi32.navidromePlugins; [
-        listenbrainz-daily-playlist
-      ];
+      enable = true;
 
       settings = mkMerge [
         {
           DataFolder = "/var/lib/navidrome";
-          Address = ipv6.enclose sigil.self.addresses.ula;
+          Address = "[${sigil.self.addresses.ula}]";
           Port = 8080;
         }
         {

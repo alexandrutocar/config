@@ -1,11 +1,22 @@
-{lib, ...}: let
-  inherit (lib.extra.net) mkHost;
+{
+  self,
+  lib,
+  ...
+}: let
+  inherit (lib.alias) networks;
+  inherit (lib.extra.ip) toCIDR;
+  inherit (lib.extra.ip.address) singleHostRoute;
+  inherit (lib.extra.net.url.authority) mkAuthority;
+in let
+  containers.beidou = {
+    inherit (self.nixosConfigurations.beidou.config.services.sigil.settings.containers.intra) cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a;
+  };
 in {
   systemd = {
     network = let
       name = "wg0";
       marker = 1010;
-      endpoint = mkHost "[2a00:5ba0:8009:5f40:1:b03f:2f2a:c1df]" 50010;
+      endpoint = mkAuthority "2a00:5ba0:8009:5f40:1:b03f:2f2a:c1df" 50010 {};
     in {
       netdevs = {
         "25-${name}" = {
@@ -29,7 +40,7 @@ in {
               Endpoint = endpoint;
 
               AllowedIPs = [
-                "fda0:9527:68ee::/48"
+                (networks.aether.internal.net._meta.network |> toCIDR)
               ];
 
               RouteTable = "off";
@@ -47,14 +58,14 @@ in {
           };
 
           address = [
-            "fda0:9527:68ee:4f8a:46a1:b595:357f:c251/128"
+            (networks.aether.internal.net.hosts.collei |> singleHostRoute |> toCIDR)
           ];
 
           networkConfig = {
             DNSDefaultRoute = true;
 
             DNS = [
-              "fda0:9527:68ee:f1b6:d826:828b:d703:cf4b"
+              containers.beidou.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a.addresses.ula
             ];
 
             Domains =
@@ -83,7 +94,7 @@ in {
 
           routes = [
             {
-              Destination = "fda0:9527:68ee::/48";
+              Destination = networks.aether.internal.net._meta.network |> toCIDR;
               Table = marker;
               Scope = "link";
             }

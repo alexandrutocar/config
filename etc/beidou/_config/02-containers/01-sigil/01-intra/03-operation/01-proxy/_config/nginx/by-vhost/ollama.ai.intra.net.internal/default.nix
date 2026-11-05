@@ -4,7 +4,6 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.net) ipv6;
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
 in let
   extraConfig = ''
@@ -43,7 +42,7 @@ in {
 
       listen = [
         {
-          addr = ipv6.enclose sigil.self.addresses.ula;
+          addr = "[${sigil.self.addresses.ula}]";
           port = 11434;
           ssl = true;
         }
@@ -74,7 +73,7 @@ in {
             proxy_next_upstream off;
           '';
 
-          proxyPass = "http://${ipv6.enclose sigil.containers.intra."d86c8e1c-2bcd-4d2f-a3b2-7962afc28a51".addresses.ula}:11434";
+          proxyPass = "http://[${sigil.containers.intra."d86c8e1c-2bcd-4d2f-a3b2-7962afc28a51".addresses.ula}]:11434";
         };
       };
     };

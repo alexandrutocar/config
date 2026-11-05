@@ -4,7 +4,6 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.net) ipv6;
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
 in let
   extraConfig = ''
@@ -51,7 +50,7 @@ in {
 
       listen = [
         {
-          addr = ipv6.enclose sigil.self.addresses.ula;
+          addr = "[${sigil.self.addresses.ula}]";
           port = 443;
           ssl = true;
         }
@@ -63,7 +62,7 @@ in {
 
       listen = [
         {
-          addr = ipv6.enclose sigil.self.addresses.ula;
+          addr = "[${sigil.self.addresses.ula}]";
           port = 443;
           ssl = true;
         }
@@ -71,7 +70,7 @@ in {
 
       locations = {
         "/" = {
-          proxyPass = "http://${ipv6.enclose sigil.containers.intra."a8e714de-f158-49fc-958a-9176f25d2973".addresses.ula}:8080";
+          proxyPass = "http://[${sigil.containers.intra."a8e714de-f158-49fc-958a-9176f25d2973".addresses.ula}]:8080";
         };
         "/.well-known/apple-device-configuration/intra.net.mobileconfig" = let
           inherit (lib.generators) mkPlistData;

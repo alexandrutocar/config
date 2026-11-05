@@ -1,17 +1,17 @@
-# ────────────────────────────────────────────────────────────────────────
-#
-# █░█ █ █▀█ ▀█▀ █░█ ▄▀█ █░░   █▀█ █▀█ █ █░█ ▄▀█ ▀█▀ █▀▀
-# ▀▄▀ █ █▀▄ ░█░ █▄█ █▀█ █▄▄   █▀▀ █▀▄ █ ▀▄▀ █▀█ ░█░ ██▄
-#
-# █▄░█ █▀▀ ▀█▀ █░█░█ █▀█ █▀█ █▄▀ █▀
-# █░▀█ ██▄ ░█░ ▀▄▀▄▀ █▄█ █▀▄ █░█ ▄█
-#
-# vpn, wireguard, client...
-#
-# ────────────────────────────────────────────────────────────────────────
-{lib, ...}: let
-  inherit (lib.extra.net) mkHost;
+{
+  self,
+  lib,
+  ...
+}: let
+  inherit (lib.alias) networks;
+  inherit (lib.extra.ip) toCIDR;
+  inherit (lib.extra.ip.address) singleHostRoute;
+  inherit (lib.extra.net.url.authority) mkAuthority;
   inherit (lib.modules) mkMerge;
+in let
+  containers.beidou = {
+    inherit (self.nixosConfigurations.beidou.config.services.sigil.settings.containers.intra) cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a;
+  };
 in {
   systemd = let
     mkWireGuardVPN = definitions:
@@ -42,7 +42,7 @@ in {
                   Endpoint = endpoint;
 
                   AllowedIPs = [
-                    "fda0:9527:68ee::/48"
+                    (networks.aether.internal.net._meta.network |> toCIDR)
                   ];
 
                   RouteTable = "off";
@@ -60,14 +60,14 @@ in {
               };
 
               address = [
-                "fda0:9527:68ee:4f8a:ad9c:4066:9123:5d9a/128"
+                (networks.aether.internal.net.hosts.albedo |> singleHostRoute |> toCIDR)
               ];
 
               networkConfig = {
                 DNSDefaultRoute = true;
 
                 DNS = [
-                  "fda0:9527:68ee:f1b6:d826:828b:d703:cf4b"
+                  containers.beidou.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a.addresses.ula
                 ];
 
                 Domains =
@@ -96,7 +96,7 @@ in {
 
               routes = [
                 {
-                  Destination = "fda0:9527:68ee::/48";
+                  Destination = networks.aether.internal.net._meta.network |> toCIDR;
                   Table = marker;
                   Scope = "link";
                 }
@@ -115,22 +115,22 @@ in {
       {
         name = "wg-intra-ipv4";
         marker = 1010;
-        endpoint = mkHost "192.168.1.2" 50010;
+        endpoint = mkAuthority "192.168.1.2" 50010 {};
       }
       {
         name = "wg-intra-ipv6";
         marker = 1020;
-        endpoint = mkHost "[fd4b:ad02:1b77:1:0020:61fc:3462:bf01]" 50010;
+        endpoint = mkAuthority "fd4b:ad02:1b77:1:0020:61fc:3462:bf01" 50010 {};
       }
       {
         name = "wg-inter-ipv4";
         marker = 1030;
-        endpoint = mkHost "212.201.75.101" 50010;
+        endpoint = mkAuthority "212.201.75.101" 50010 {};
       }
       {
         name = "wg-inter-ipv6";
         marker = 1040;
-        endpoint = mkHost "[2a00:5ba0:8009:5f40:1:b03f:2f2a:c1df]" 50010;
+        endpoint = mkAuthority "2a00:5ba0:8009:5f40:1:b03f:2f2a:c1df" 50010 {};
       }
     ];
   };

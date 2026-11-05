@@ -1,4 +1,8 @@
-_: {
+{lib, ...}: let
+  inherit (lib.alias) networks;
+  inherit (lib.extra.ip) toCompressed;
+  inherit (lib.extra.ip.network) toPrefixGroups;
+in {
   services.sigil = {
     enable = true;
 
@@ -10,8 +14,8 @@ _: {
         ula = {
           # Prefix fd + a0:9527:68ee is generated randomly. The fourth hextet is
           # derived from the zone name, yielding one deterministic /64 per zone.
-          prefix = "fda0:9527:68ee";
-          source = "fda0:9527:68ee:4f8a:46a1:b595:357f:c251";
+          prefix = networks.aether.internal.net._meta.network |> toPrefixGroups;
+          source = networks.aether.internal.net.hosts.collei |> toCompressed;
         };
       };
     };

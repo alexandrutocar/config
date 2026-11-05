@@ -3,6 +3,8 @@
   lib,
   ...
 }: let
+  inherit (lib.alias) networks;
+  inherit (lib.extra.ip) toCIDR;
   inherit (lib.modules) mkForce;
 in {
   networking = {
@@ -20,7 +22,7 @@ in {
     };
 
     authentication = ''
-      host  stalwart stalwart fda0:9527:68ee::/48 trust
+      host  stalwart stalwart ${(networks.aether.internal.net._meta.network |> toCIDR)} trust
       host  stalwart stalwart ::1/128 trust
     '';
 

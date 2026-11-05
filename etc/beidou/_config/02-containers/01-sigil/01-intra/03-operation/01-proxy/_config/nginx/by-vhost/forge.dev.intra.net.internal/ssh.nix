@@ -1,10 +1,4 @@
-{
-  sigil,
-  lib,
-  ...
-}: let
-  inherit (lib.extra.net) ipv6;
-in {
+{sigil, ...}: {
   networking = {
     firewall = {
       allowedTCPPorts = [
@@ -15,12 +9,12 @@ in {
 
   services.nginx.streamConfig = ''
     upstream forge_ssh {
-        server ${ipv6.enclose sigil.containers.intra."acda4bf3-2678-43c5-bae9-e67bd8cb710d".addresses.ula}:22;
+        server [${sigil.containers.intra."acda4bf3-2678-43c5-bae9-e67bd8cb710d".addresses.ula}]:22;
     }
 
     server {
         listen 22;
-        listen ${ipv6.enclose sigil.self.addresses.ula}:22;
+        listen [${sigil.self.addresses.ula}]:22;
         proxy_pass forge_ssh;
     }
   '';

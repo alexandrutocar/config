@@ -4,7 +4,9 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.net) mkHost';
+  inherit (lib.alias) networks;
+  inherit (lib.extra.ip) toCompressed toCIDR;
+  inherit (lib.extra.net.interface) mkInterface;
   inherit (lib.modules) mkMerge;
 in {
   networking = {
@@ -27,7 +29,7 @@ in {
         server = mkMerge [
           {
             interface = [
-              (mkHost' sigil.self.addresses.ula 53)
+              (mkInterface sigil.self.addresses.ula 53)
             ];
 
             do-udp = true;
@@ -37,7 +39,7 @@ in {
             # https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html#unbound-conf-access-control
             access-control = [
               # NOTE: Allow requests from inside the internal network (intra.net®).
-              "fda0:9527:68ee::/48 allow"
+              "${(networks.aether.internal.net._meta.network |> toCIDR)} allow"
             ];
           }
           {
@@ -205,27 +207,27 @@ in {
               {
                 "albedo" = {
                   AAAA = [
-                    "fda0:9527:68ee:4f8a:ad9c:4066:9123:5d9a"
+                    (networks.aether.internal.net.hosts.albedo |> toCompressed)
                   ];
                 };
                 "beidou" = {
                   AAAA = [
-                    "fda0:9527:68ee:4f8a:f7f3:176c:41e0:4098"
+                    (networks.aether.internal.net.hosts.beidou |> toCompressed)
                   ];
                 };
                 "collei" = {
                   AAAA = [
-                    "fda0:9527:68ee:4f8a:46a1:b595:357f:c251"
+                    (networks.aether.internal.net.hosts.collei |> toCompressed)
                   ];
                 };
                 "fischl" = {
                   AAAA = [
-                    "fda0:9527:68ee:4f8a:712a:ed72:b041:27c3"
+                    (networks.aether.internal.net.hosts.fischl |> toCompressed)
                   ];
                 };
                 "keqing" = {
                   AAAA = [
-                    "fda0:9527:68ee:4f8a:afbf:7002:aa5f:a363"
+                    (networks.aether.internal.net.hosts.keqing |> toCompressed)
                   ];
                 };
               }

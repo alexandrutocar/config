@@ -1,4 +1,8 @@
-_: {
+{lib, ...}: let
+  inherit (lib.alias) networks;
+  inherit (lib.extra.ip) toCIDR;
+  inherit (lib.extra.ip.address) singleHostRoute;
+in {
   systemd = {
     network = {
       networks = {
@@ -12,7 +16,7 @@ _: {
               "127.0.0.1/8"
             ]
             ++ [
-              "fda0:9527:68ee:4f8a:f7f3:176c:41e0:4098/128"
+              (networks.aether.internal.net.hosts.beidou |> singleHostRoute |> toCIDR)
             ];
         };
       };

@@ -3,11 +3,8 @@
   config,
   sigil,
   pkgs,
-  lib,
   ...
-}: let
-  inherit (lib.extra.net) ipv6;
-in {
+}: {
   networking = {
     firewall = {
       allowedTCPPorts = [config.services.ollama.port];
@@ -36,7 +33,7 @@ in {
 
       package = pkgs.ollama-cuda;
 
-      host = ipv6.enclose sigil.self.addresses.ula;
+      host = "[${sigil.self.addresses.ula}]";
       port = 11434;
 
       user = "ollama";

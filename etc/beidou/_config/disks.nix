@@ -1,19 +1,6 @@
-# ────────────────────────────────────────────────────────────────────────
-#
-# █▀▄ █ █▀ █▄▀ █▀
-# █▄▀ █ ▄█ █░█ ▄█
-#
-# disks, swap, filesystems...
-#
-# ────────────────────────────────────────────────────────────────────────
 _: {
   boot = {
     initrd.availableKernelModules = ["usb_storage"]; # universal serial bus
-
-    # ────────────────────────────────────────────────────────────────────────
-    # NOTE: This is a safeguard against bypassing important checks.
-    # ────────────────────────────────────────────────────────────────────────
-    zfs.forceImportRoot = false;
 
     kernelParams = [
       # Maximum size of Arc cache and reserved space add up to

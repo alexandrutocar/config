@@ -1,4 +1,12 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  self,
+  ...
+}: let
+  containers.beidou = {
+    inherit (self.nixosConfigurations.beidou.config.services.sigil.settings.containers.porti) a8dd2ef7-86c8-4a7e-af8a-b3f98a2f31d3;
+  };
+in {
   networking = {
     firewall = {
       allowedTCPPorts = [
@@ -11,7 +19,7 @@
     enable = true;
     settings = {
       "@type" = "PostgreSql";
-      host = "fda0:9527:68ee:9cfe:7d2e:1a54:f290:09a3";
+      host = containers.beidou.a8dd2ef7-86c8-4a7e-af8a-b3f98a2f31d3.addresses.ula;
       authSecret = {
         "@type" = "None";
       };

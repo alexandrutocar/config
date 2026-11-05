@@ -1,11 +1,3 @@
-# ────────────────────────────────────────────────────────────────────────
-#
-# █▀▄ █ █▀ █▄▀ █▀
-# █▄▀ █ ▄█ █░█ ▄█
-#
-# disks, swap, filesystems...
-#
-# ────────────────────────────────────────────────────────────────────────
 {
   config,
   lib,
@@ -22,11 +14,6 @@ in {
       "sd_mod"
       "sr_mod"
     ];
-
-    # ────────────────────────────────────────────────────────────────────────
-    # NOTE: This is a safeguard against bypassing important checks.
-    # ────────────────────────────────────────────────────────────────────────
-    zfs.forceImportRoot = false;
 
     kernelParams = let
       size = report.memory.extra.size config.hardware.facter.report;

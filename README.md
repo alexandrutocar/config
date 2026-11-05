@@ -58,8 +58,7 @@ In case a test does not go to plan, it can be reverted to previous configuration
 |____doc
 |____dot
 | |____<host>
-|   |____by-user
-|     |____<user>
+|   |____<user>
 |       |____default.nix
 |____etc
 | |____<host>
@@ -67,13 +66,12 @@ In case a test does not go to plan, it can be reverted to previous configuration
 |   |____default.nix
 |   |____report.json # <- facter's report
 |____nix
-  |____dev-shell
-  | |____default.nix
   |____fixes? # <- package fixes
-  |____hm # <- updated and new modules for Home Manager
-  |____lib # <- lib(s) updates and .extra lib 
-  |____nixos # <- updated and new modules for NixOS
+  |____modules # <- updated and new modules for NixOS
+  | |____home-manager # <- updated and new modules for Home Manager
+  | |____nixos # <- updated and new modules for NixOS
   |____packages # <- new packages
+  |____libraries # <- additional libraries (extension)
 ```
 
 Configuration is commonly indexed (e.g. `01-development`) or organised by category (e.g. `by-user`). Directories and files prefixed with an underscore (e.g. `_config`) are usually excluded from being imported recursively. Large configuration files are avoided whenever possible. Clarity is central, but, wherever it is fitting, convention is preferred.

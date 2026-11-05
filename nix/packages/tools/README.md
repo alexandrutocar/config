@@ -1,5 +1,32 @@
 # Utilities
 
+## `writeAuthZone`
+
+This is a customized variation of `dns.util.writeZone`.
+
+```nix
+let
+  inherit (lib.meta) getExe;
+in {
+  auth-zone = [
+    (pkgs.custom.writeAuthZone "hosts.net.internal" {
+      # Entries of a usual dns.nix zone file.
+      SOA = {
+        nameServer = "beidou.ns.hosts.net.internal.";
+        minimum = 86400;
+        serial = 2026082701;
+        retry = 1800;
+        expire = 604800;
+        refresh = 3600;
+        adminEmail = "noc@beidou.ns.hosts.net.internal";
+      }
+    });
+  ]
+}
+```
+
+
+
 ## `writeShell`
 
 This is a customized variation of `pkgs.writeShellApplication`.

@@ -4,7 +4,9 @@
   lib,
   ...
 }: let
+  inherit (lib.alias) networks;
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
+  inherit (lib.extra.ip) toCompressed;
   inherit (lib.modules) mkMerge;
   inherit (lib.strings) toInt;
 in {
@@ -59,7 +61,7 @@ in {
         }
         {
           NO_PROXY = ".intra.net.internal,localhost,::1";
-          HTTPS_PROXY = "http://[fda0:9527:68ee:4f8a:f7f3:176c:41e0:4098]:8888";
+          HTTPS_PROXY = "http://[${networks.aether.internal.net.hosts.beidou |> toCompressed}]:8888";
         }
         {
           listen-address = sigil.self.addresses.ula;
