@@ -1,5 +1,7 @@
 {lib, ...}: let
+  inherit (lib.alias) networks;
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
+  inherit (lib.extra.ip) toCompressed;
 in let
   container = {
     network = "host";
@@ -10,6 +12,10 @@ in let
     labels = [
       "docker:docker://data.forgejo.org/oci/node:20-bookworm"
     ];
+    envs = {
+      HTTPS_PROXY = "http://[${networks.aether.internal.net.hosts.beidou |> toCompressed}]:8888";
+      NO_PROXY = "forge.dev.intra.net.internal,workflows.intra.net.internal";
+    };
   };
 in {
   services.forgejo-runner = {
