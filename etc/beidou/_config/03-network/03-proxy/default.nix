@@ -35,6 +35,7 @@ in {
           text = ''
             ^github\.com$
             ^api\.github\.com$
+            ^codeload\.github\.com$
           '';
         };
 
