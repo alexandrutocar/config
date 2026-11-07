@@ -1,0 +1,160 @@
+# ────────────────────────────────────────────────────────────────────────
+# Flake update preview on ci/flake-update-preview, with every host checked
+# and evaluated before and after the update. Evaluation results and system
+# details are collected for an automated review.
+#
+# Here is order of execution:
+#
+# 1 Prepare ─┬────────────────────── 2 Inspect Base ────┐
+#            └──── 2 Flake Update ── 3 Inspect Next ────┴─ 4 Diff & Report
+#
+# Secrets:
+#   FLAKE_UPDATE_PREVIEW_WEBHOOK_URL     webhook url
+#   FLAKE_UPDATE_PREVIEW_WEBHOOK_HEADER  auth header (e.g. "Name: value")
+# ────────────────────────────────────────────────────────────────────────
+
+name: Flake Update Preview
+
+on:
+  schedule:
+    - cron: "37 3 * * *"
+  workflow_dispatch:
+    inputs:
+      send:
+        description: Send details for review.
+        type: boolean
+        default: true
+
+env:
+  # ──────────────────────────────────────────────────────────────────────
+  # NOTE: Convention: scripts in .forgejo/workflows/<ID>/, artifacts of a
+  #       job in .<ID>/, updates pushed to ci/<ID>.
+  # ──────────────────────────────────────────────────────────────────────
+  ID: flake-update-preview
+
+jobs:
+  sync-preview-branch:
+    name: "Sync the preview branch with the default branch."
+    runs-on: host
+    outputs:
+      base-commit: ${{ steps.sync-preview-branch.outputs.base-commit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: sync-preview-branch
+        name: "Sync preview branch with the default branch..."
+        run: .forgejo/workflows/$ID/sync-preview-branch.sh
+  
+  collect-nix-systems:
+    name: "Collect Nix systems."
+    needs: [sync-preview-branch]
+    runs-on: host
+    outputs:
+      nix-systems: ${{ steps.collect-nix-systems.outputs.nix-systems }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.sync-preview-branch.outputs.base-commit }}
+      - id: collect-nix-systems
+        name: "Collect Nix systems..."
+        run: .forgejo/workflows/$ID/collect-nix-systems.sh
+
+  collect-system-features-and-evaluate-system-closure-on-base:
+    name: "Collect system information and evaluate '${{ matrix.system }}' before the update."
+    needs: [sync-preview-branch, collect-nix-systems]
+    runs-on: host
+    strategy:
+      fail-fast: false
+      matrix:
+        system: ${{ fromJSON(needs.collect-nix-systems.outputs.nix-systems) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.sync-preview-branch.outputs.base-commit }}
+      - name: "Collect system information (packages, modules, etc.)..."
+        run: .forgejo/workflows/$ID/collect-system-features.sh base ${{ matrix.system }}
+      - name: "Evaluate system closure..."
+        if: success() || failure() # without features, the system itself is evaluated
+        run: .forgejo/workflows/$ID/evaluate-system-closure.sh base ${{ matrix.system }}
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: base-${{ matrix.system }}
+          path: .${{ env.ID }}
+          include-hidden-files: true
+
+  nix-flake-update:
+    name: "Update flake inputs."
+    needs: 
+      - sync-preview-branch
+    runs-on: host
+    outputs:
+      next-commit: ${{ steps.update-flake-inputs.outputs.next-commit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.sync-preview-branch.outputs.base-commit }}
+      - id: update-flake-inputs
+        name: "Update flake.lock and push it to 'ci/flake-update-preview'..."
+        run: .forgejo/workflows/$ID/update-flake-inputs.sh
+
+  collect-system-features-and-evaluate-system-closure-on-next:
+    name: "Collect system information and evaluate '${{ matrix.system }}' after the update."
+    needs: [collect-nix-systems, nix-flake-update]
+    if: needs.nix-flake-update.outputs.next-commit != ''
+    runs-on: host
+    strategy:
+      fail-fast: false
+      matrix:
+        system: ${{ fromJSON(needs.collect-nix-systems.outputs.nix-systems) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.nix-flake-update.outputs.next-commit }}
+      - name: "Collect system information (packages, modules, etc.)..."
+        run: .forgejo/workflows/$ID/collect-system-features.sh next ${{ matrix.system }}
+      - name: "Evaluate system closure..."
+        if: success() || failure() # without features, the system itself is evaluated
+        run: .forgejo/workflows/$ID/evaluate-system-closure.sh next ${{ matrix.system }}
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: next-${{ matrix.system }}
+          path: .${{ env.ID }}
+          include-hidden-files: true
+
+  diff-and-report:
+    name: "Diff the collected information and send it for review."
+    needs:
+      - collect-system-features-and-evaluate-system-closure-on-base
+      - nix-flake-update
+      - collect-system-features-and-evaluate-system-closure-on-next
+    # A failed system job only leaves its records out of the report.
+    if: always() && needs.nix-flake-update.result == 'success' && needs.nix-flake-update.outputs.next-commit != ''
+    runs-on: host
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.nix-flake-update.outputs.next-commit }}
+          fetch-depth: 2 
+      - uses: actions/download-artifact@v3
+        with:
+          path: .${{ env.ID }}-downloads
+      - name: "Merge the collected records..."
+        run: mkdir -p ".$ID" && cp -r ".$ID-downloads"/*/. ".$ID/"
+      - id: build-review-payload
+        name: "Diff and build the review payload..."
+        run: .forgejo/workflows/$ID/build-review-payload.sh
+      - uses: actions/upload-artifact@v3
+        with:
+          name: payload
+          path: .${{ env.ID }}/payload.json
+          include-hidden-files: true
+      - id: send-review-payload
+        name: "Send for review..."
+        if: github.event.inputs.send != 'false'
+        run: .forgejo/workflows/$ID/send-review-payload.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.FLAKE_UPDATE_PREVIEW_WEBHOOK_URL }}
+          WEBHOOK_HEADER: ${{ secrets.FLAKE_UPDATE_PREVIEW_WEBHOOK_HEADER }}
