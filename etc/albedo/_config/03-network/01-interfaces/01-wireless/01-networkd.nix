@@ -1,4 +1,10 @@
-_: {
+{
+  hostName,
+  lib,
+  ...
+}: let
+  inherit (lib.strings) toSentenceCase;
+in {
   systemd.network = {
     networks = {
       # Network Interface [+]
@@ -31,7 +37,7 @@ _: {
 
         # [DHCP]
         dhcpConfig = {
-          Hostname = "Albedo";
+          Hostname = toSentenceCase hostName;
           SendHostname = true;
         };
       };
