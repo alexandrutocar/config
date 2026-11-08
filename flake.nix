@@ -35,7 +35,20 @@
 
     devenv = {
       url = "github:cachix/devenv";
-      inputs.nixpkgs.follows = "nixos-unstable-small";
+      inputs = {
+        nixpkgs.follows = "nixos-unstable-small";
+
+        # Consumed by nix,nixd,git-hooks
+        flake-compat.follows = "";
+        flake-parts.follows = "";
+
+        # Consumed by devenv (package)
+        crate2nix.follows = "";
+        ghostty.follows = "";
+        nix.follows = "";
+        nixd.follows = "";
+        rust-overlay.follows = "";
+      };
     };
 
     lanzaboote = {
