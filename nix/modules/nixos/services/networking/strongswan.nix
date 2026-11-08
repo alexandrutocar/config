@@ -52,7 +52,8 @@ in {
 
       settings = {
         strongswan = lib.mkOption {
-          type = format.type;
+          inherit (format) type;
+
           default = {};
           description = ''
             strongswan.conf contents as attributes. See
@@ -62,7 +63,8 @@ in {
           '';
         };
         swanctl = lib.mkOption {
-          type = format.type;
+          inherit (format) type;
+
           default = {};
           description = ''
             swanctl.conf contents as attributes. See

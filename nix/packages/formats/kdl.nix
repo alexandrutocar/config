@@ -34,209 +34,207 @@
 in
   {version}:
     assert version == 1 || version == 2; {
-      type = (
-        let
-          mergeUniq = mergeOne:
-            lib.mergeUniqueOption {
-              message = "";
-              merge = loc: defs: let
-                inherit (lib.head defs) file value;
-              in
-                mergeOne file loc value;
-            };
-
-          mergeFlat = elemType: loc: file: value:
-            if value ? _type
-            then throw "${lib.showOption loc} has wrong type: expected '${elemType.description}', got `${value._type}`"
-            else elemType.merge loc [{inherit file value;}];
-
-          uniqFlatListOf = elemType:
-            lib.mkOptionType {
-              name = "uniqFlatListOf";
-              inherit (listOf elemType) description descriptionClass;
-              check = builtins.isList;
-              merge = mergeUniq (
-                file: loc: lib.imap1 (i: mergeFlat elemType (loc ++ ["[entry ${toString i}]"]) file)
-              );
-            };
-
-          uniqFlatAttrsOf = elemType:
-            lib.mkOptionType {
-              name = "uniqFlatAttrsOf";
-              inherit (attrsOf elemType) description descriptionClass;
-              check = builtins.isAttrs;
-              merge = mergeUniq (file: loc: lib.mapAttrs (name: mergeFlat elemType (loc ++ [name]) file));
-            };
-
-          kdlUntypedValue = lib.mkOptionType {
-            name = "kdlUntypedValue";
-            description = "KDL value without type annotation";
-            descriptionClass = "noun";
-
-            inherit
-              (nullOr (oneOf [
-                str
-                bool
-                number
-                path
-              ]))
-              check
-              merge
-              ;
-          };
-
-          kdlTypedValue = lib.mkOptionType {
-            name = "kdlTypedValue";
-            description = "KDL value with type annotation";
-            descriptionClass = "noun";
-
-            check = builtins.isAttrs;
-            merge = let
-              base = submodule {
-                options = {
-                  type = lib.mkOption {
-                    type = nullOr str;
-                    default = null;
-                    description = ''
-                      [Type annotation](https://kdl.dev/spec/#name-type-annotation) of a [KDL value](https://kdl.dev/spec/#name-value).
-                    '';
-                  };
-                  value = lib.mkOption {
-                    type = kdlUntypedValue;
-                    description = ''
-                      Scalar part of a [KDL value](https://kdl.dev/spec/#name-value)
-                    '';
-                  };
-                };
-              };
+      type = let
+        mergeUniq = mergeOne:
+          lib.mergeUniqueOption {
+            message = "";
+            merge = loc: defs: let
+              inherit (lib.head defs) file value;
             in
-              loc: defs: base.merge loc defs;
+              mergeOne file loc value;
           };
 
-          # https://kdl.dev/spec/#name-value
-          kdlValue = let
-            base = coercedTo kdlUntypedValue (value: {inherit value;}) kdlTypedValue;
-          in
-            lib.mkOptionType {
-              name = "kdlValue";
-              description = "KDL value";
-              descriptionClass = "noun";
+        mergeFlat = elemType: loc: file: value:
+          if value ? _type
+          then throw "${lib.showOption loc} has wrong type: expected '${elemType.description}', got `${value._type}`"
+          else elemType.merge loc [{inherit file value;}];
 
-              check = v: base.check v;
-              merge = loc: defs: base.merge loc defs;
-
-              nestedTypes = {
-                type = nullOr str;
-                scalar = kdlUntypedValue;
-              };
-            };
-
-          # https://kdl.dev/spec/#name-node
-          kdlNode = lib.mkOptionType {
-            name = "kdlNode";
-            description = "KDL node";
-            descriptionClass = "noun";
-
-            check = builtins.isAttrs;
-            merge = let
-              base = submodule {
-                options = {
-                  type = lib.mkOption {
-                    type = nullOr str;
-                    default = null;
-                    description = ''
-                      [Type annotation](https://kdl.dev/spec/#name-type-annotation) of a KDL node.
-                    '';
-                  };
-                  name = lib.mkOption {
-                    type = str;
-                    description = ''
-                      Name of a [KDL node](https://kdl.dev/spec/#name-node).
-                    '';
-                  };
-                  arguments = lib.mkOption {
-                    type = uniqFlatListOf kdlValue;
-                    default = [];
-                    description = ''
-                      [Arguments](https://kdl.dev/spec/#name-argument) of a KDL node.
-                    '';
-                  };
-                  properties = lib.mkOption {
-                    type = uniqFlatAttrsOf kdlValue;
-                    default = {};
-                    description = ''
-                      [Properties](https://kdl.dev/spec/#name-property) of a KDL node.
-                    '';
-                  };
-                  children = lib.mkOption {
-                    type = kdlDocument;
-                    default = [];
-                    description = ''
-                      [Children](https://kdl.dev/spec/#children-block) of a KDL node.
-                    '';
-                  };
-                };
-              };
-            in
-              loc: defs: base.merge loc defs;
-
-            nestedTypes = {
-              name = str;
-              type = nullOr str;
-              arguments = uniqFlatListOf kdlValue;
-              properties = uniqFlatAttrsOf kdlValue;
-              children = kdlDocument;
-            };
-          };
-
-          kdlDocument = lib.mkOptionType {
-            name = "kdlDocument";
-            description = "KDL document";
-            descriptionClass = "noun";
-
+        uniqFlatListOf = elemType:
+          lib.mkOptionType {
+            name = "uniqFlatListOf";
+            inherit (listOf elemType) description descriptionClass;
             check = builtins.isList;
             merge = mergeUniq (
-              file: let
-                mergeDocument = loc: toplevel:
-                  builtins.concatLists (
-                    lib.imap1 (i: mergeDocumentEntry (loc ++ ["[entry ${toString i}]"])) toplevel
-                  );
-
-                mergeDocumentEntry = loc: value: let
-                  inherit (lib.options) showDefs;
-                  defs = [{inherit file value;}];
-                in
-                  if builtins.isList value
-                  then mergeDocument loc value
-                  else if value ? _type
-                  then
-                    if value._type == "if"
-                    then
-                      if builtins.isBool value.condition
-                      then
-                        if value.condition
-                        then mergeDocumentEntry loc value.content
-                        else []
-                      else throw "`mkIf` called with non-Boolean condition at ${lib.showOption loc}. Definition value:${showDefs defs}"
-                    else if value._type == "merge"
-                    then
-                      throw ''
-                        ${lib.showOption loc} has wrong type: expected a KDL node or document, got 'merge'.
-                        note: `mkMerge` is potentially ambiguous in a KDL document, as "merging" is application-specific. if you intended to "splat" all the nodes in a KDL document, you can just insert the list of nodes directly. you can arbitrarily nest KDL documents, and they will be concatenated.
-                      ''
-                    else throw "${lib.showOption loc} has wrong type: expected a KDL node or document, got '${value._type}'. Definition value:${showDefs defs}"
-                  else if kdlNode.check value
-                  then [(kdlNode.merge loc [{inherit file value;}])]
-                  else throw "${lib.showOption loc} has wrong type: expected a KDL node or document. Definition value:${showDefs defs}";
-              in
-                mergeDocument
+              file: loc: lib.imap1 (i: mergeFlat elemType (loc ++ ["[entry ${toString i}]"]) file)
             );
-
-            nestedTypes.node = kdlNode;
           };
+
+        uniqFlatAttrsOf = elemType:
+          lib.mkOptionType {
+            name = "uniqFlatAttrsOf";
+            inherit (attrsOf elemType) description descriptionClass;
+            check = builtins.isAttrs;
+            merge = mergeUniq (file: loc: lib.mapAttrs (name: mergeFlat elemType (loc ++ [name]) file));
+          };
+
+        kdlUntypedValue = lib.mkOptionType {
+          name = "kdlUntypedValue";
+          description = "KDL value without type annotation";
+          descriptionClass = "noun";
+
+          inherit
+            (nullOr (oneOf [
+              str
+              bool
+              number
+              path
+            ]))
+            check
+            merge
+            ;
+        };
+
+        kdlTypedValue = lib.mkOptionType {
+          name = "kdlTypedValue";
+          description = "KDL value with type annotation";
+          descriptionClass = "noun";
+
+          check = builtins.isAttrs;
+          merge = let
+            base = submodule {
+              options = {
+                type = lib.mkOption {
+                  type = nullOr str;
+                  default = null;
+                  description = ''
+                    [Type annotation](https://kdl.dev/spec/#name-type-annotation) of a [KDL value](https://kdl.dev/spec/#name-value).
+                  '';
+                };
+                value = lib.mkOption {
+                  type = kdlUntypedValue;
+                  description = ''
+                    Scalar part of a [KDL value](https://kdl.dev/spec/#name-value)
+                  '';
+                };
+              };
+            };
+          in
+            loc: defs: base.merge loc defs;
+        };
+
+        # https://kdl.dev/spec/#name-value
+        kdlValue = let
+          base = coercedTo kdlUntypedValue (value: {inherit value;}) kdlTypedValue;
         in
-          kdlDocument
-      );
+          lib.mkOptionType {
+            name = "kdlValue";
+            description = "KDL value";
+            descriptionClass = "noun";
+
+            check = v: base.check v;
+            merge = loc: defs: base.merge loc defs;
+
+            nestedTypes = {
+              type = nullOr str;
+              scalar = kdlUntypedValue;
+            };
+          };
+
+        # https://kdl.dev/spec/#name-node
+        kdlNode = lib.mkOptionType {
+          name = "kdlNode";
+          description = "KDL node";
+          descriptionClass = "noun";
+
+          check = builtins.isAttrs;
+          merge = let
+            base = submodule {
+              options = {
+                type = lib.mkOption {
+                  type = nullOr str;
+                  default = null;
+                  description = ''
+                    [Type annotation](https://kdl.dev/spec/#name-type-annotation) of a KDL node.
+                  '';
+                };
+                name = lib.mkOption {
+                  type = str;
+                  description = ''
+                    Name of a [KDL node](https://kdl.dev/spec/#name-node).
+                  '';
+                };
+                arguments = lib.mkOption {
+                  type = uniqFlatListOf kdlValue;
+                  default = [];
+                  description = ''
+                    [Arguments](https://kdl.dev/spec/#name-argument) of a KDL node.
+                  '';
+                };
+                properties = lib.mkOption {
+                  type = uniqFlatAttrsOf kdlValue;
+                  default = {};
+                  description = ''
+                    [Properties](https://kdl.dev/spec/#name-property) of a KDL node.
+                  '';
+                };
+                children = lib.mkOption {
+                  type = kdlDocument;
+                  default = [];
+                  description = ''
+                    [Children](https://kdl.dev/spec/#children-block) of a KDL node.
+                  '';
+                };
+              };
+            };
+          in
+            loc: defs: base.merge loc defs;
+
+          nestedTypes = {
+            name = str;
+            type = nullOr str;
+            arguments = uniqFlatListOf kdlValue;
+            properties = uniqFlatAttrsOf kdlValue;
+            children = kdlDocument;
+          };
+        };
+
+        kdlDocument = lib.mkOptionType {
+          name = "kdlDocument";
+          description = "KDL document";
+          descriptionClass = "noun";
+
+          check = builtins.isList;
+          merge = mergeUniq (
+            file: let
+              mergeDocument = loc: toplevel:
+                builtins.concatLists (
+                  lib.imap1 (i: mergeDocumentEntry (loc ++ ["[entry ${toString i}]"])) toplevel
+                );
+
+              mergeDocumentEntry = loc: value: let
+                inherit (lib.options) showDefs;
+                defs = [{inherit file value;}];
+              in
+                if builtins.isList value
+                then mergeDocument loc value
+                else if value ? _type
+                then
+                  if value._type == "if"
+                  then
+                    if builtins.isBool value.condition
+                    then
+                      if value.condition
+                      then mergeDocumentEntry loc value.content
+                      else []
+                    else throw "`mkIf` called with non-Boolean condition at ${lib.showOption loc}. Definition value:${showDefs defs}"
+                  else if value._type == "merge"
+                  then
+                    throw ''
+                      ${lib.showOption loc} has wrong type: expected a KDL node or document, got 'merge'.
+                      note: `mkMerge` is potentially ambiguous in a KDL document, as "merging" is application-specific. if you intended to "splat" all the nodes in a KDL document, you can just insert the list of nodes directly. you can arbitrarily nest KDL documents, and they will be concatenated.
+                    ''
+                  else throw "${lib.showOption loc} has wrong type: expected a KDL node or document, got '${value._type}'. Definition value:${showDefs defs}"
+                else if kdlNode.check value
+                then [(kdlNode.merge loc [{inherit file value;}])]
+                else throw "${lib.showOption loc} has wrong type: expected a KDL node or document. Definition value:${showDefs defs}";
+            in
+              mergeDocument
+          );
+
+          nestedTypes.node = kdlNode;
+        };
+      in
+        kdlDocument;
 
       lib = {
         /**
