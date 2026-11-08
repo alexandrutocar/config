@@ -10,18 +10,39 @@
 in {
   imports = singleton (self + "/etc/shared/01-settings/appearance.nix");
 
-  # MULTILINGUAL INPUT
-  # ------------------
-  i18n.inputMethod = {
-    enable = true;
-    type = "fcitx5";
+  # SYSTEM TIME
+  # -----------
+  time.timeZone = "Europe/Berlin";
 
-    fcitx5 = {
-      addons = with (pkgs // pkgs.kdePackages); [
-        fcitx5-black-simplicity
-        fcitx5-chinese-addons
-        fcitx5-table-other
-      ];
+  # SYSTEM LOCALE
+  # -------------
+  i18n = {
+    defaultLocale = "de_DE.UTF-8";
+    extraLocales = [
+      # International
+      "en_US.UTF-8/UTF-8"
+      # East-Europe
+      "ru_RU.UTF-8/UTF-8"
+      "uk_UA.UTF-8/UTF-8"
+      # East-Asia
+      "zh_CN.UTF-8/UTF-8"
+      "zh_SG.UTF-8/UTF-8"
+      "zh_TW.UTF-8/UTF-8"
+    ];
+
+    # MULTILINGUAL INPUT
+    # ------------------
+    inputMethod = {
+      enable = true;
+      type = "fcitx5";
+
+      fcitx5 = {
+        addons = with (pkgs // pkgs.kdePackages); [
+          fcitx5-black-simplicity
+          fcitx5-chinese-addons
+          fcitx5-table-other
+        ];
+      };
     };
   };
 

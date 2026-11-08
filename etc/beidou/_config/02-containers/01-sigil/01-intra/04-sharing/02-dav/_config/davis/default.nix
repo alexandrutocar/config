@@ -51,6 +51,7 @@ in {
         # -------
         APP_ENV = "prod";
         APP_SECRET.cred = "app-secret";
+        APP_TIMEZONE = "Europe/Berlin";
 
         # Auth
         # ----
