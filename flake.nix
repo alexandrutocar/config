@@ -132,13 +132,10 @@
                       tomlFormat = pkgs.formats.toml {};
                     in
                       toString (
-                        pkgs.writeTextFile {
-                          name = "statix.toml";
-                          text = tomlFormat.generate "statix.toml" {
-                            disabled = [
-                              "collapsible_let_in"
-                            ];
-                          };
+                        tomlFormat.generate "statix.toml" {
+                          disabled = [
+                            "collapsible_let_in"
+                          ];
                         }
                       );
                   };
