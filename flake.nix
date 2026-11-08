@@ -1,6 +1,6 @@
 {
   description = ''
-    Reproducible configuration for Albedo (Laptop), Beidou (Server), and Collei (VPS).
+    Reproducible configuration for Albedo (Laptop), Beidou (Server), Collei (VPS) and Fischl (Server).
   '';
 
   inputs = {
