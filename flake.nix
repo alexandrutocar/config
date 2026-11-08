@@ -58,6 +58,8 @@
     inherit (lib.lists) concatLists singleton;
     inherit (lib.extra.files.list) recursive;
     inherit (lib.extra.files.special) patches scripts;
+    inherit (lib.path) append;
+    inherit (lib.strings) concatStringsSep;
 
     # Library
     # -------
@@ -182,7 +184,7 @@
 
               # Host Config
               # -----------
-              (singleton (./etc + "/${hostName}/default.nix"))
+              (singleton (append ./etc hostName))
 
               # Nixpkgs Configuration
               # ---------------------
@@ -237,7 +239,7 @@
 
       mkUser = username: {
         ${username} = {hostName, ...}: {
-          imports = singleton (./dot + "/${hostName}/${username}/default.nix");
+          imports = singleton (append ./dot (concatStringsSep "/" [hostName username]));
 
           _module = {
             args = {inherit username;};
@@ -265,7 +267,7 @@
     };
 
     overlays = let
-      fixes = ./nix + "/fixes?";
+      fixes = append ./nix "fixes?";
     in
       {
         packages = final: _: byName final.callPackage;
@@ -291,7 +293,7 @@
               "plist"
               "kdl"
               "strongswan"
-            ] (name: import (./nix/packages/formats + "/${name}.nix") final);
+            ] (name: import (append ./nix/packages/formats "${name}.nix") final);
         };
       }
       // patches fixes;
