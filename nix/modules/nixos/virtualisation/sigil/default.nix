@@ -18,7 +18,7 @@ in {
     inherit (lib) hashString;
     inherit (lib.extra.files.list) recursive;
     inherit (lib.attrsets) attrByPath attrValues mapAttrs mergeAttrsList;
-    inherit (lib.lists) concatMap elemAt foldl' length sort;
+    inherit (lib.lists) concatMap elemAt foldl' length singleton sort;
     inherit (lib.modules) mkBefore;
     inherit (lib.options) literalExpression mkEnableOption mkOption;
     inherit (lib.types) attrsOf deferredModule listOf mkOptionType nullOr raw str submodule;
@@ -193,9 +193,7 @@ in {
                             ++ (recursive (self + "/nix/modules/nixos"))
                             ++ [
                               (_: {
-                                imports = [
-                                  (modulesPath + "/misc/nixpkgs/read-only.nix")
-                                ];
+                                imports = singleton (modulesPath + "/misc/nixpkgs/read-only.nix");
 
                                 config = {
                                   nixpkgs = {

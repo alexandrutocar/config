@@ -1,9 +1,11 @@
-_: let
+{config, ...}: let
   user.name = "root";
 in {
   users.users = {
     ${user.name} = {
-      extraGroups = ["ssh"];
+      extraGroups = [
+        config.users.groups.ssh.name
+      ];
 
       openssh = {
         authorizedKeys.keys = [

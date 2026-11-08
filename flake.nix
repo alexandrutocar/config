@@ -35,7 +35,20 @@
 
     devenv = {
       url = "github:cachix/devenv";
-      inputs.nixpkgs.follows = "nixos-unstable-small";
+      inputs = {
+        nixpkgs.follows = "nixos-unstable-small";
+
+        # Consumed by nix,nixd,git-hooks
+        flake-compat.follows = "";
+        flake-parts.follows = "";
+
+        # Consumed by devenv (package)
+        crate2nix.follows = "";
+        ghostty.follows = "";
+        nix.follows = "";
+        nixd.follows = "";
+        rust-overlay.follows = "";
+      };
     };
 
     lanzaboote = {
@@ -58,6 +71,8 @@
     inherit (lib.lists) concatLists singleton;
     inherit (lib.extra.files.list) recursive;
     inherit (lib.extra.files.special) patches scripts;
+    inherit (lib.path) append;
+    inherit (lib.strings) concatStringsSep;
 
     # Library
     # -------
@@ -132,13 +147,10 @@
                       tomlFormat = pkgs.formats.toml {};
                     in
                       toString (
-                        pkgs.writeTextFile {
-                          name = "statix.toml";
-                          text = tomlFormat.generate "statix.toml" {
-                            disabled = [
-                              "collapsible_let_in"
-                            ];
-                          };
+                        tomlFormat.generate "statix.toml" {
+                          disabled = [
+                            "collapsible_let_in"
+                          ];
                         }
                       );
                   };
@@ -185,7 +197,7 @@
 
               # Host Config
               # -----------
-              (singleton (./etc + "/${hostName}/default.nix"))
+              (singleton (append ./etc hostName))
 
               # Nixpkgs Configuration
               # ---------------------
@@ -240,7 +252,7 @@
 
       mkUser = username: {
         ${username} = {hostName, ...}: {
-          imports = singleton (./dot + "/${hostName}/${username}/default.nix");
+          imports = singleton (append ./dot (concatStringsSep "/" [hostName username]));
 
           _module = {
             args = {inherit username;};
@@ -268,7 +280,7 @@
     };
 
     overlays = let
-      fixes = ./nix + "/fixes?";
+      fixes = append ./nix "fixes?";
     in
       {
         packages = final: _: byName final.callPackage;
@@ -294,7 +306,7 @@
               "plist"
               "kdl"
               "strongswan"
-            ] (name: import (./nix/packages/formats + "/${name}.nix") final);
+            ] (name: import (append ./nix/packages/formats "${name}.nix") final);
         };
       }
       // patches fixes;

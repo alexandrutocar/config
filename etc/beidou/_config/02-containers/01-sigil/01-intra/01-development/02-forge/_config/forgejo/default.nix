@@ -5,15 +5,20 @@
   ...
 }: let
   inherit (lib.modules) mkMerge;
+in let
+  group = "git";
+  user = "git";
 in {
-  users.groups.git = {};
+  users.groups.${group} = {};
 
-  users.users.git = {
-    description = "Git";
-    group = "git";
-    home = "/var/lib/git";
+  users.users.${user} = {
+    inherit group;
 
-    extraGroups = ["ssh"];
+    home = "/var/lib/${user}";
+
+    extraGroups = [
+      config.users.groups.ssh.name
+    ];
 
     createHome = true;
     isSystemUser = true;
@@ -30,10 +35,9 @@ in {
 
   services = {
     forgejo = {
-      enable = true;
+      inherit group user;
 
-      group = "git";
-      user = "git";
+      enable = true;
 
       settings = {
         "service.explore" = {
