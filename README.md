@@ -1,5 +1,5 @@
 <!-- -->
-# Reproducible configuration for Albedo (Laptop), Beidou (Server), Collei (VPS) and Fischl (Server).
+# Reproducible configuration for Albedo (Client), Beidou (Server/On-Premise), Collei (Server/VPS) and Fischl (Server/On-Premise).
 
 > [!NOTE]
 > Mirrors exist on [Codeberg](https://codeberg.org/alexandrutocar/config) and [GitHub](https://github.com/alexandrutocar/config). Issue tracking, milestone planning, and pull requests all take place on a private [Forgejo](https://forgejo.org) instance.
@@ -9,7 +9,7 @@
 
 The contained configuration is opinionated and works for me. It introduces its own conventions (e.g. `import = recursive <...>`) and systems (e.g. `services.sigil`), so be warned. If anything overly strange takes place, it is usually explained inline. If it is not, then try looking up the definition – either inside this repository, [home-manager](https://github.com/nix-community/home-manager) or [nixpkgs](https://github.com/nixos/nixpkgs) repositories. If you've exhausted all options and still have questions, or if you would like to share your thoughts – feel free to reach out on social media or [via email](mailto:alexandru.tocar@outlook.com).
 
-- [Reproducible configuration for Albedo (Laptop), Beidou (Server), Collei (VPS) and Fischl (Server).](#reproducible-configuration-for-albedo-laptop-beidou-server-collei-vps-and-fischl-server)
+- [Reproducible configuration for Albedo (Client), Beidou (Server/On-Premise), Collei (Server/VPS) and Fischl (Server/On-Premise).](#reproducible-configuration-for-albedo-client-beidou-serveron-premise-collei-servervps-and-fischl-serveron-premise)
   - [Screenshots](#screenshots)
     - [Albedo](#albedo)
     - [Beidou](#beidou)
