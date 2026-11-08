@@ -22,6 +22,9 @@ in {
                     Bind = [
                       "/state/var/lib/machines/${mid}/var/lib/containers:/var/lib/containers:idmap"
                     ];
+                    BindReadOnly = [
+                      "/nix/var/nix/daemon-socket:/nix/var/nix/daemon-socket"
+                    ];
                   };
                 };
                 flags = mkAfter [
@@ -37,6 +40,9 @@ in {
               ${mid} = [
                 {
                   target = config.services.sigil.settings.containers.intra.acda4bf3-2678-43c5-bae9-e67bd8cb710d; # intra/development/forge
+                }
+                {
+                  target = config.services.sigil.settings.containers.intra.a4205b50-197a-40c8-8057-fe1394630e91; # intra/development/forge
                 }
                 {
                   target = config.services.sigil.settings.containers.intra.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a; # intra/operation/dns

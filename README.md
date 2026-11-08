@@ -4,6 +4,9 @@
 > [!NOTE]
 > Mirrors exist on [Codeberg](https://codeberg.org/alexandrutocar/config) and [GitHub](https://github.com/alexandrutocar/config). Issue tracking, milestone planning, and pull requests all take place on a private [Forgejo](https://forgejo.org) instance.
 
+> [!IMPORTANT]
+> Portions of this project are developed with assistance from LLM tools. Assistance ranges from small tasks, such as transferring style and formatting between files or finding and fixing errors, to larger ones: planning, reviewing, and iterating on substantial pieces of code (modules, libraries, workflows). All such code is reviewed thoroughly. The conversational parts of the project, including documentation and most comments, are written by hand.
+
 The contained configuration is opinionated and works for me. It introduces its own conventions (e.g. `import = recursive <...>`) and systems (e.g. `services.sigil`), so be warned. If anything overly strange takes place, it is usually explained inline. If it is not, then try looking up the definition – either inside this repository, [home-manager](https://github.com/nix-community/home-manager) or [nixpkgs](https://github.com/nixos/nixpkgs) repositories. If you've exhausted all options and still have questions, or if you would like to share your thoughts – feel free to reach out on social media or [via email](mailto:alexandru.tocar@outlook.com).
 
 - [Reproducible configuration for Albedo (Laptop), Beidou (Server), and Collei (VPS).](#reproducible-configuration-for-albedo-laptop-beidou-server-and-collei-vps)
