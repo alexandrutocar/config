@@ -1,4 +1,4 @@
-_: let
+{config, ...}: let
   user.name = "git";
 in {
   services.openssh.extraConfig = ''
@@ -12,7 +12,9 @@ in {
 
   users.users = {
     ${user.name} = {
-      extraGroups = ["ssh"];
+      extraGroups = [
+        config.users.groups.ssh.name
+      ];
 
       openssh.authorizedKeys.keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO+Hv86vvA3XpfouF6a2w84MRIjTZVHfGZsOzbpEG6K5 alex@albedo"

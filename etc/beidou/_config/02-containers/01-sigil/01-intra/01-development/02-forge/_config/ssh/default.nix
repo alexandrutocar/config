@@ -42,7 +42,9 @@ in {
         # Authentication
         PubkeyAuthentication = true;
         UsePAM = true;
-        AllowGroups = ["ssh"];
+        AllowGroups = [
+          config.users.groups.ssh.name
+        ];
         PasswordAuthentication = false;
         ChallengeResponseAuthentication = false;
 
