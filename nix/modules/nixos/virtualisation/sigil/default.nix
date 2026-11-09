@@ -119,9 +119,17 @@ in {
                     in {
                       addresses = {
                         gua = mkOption {
-                          readOnly = false;
                           type = nullOr str;
-                          default = getGUAddress cfg.settings.network.gua.prefix config.mid;
+                          default =
+                            if cfg.settings.network.gua.prefix == null
+                            then null
+                            else getGUAddress cfg.settings.network.gua.prefix config.mid;
+                          defaultText = literalExpression ''
+                            if config.services.sigil.settings.network.gua.prefix == null
+                            then null
+                            else "''${config.services.sigil.settings.network.gua.prefix}:<iid>"
+                            # <iid>: first 16 hex chars of sha256(mid), as four colon-separated groups
+                          '';
                           description = "Globally routable address of the container.";
                         };
 
@@ -348,9 +356,11 @@ in {
           };
           gua = {
             prefix = mkOption {
-              type = str;
+              type = nullOr str;
+              default = null;
               description = ''
-                A ::/64 GUA prefix managed by the host.
+                A ::/64 GUA prefix managed by the host. When null, containers get no
+                globally routable address and are reachable only via ULA.
               '';
             };
           };
@@ -588,6 +598,10 @@ in {
         (mkMerge [
           {
             assertions = [
+              {
+                assertion = all (c: c.addresses.gua != null || c.addresses.ula != null) containers.all;
+                message = "sigil: container has neither a GUA nor a ULA address";
+              }
               {
                 assertion = all (e: e.source != e.target) links.policies;
                 message = "sigil: container declares a link to itself";
