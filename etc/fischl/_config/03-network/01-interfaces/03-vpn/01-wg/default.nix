@@ -6,7 +6,7 @@
   inherit (lib.alias) networks;
   inherit (lib.extra.ip) toCIDR toCompressed;
   inherit (lib.extra.ip.address) singleHostRoute;
-  inherit (lib.extra.net.url.authority) mkAuthority;
+  inherit (lib.extra.url) mkAuthority;
 in let
   containers.beidou = {
     inherit (self.nixosConfigurations.beidou.config.services.sigil.settings.containers.intra) cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a;

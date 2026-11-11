@@ -8,7 +8,7 @@
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
   inherit (lib.extra.ip) toCIDR toCompressed;
   inherit (lib.extra.ip.address) singleHostRoute;
-  inherit (lib.extra.net.url.authority) mkAuthority;
+  inherit (lib.extra.url) mkAuthority;
 in {
   networking = {
     firewall = {

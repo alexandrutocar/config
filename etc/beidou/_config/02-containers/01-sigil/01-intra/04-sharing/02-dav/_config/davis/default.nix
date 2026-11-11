@@ -6,7 +6,7 @@
 }: let
   inherit (lib.extra.cs.systemd) mkSetCredentialEncrypted;
   inherit (lib.extra.ip) toCompressed;
-  inherit (lib.extra.net.url.authority) mkAuthority;
+  inherit (lib.extra.url) mkAuthority;
 in {
   networking = {
     firewall = {

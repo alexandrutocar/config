@@ -6,7 +6,7 @@
 }: let
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
   inherit (lib.extra.ip) toCompressed;
-  inherit (lib.extra.net.url.authority) mkAuthority;
+  inherit (lib.extra.url) mkAuthority;
 in let
   extraConfig = ''
     access_log /var/log/nginx/intra.net.internal.access.log analytics;
