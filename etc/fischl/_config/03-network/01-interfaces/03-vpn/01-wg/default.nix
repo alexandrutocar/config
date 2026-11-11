@@ -4,7 +4,7 @@
   ...
 }: let
   inherit (lib.alias) networks;
-  inherit (lib.extra.ip) toCIDR;
+  inherit (lib.extra.ip) toCIDR toCompressed;
   inherit (lib.extra.ip.address) singleHostRoute;
   inherit (lib.extra.net.url.authority) mkAuthority;
 in let
@@ -65,7 +65,7 @@ in {
             DNSDefaultRoute = true;
 
             DNS = [
-              containers.beidou.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a.addresses.ula
+              (containers.beidou.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a.addresses.ula |> toCompressed)
             ];
 
             Domains =

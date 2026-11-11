@@ -5,6 +5,7 @@
   ...
 }: let
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
+  inherit (lib.extra.ip) toCompressed;
 in {
   networking = {
     firewall = {
@@ -49,7 +50,7 @@ in {
       enable = true;
       settings = {
         force_ldap_user_pass_reset = "always";
-        http_host = sigil.self.addresses.ula;
+        http_host = sigil.self.addresses.ula |> toCompressed;
         http_port = 8080;
         http_url = "https://directory.intra.net.internal";
 

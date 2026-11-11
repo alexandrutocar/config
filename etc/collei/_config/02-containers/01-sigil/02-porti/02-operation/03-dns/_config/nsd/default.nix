@@ -4,6 +4,7 @@
   lib,
   ...
 }: let
+  inherit (lib.extra.ip) toCompressed;
   inherit (lib.extra.net.interface) mkInterface;
   inherit (lib.modules) mkForce;
 in {
@@ -22,7 +23,7 @@ in {
         chroot = mkForce "";
 
         interface = [
-          (mkInterface sigil.self.addresses.gua 53)
+          (mkInterface (sigil.self.addresses.gua |> toCompressed) 53)
         ];
 
         server-count = 1;
@@ -32,7 +33,7 @@ in {
         identity = "COLLEI";
 
         metrics-enable = true;
-        metrics-interface = sigil.self.addresses.ula;
+        metrics-interface = sigil.self.addresses.ula |> toCompressed;
       };
 
       remote-control = {
@@ -41,13 +42,15 @@ in {
 
       zone = let
         ip = {
-          dns = sigil.self.addresses.gua;
-          web = sigil.containers.porti.c8ac5cd5-7563-4e68-9dce-68bb11224eab.addresses.gua;
+          proxy = {
+            _main = sigil.containers.porti.c8ac5cd5-7563-4e68-9dce-68bb11224eab.addresses.gua |> toCompressed;
+          };
+          dns = sigil.self.addresses.gua |> toCompressed;
         };
       in [
         (pkgs.custom.writeAuthZone "ueuie.earth" {
-          AAAA = [
-            ip.web
+          AAAA = with ip.proxy; [
+            _main
           ];
 
           SOA = {

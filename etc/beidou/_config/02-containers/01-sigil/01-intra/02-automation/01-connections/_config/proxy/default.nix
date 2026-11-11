@@ -1,8 +1,11 @@
 {
   config,
   sigil,
+  lib,
   ...
-}: {
+}: let
+  inherit (lib.extra.ip) toCompressed;
+in {
   networking = {
     firewall = {
       allowedTCPPorts = [8888];
@@ -23,12 +26,12 @@
       enable = true;
 
       settings = {
-        Listen = sigil.self.addresses.ula;
+        Listen = sigil.self.addresses.ula |> toCompressed;
 
         Port = 8888;
 
         Allow = [
-          sigil.containers.intra."e079b57e-4727-4408-8c33-39abaae975d9".addresses.ula
+          (sigil.containers.intra."e079b57e-4727-4408-8c33-39abaae975d9".addresses.ula |> toCompressed)
         ];
 
         ConnectPort = [

@@ -22,7 +22,7 @@ in {
 
         Port = 8888;
 
-        Allow = [
+        Allow = map toCompressed [
           config.services.sigil.settings.containers.intra."a4205b50-197a-40c8-8057-fe1394630e91".addresses.ula # intra/automation/n8n
           config.services.sigil.settings.containers.intra."fe616e36-c9d0-4ba9-8938-436e75ef0dc0".addresses.ula # intra/development/actions
         ];

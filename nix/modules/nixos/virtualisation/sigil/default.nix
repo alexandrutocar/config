@@ -13,9 +13,28 @@ in let
   mkBridgeName = bid: "br-${bid}";
   mkLHLinkName = bid: mid: "lh-${builtins.substring 0 12 (builtins.hashString "sha256" (bid + mid))}";
   mkLCLinkName = bid: mid: "lc-${builtins.substring 0 12 (builtins.hashString "sha256" (bid + mid))}";
+
+  # LINK-LOCAL ADDRESSING
+  # ---------------------
+  # Every veth (host ve-* <-> container host0) and every container link (lc-*)
+  # is its own fe80::/64, so the same few addresses repeat on each of them.
+  # Built from the link network, so each carries /64 and lies within fe80::/10.
+  # Handed to the containers as `sigil.linkLocal`.
+  linkLocal = let
+    on = lib.extra.ip.network.hostAddress (lib.extra.ip.network.fromCIDR 6 "fe80::/64");
+  in {
+    host = on "::1"; # ve-* end on the host
+    container = on "::c"; # host0 end in the container
+    peerA = on "::a"; # lc-* end of the linked container with the lower MID
+    peerB = on "::b"; # lc-* end of the other linked container
+  };
 in {
   options = let
     inherit (lib) hashString;
+    inherit (lib.extra.ip) ranges;
+    inherit (lib.extra.ip.address) singleHostRoute;
+    inherit (lib.extra.ip.network) hostAddressFromHex subnetAt;
+    inherit (lib.extra.types.ip) addressWith networkWith;
     inherit (lib.extra.files.list) recursive;
     inherit (lib.attrsets) attrByPath attrValues mapAttrs mergeAttrsList;
     inherit (lib.lists) concatMap elemAt foldl' length singleton sort;
@@ -23,6 +42,18 @@ in {
     inherit (lib.options) literalExpression mkEnableOption mkOption;
     inherit (lib.types) attrsOf deferredModule listOf mkOptionType nullOr raw str submodule;
     inherit (lib.strings) concatStringsSep substring;
+    inherit (lib.trivial) fromHexString;
+
+    # IP TYPES
+    # --------
+    # Container addresses are single IPv6 hosts (/128) of the right scope.
+    # Strings are still accepted and parsed; values are `lib.extra.ip` data.
+    singleHostWithin = within:
+      addressWith {
+        version = 6;
+        inherit within;
+        singleHost = true;
+      };
   in {
     services.sigil = {
       enable = mkEnableOption "sigil";
@@ -34,28 +65,21 @@ in {
             # `id` defaults to the attribute name and `zone` to the enclosing
             # attribute, so `inherit id zone;` at the call site is optional.
             containerModule = let
-              # Stable 64-bit interface identifier derived from the container id.
-              getIIdentity = mid: let
-                hash = hashString "sha256" mid;
-              in
-                concatStringsSep ":" [
-                  (substring 0 4 hash)
-                  (substring 4 4 hash)
-                  (substring 8 4 hash)
-                  (substring 12 4 hash)
-                ];
+              # ADDRESS DERIVATION
+              # ------------------
+              # The container's single host on a /64: its 64-bit interface
+              # identifier is the first 16 hex digits of sha256(mid). Same
+              # addresses as the former "<prefix>:<aaaa:bbbb:cccc:dddd>" strings.
+              getHostAddress = subnet: mid:
+                singleHostRoute
+                (hostAddressFromHex subnet (hashString "sha256" mid));
 
-              # GUA ADDRESS DERIVATION
-              # ----------------------
-              getGUAddress = prefix: mid: "${prefix}:${getIIdentity mid}";
-
-              # ULA ADDRESS DERIVATION
-              # ----------------------
-              getULAPrefix = prefix: group: let
-                hash = builtins.hashString "sha256" group;
-              in "${prefix}:${builtins.substring 0 4 hash}";
-
-              getULAddress = prefix: group: mid: "${getULAPrefix prefix group}:${getIIdentity mid}";
+              # The group's /64 within the ULA /48: the first 4 hex digits of
+              # sha256(group) select one of its 2^16 subnets. Same subnets as the
+              # former "<prefix>:<first 4 hex digits>" strings.
+              getULASubnet = prefix: group:
+                subnetAt prefix 64
+                (fromHexString (substring 0 4 (hashString "sha256" group)));
             in
               group:
                 submodule (
@@ -119,25 +143,37 @@ in {
                     in {
                       addresses = {
                         gua = mkOption {
-                          type = nullOr str;
+                          type = nullOr (singleHostWithin ranges.ipv6.globalUnicast);
                           default =
                             if cfg.settings.network.gua.prefix == null
                             then null
-                            else getGUAddress cfg.settings.network.gua.prefix config.mid;
+                            else getHostAddress cfg.settings.network.gua.prefix config.mid;
                           defaultText = literalExpression ''
                             if config.services.sigil.settings.network.gua.prefix == null
                             then null
-                            else "''${config.services.sigil.settings.network.gua.prefix}:<iid>"
-                            # <iid>: first 16 hex chars of sha256(mid), as four colon-separated groups
+                            else <gua prefix>:<iid>/128
+                            # <iid>: first 16 hex digits of sha256(mid)
                           '';
-                          description = "Globally routable address of the container.";
+                          description = ''
+                            Globally routable address of the container, as
+                            `lib.extra.ip` address data (/128, within 2000::/3).
+                            Render with `lib.extra.ip.toCompressed` or `toCIDR`.
+                          '';
                         };
 
                         ula = mkOption {
-                          readOnly = false;
-                          type = nullOr str;
-                          default = getULAddress cfg.settings.network.ula.prefix config.group config.mid;
-                          description = "Zone-local address of the container.";
+                          type = nullOr (singleHostWithin ranges.ipv6.uniqueLocal);
+                          default = getHostAddress (getULASubnet cfg.settings.network.ula.prefix config.group) config.mid;
+                          defaultText = literalExpression ''
+                            <ula prefix>:<subnet>:<iid>/128
+                            # <subnet>: first 4 hex digits of sha256(group)
+                            # <iid>: first 16 hex digits of sha256(mid)
+                          '';
+                          description = ''
+                            Zone-local address of the container, as `lib.extra.ip`
+                            address data (/128, within fc00::/7).
+                            Render with `lib.extra.ip.toCompressed` or `toCIDR`.
+                          '';
                         };
                       };
 
@@ -220,6 +256,7 @@ in {
                               self = infosFor config;
                               containers =
                                 mapAttrs (_: mapAttrs (_: infosFor)) cfg.settings.containers;
+                              inherit linkLocal;
                             };
 
                             inherit lib self;
@@ -356,28 +393,42 @@ in {
           };
           gua = {
             prefix = mkOption {
-              type = nullOr str;
+              type = nullOr (networkWith {
+                version = 6;
+                within = ranges.ipv6.globalUnicast;
+                prefixLength = 64;
+              });
               default = null;
+              example = "2001:db8:1:2::/64";
               description = ''
-                A ::/64 GUA prefix managed by the host. When null, containers get no
-                globally routable address and are reachable only via ULA.
+                A /64 GUA prefix managed by the host, within 2000::/3. Given as
+                CIDR or as its four groups (`"2001:db8:1:2"`). When null,
+                containers get no globally routable address and are reachable
+                only via ULA.
               '';
             };
           };
           ula = {
             prefix = mkOption {
-              type = str;
+              type = networkWith {
+                version = 6;
+                within = ranges.ipv6.uniqueLocal;
+                prefixLength = 48;
+              };
+              example = "fd00:1:2::/48";
               description = ''
-                An ::/48 ULA prefix managed by the host.
+                A /48 ULA prefix managed by the host, within fc00::/7. Given as
+                CIDR or as its three groups (`"fd00:1:2"`). Each group of
+                containers gets one /64 of it.
               '';
             };
             source = mkOption {
-              type = str;
+              type = singleHostWithin ranges.ipv6.uniqueLocal;
+              example = "fd00:1:2::1";
               description = ''
                 `PreferredSource=` for the host-side ULA route toward
-                each container (the host's own ULA address). The default
-                carries over the previously hard-coded value; derive or
-                override it as appropriate.
+                each container: the host's own ULA address (a single host
+                within fc00::/7).
               '';
             };
           };
@@ -387,9 +438,11 @@ in {
   };
 
   config = let
+    inherit (lib.extra.ip) toCIDR toCompressed;
     inherit (lib.attrsets) attrValues mapAttrsToList mergeAttrsList;
-    inherit (lib.lists) all concatLists concatMap foldl' optional singleton unique;
+    inherit (lib.lists) all concatLists concatMap count filter foldl' optional singleton unique;
     inherit (lib.modules) mkIf mkMerge;
+    inherit (lib.strings) concatStringsSep;
   in let
     # Flat container list, evaluating each container
     # exactly once and carrying the result along.
@@ -449,18 +502,32 @@ in {
         mkIf (cfg.settings.containers != {}) (
           mkMerge [
             {
-              assertions = [
+              assertions = let
+                # Two containers with the same address would get conflicting
+                # /128 host routes. Addresses are data, so equality is
+                # semantic, not textual.
+                mkUniqueAddressAssertion = kind: addressOf: let
+                  addresses = filter (a: a != null) (map addressOf containers.all);
+                  duplicates = unique (filter (a: count (b: b == a) addresses > 1) addresses);
+                in {
+                  assertion = duplicates == [];
+                  message = "sigil: ${kind} assigned to more than one container: ${concatStringsSep ", " (map toCompressed duplicates)}";
+                };
+              in [
                 {
                   assertion = let
-                    ulas.all = map (container: container.mid) containers.all;
+                    mids = map (container: container.mid) containers.all;
                   in
-                    builtins.length (unique ulas.all) == builtins.length ulas.all;
-                  message = "sigil: Unique Local Address (ULA) collision — duplicate machine-id?";
+                    builtins.length (unique mids) == builtins.length mids;
+                  message = "sigil: Machine ID (MID) used by more than one container";
                 }
                 {
                   assertion = all (c: builtins.match "[0-9a-f-]{36}" c.mid != null) containers.all;
                   message = "sigil: Machine ID (MID) must be a UUID (passed to --uuid=)";
                 }
+                (mkUniqueAddressAssertion "GUA" (c: c.addresses.gua))
+                # Also catches two groups whose derived /64s collide.
+                (mkUniqueAddressAssertion "ULA" (c: c.addresses.ula))
               ];
             }
             {
@@ -570,20 +637,21 @@ in {
                       };
                       addresses = [
                         {
-                          Address = "fe80::1/64";
+                          Address = toCIDR linkLocal.host;
                         }
                       ];
+                      # Container addresses are /128 by type, so toCIDR yields host routes.
                       routes =
                         optional (container.addresses.gua != null) {
-                          Destination = "${container.addresses.gua}/128";
-                          Gateway = "fe80::c";
+                          Destination = toCIDR container.addresses.gua;
+                          Gateway = toCompressed linkLocal.container;
                           GatewayOnLink = true;
                         }
                         ++ optional (container.addresses.ula != null) {
-                          Destination = "${container.addresses.ula}/128";
-                          Gateway = "fe80::c";
+                          Destination = toCIDR container.addresses.ula;
+                          Gateway = toCompressed linkLocal.container;
                           GatewayOnLink = true;
-                          PreferredSource = cfg.settings.network.ula.source;
+                          PreferredSource = toCompressed cfg.settings.network.ula.source;
                         };
                     };
                   });

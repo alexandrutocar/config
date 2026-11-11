@@ -2,8 +2,11 @@
   config,
   sigil,
   pkgs,
+  lib,
   ...
 }: let
+  inherit (lib.extra.ip) toCompressed;
+in let
   serverDomain = "ueuie.earth";
   serverOrigin = "https://${serverDomain}";
 in let
@@ -15,7 +18,7 @@ in {
     virtualHosts = {
       ${serverOrigin} = {
         listenAddresses = [
-          "${sigil.self.addresses.gua}"
+          (sigil.self.addresses.gua |> toCompressed)
         ];
 
         logFormat = ''

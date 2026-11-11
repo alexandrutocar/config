@@ -5,6 +5,7 @@
   ...
 }: let
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
+  inherit (lib.extra.ip) toCompressed;
   inherit (lib.modules) mkMerge;
 in {
   networking = {
@@ -53,7 +54,7 @@ in {
       }
       # Server
       {
-        HOST = sigil.self.addresses.ula;
+        HOST = sigil.self.addresses.ula |> toCompressed;
         PORT = 8081;
       }
       # Service

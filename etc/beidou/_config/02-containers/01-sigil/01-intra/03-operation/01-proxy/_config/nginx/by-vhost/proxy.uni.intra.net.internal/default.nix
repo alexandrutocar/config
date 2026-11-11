@@ -6,8 +6,9 @@
 }: let
   inherit (lib.alias) networks;
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
-  inherit (lib.extra.ip) toCIDR;
+  inherit (lib.extra.ip) toCIDR toCompressed;
   inherit (lib.extra.ip.address) singleHostRoute;
+  inherit (lib.extra.net.url.authority) mkAuthority;
 in {
   networking = {
     firewall = {
@@ -47,15 +48,15 @@ in {
     in {
       streamConfig = ''
         upstream uni_proxy {
-          server [${sigil.containers.intra."b6cab864-64cc-454d-8647-30348af279da".addresses.ula}]:8888;
+          server ${mkAuthority (sigil.containers.intra."b6cab864-64cc-454d-8647-30348af279da".addresses.ula |> toCompressed) 8888 {}};
         }
 
         server {
           listen 8443 ssl default_server;
 
-          listen [${sigil.self.addresses.ula}]:8443 ssl default_server;
+          listen ${mkAuthority (sigil.self.addresses.ula |> toCompressed) 8443 {}} ssl default_server;
 
-          allow ${sigil.containers.intra."a4205b50-197a-40c8-8057-fe1394630e91".addresses.ula}/128;
+          allow ${sigil.containers.intra."a4205b50-197a-40c8-8057-fe1394630e91".addresses.ula |> toCIDR};
           allow ${(networks.aether.internal.net.hosts.albedo |> singleHostRoute |> toCIDR)};
           deny all;
 
@@ -69,7 +70,7 @@ in {
 
         server {
           listen 8443 ssl;
-          listen [${sigil.self.addresses.ula}]:8443 ssl;
+          listen ${mkAuthority (sigil.self.addresses.ula |> toCompressed) 8443 {}} ssl;
           server_name ${serverName};
 
           ssl_certificate_key ${sslCertificateKey};
@@ -78,7 +79,7 @@ in {
 
           ssl_conf_command Options KTLS;
 
-          proxy_bind [${sigil.self.addresses.ula}];
+          proxy_bind [${sigil.self.addresses.ula |> toCompressed}];
           proxy_pass uni_proxy;
         }
       '';
@@ -98,7 +99,7 @@ in {
 
           listen = [
             {
-              addr = "[${sigil.self.addresses.ula}]";
+              addr = "[${sigil.self.addresses.ula |> toCompressed}]";
               port = 443;
               ssl = true;
             }

@@ -4,6 +4,7 @@
   lib,
   ...
 }: let
+  inherit (lib.extra.ip) toCompressed;
   inherit (lib.modules) mkMerge;
 in let
   group = "git";
@@ -58,7 +59,7 @@ in {
             DOMAIN = "forge.dev.intra.net.internal";
           }
           {
-            HTTP_ADDR = sigil.self.addresses.ula;
+            HTTP_ADDR = sigil.self.addresses.ula |> toCompressed;
             HTTP_PORT = 8080;
           }
           {

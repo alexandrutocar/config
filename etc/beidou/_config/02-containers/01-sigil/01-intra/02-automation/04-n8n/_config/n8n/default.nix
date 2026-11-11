@@ -64,7 +64,7 @@ in {
           HTTPS_PROXY = "http://[${networks.aether.internal.net.hosts.beidou |> toCompressed}]:8888";
         }
         {
-          listen-address = sigil.self.addresses.ula;
+          listen-address = sigil.self.addresses.ula |> toCompressed;
           proxy-hops = 1;
           host = "workflows.intra.net.internal";
           port = 8080;

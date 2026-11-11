@@ -3,11 +3,8 @@
   lib,
   ...
 }: let
-  inherit (lib.lists) optional;
-in let
-  loopback = [
-    "::1/128"
-  ];
+  inherit (lib.extra.ip) ranges toCIDR;
+  inherit (lib.lists) filter;
 in {
   systemd = {
     network = {
@@ -16,10 +13,14 @@ in {
           matchConfig = {
             Name = "lo";
           };
-          address =
-            loopback
-            ++ optional (sigil.self.addresses.gua != null) "${sigil.self.addresses.gua}/128"
-            ++ optional (sigil.self.addresses.ula != null) "${sigil.self.addresses.ula}/128";
+          # ::1/128 plus the container's own addresses, which are /128 by type.
+          address = map toCIDR (
+            ranges.ipv6.loopback
+            ++ filter (a: a != null) [
+              sigil.self.addresses.gua
+              sigil.self.addresses.ula
+            ]
+          );
         };
       };
     };

@@ -29,7 +29,7 @@ in {
         server = mkMerge [
           {
             interface = [
-              (mkInterface sigil.self.addresses.ula 53)
+              (mkInterface (sigil.self.addresses.ula |> toCompressed) 53)
             ];
 
             do-udp = true;
@@ -115,12 +115,16 @@ in {
 
         auth-zone = let
           ip = {
-            dns = sigil.self.addresses.ula;
-            web = sigil.containers.intra.e079b57e-4727-4408-8c33-39abaae975d9.addresses.ula;
+            proxy = {
+              _main = sigil.containers.intra.e079b57e-4727-4408-8c33-39abaae975d9.addresses.ula |> toCompressed;
+            };
+            dns = sigil.self.addresses.ula |> toCompressed;
           };
         in [
           (pkgs.custom.writeAuthZone "intra.net.internal" {
-            AAAA = [ip.web];
+            AAAA = with ip.proxy; [
+              _main
+            ];
 
             SOA = {
               nameServer = "beidou.ns.intra.net.internal.";
@@ -134,54 +138,47 @@ in {
 
             NS = ["beidou.ns.intra.net.internal."];
 
-            subdomains = mkMerge [
-              {
-                "beidou.ns" = {
-                  AAAA = [
-                    ip.dns
+            subdomains = let
+              AAAA = with ip.proxy; [
+                _main
+              ];
+            in
+              mkMerge [
+                {
+                  "beidou.ns" = {
+                    inherit AAAA;
+                  };
+                }
+                {
+                  "directory" = {
+                    inherit AAAA;
+                  };
+                  "forge.dev" = {
+                    inherit AAAA;
+                  };
+                  "ollama.ai" = {
+                    inherit AAAA;
+                  };
+                  "pocket-id" = {
+                    inherit AAAA;
+                  };
+                  "proxy.uni" = {
+                    inherit AAAA;
+                  };
+                  "workflows" = {
+                    inherit AAAA;
+                  };
+                }
+                (let
+                  AAAA = with ip.proxy; [
+                    _main
                   ];
-                };
-              }
-              {
-                "directory" = {
-                  AAAA = [
-                    ip.web
-                  ];
-                };
-                "forge.dev" = {
-                  AAAA = [
-                    ip.web
-                  ];
-                };
-                "ollama.ai" = {
-                  AAAA = [
-                    ip.web
-                  ];
-                };
-                "pocket-id" = {
-                  AAAA = [
-                    ip.web
-                  ];
-                };
-                "proxy.uni" = {
-                  AAAA = [
-                    ip.web
-                  ];
-                };
-                "workflows" = {
-                  AAAA = [
-                    ip.web
-                  ];
-                };
-              }
-              (let
-                AAAA = [ip.web];
-              in {
-                "music" = {
-                  inherit AAAA;
-                };
-              })
-            ];
+                in {
+                  "music" = {
+                    inherit AAAA;
+                  };
+                })
+              ];
           })
           (pkgs.custom.writeAuthZone "hosts.net.internal" {
             SOA = {
