@@ -17,7 +17,7 @@ final: super: {scope}: let
   inherit (super.attrsets) attrNames;
   inherit (final.extra.math) clamp floorDiv maxInt pow2;
   inherit (super.lists) all any compareLists concatLists drop elemAt filter foldl' genList head imap0 isList length reverseList sort tail take;
-  inherit (super.strings) concatMapStringsSep concatStringsSep fixedWidthString fromJSON hasInfix hasPrefix isString match optionalString splitString toLower;
+  inherit (super.strings) concatMapStringsSep concatStringsSep fixedWidthString fromJSON hasInfix hasPrefix isString match optionalString splitString stringLength substring toLower;
   inherit (super.trivial) bitAnd compare deepSeq fromHexString importJSON isInt mod toHexString;
   inherit (super.types) isType setType;
 
@@ -832,6 +832,51 @@ final: super: {scope}: let
         if any (x: x != 0) (w.network hs n'.prefixLength)
         then throw "host part ${_show hostPart} does not fit into the ${toString (w.totalBits - n'.prefixLength)} host bits of /${toString n'.prefixLength}"
         else Address n'.version (genList (i: elemAt n'.words i + elemAt hs i) w.count) n'.prefixLength);
+
+    /*
+    * The address of a host on the network whose host bits are taken from the
+    * leading hex digits of a string, typically a hash: a stable address per
+    * name without allocation state.
+    *
+    * Example:
+    *   lib.extra.ip.toCIDR (lib.extra.ip.network.hostAddressFromHex (lib.extra.ip.network.fromCIDR 6 "fd00:1:2:3::/64") (builtins.hashString "sha256" "x"))
+    *     -> "fd00:1:2:3:2d71:1642:b726:b044/64"
+    *   lib.extra.ip.toCIDR (lib.extra.ip.network.hostAddressFromHex (lib.extra.ip.network.fromCIDR 4 "10.97.0.0/16") "c0a8ff")
+    *     -> "10.97.192.168/16"
+    *
+    * Implementation:
+    * - Uses the first ceil(h / 4) digits for h host bits, read as one number
+    *   and masked to the host bits; the rest of the string is ignored.
+    * - A /64 takes 16 digits, so it equals the four-group IID "aaaa:bbbb:cccc:dddd"
+    *   built from the same leading digits.
+    *
+    * Edge cases:
+    * - Throws on non-hex characters or too few digits.
+    * - When h is not a multiple of 4, the surplus high bits of the first digit are dropped.
+    * - The result may be the network address (all-zero host, the IPv6
+    *   subnet-router anycast address) or, for IPv4, the broadcast address;
+    *   callers that must avoid them check against getNetworkAddress / getLastAddress.
+    * - A host part does not fit into a Nix integer for long host parts (/64),
+    *   which is why this takes text rather than a number.
+    */
+    hostAddressFromHex = n: hex:
+      _guard ["network" "hostAddressFromHex"] (let
+        n' = _expectNetwork n;
+        w = _wordsOf n';
+        hostLength = w.totalBits - n'.prefixLength;
+        digits = (hostLength + 3) / 4;
+        digitsPerWord = w.bits / 4;
+      in
+        if !(isString hex) || match "[0-9a-fA-F]*" hex == null
+        then throw "expected a string of hex digits, got ${_show hex}"
+        else if stringLength hex < digits
+        then throw "need at least ${toString digits} hex digits for the ${toString hostLength} host bits of /${toString n'.prefixLength}, got ${toString (stringLength hex)}"
+        else let
+          padded = fixedWidthString (w.totalBits / 4) "0" (substring 0 digits hex);
+          ws = genList (i: fromHexString (substring (i * digitsPerWord) digitsPerWord padded)) w.count;
+          hs = w.host ws n'.prefixLength;
+        in
+          Address n'.version (genList (i: elemAt n'.words i + elemAt hs i) w.count) n'.prefixLength);
 
     /*
     * Whether network n contains x: a network, or an address together with its
