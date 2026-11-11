@@ -17,7 +17,7 @@ final: super: {scope}: let
   inherit (super.attrsets) attrNames;
   inherit (final.extra.math) clamp floorDiv maxInt pow2;
   inherit (super.lists) all any compareLists concatLists drop elemAt filter foldl' genList head imap0 isList length reverseList sort tail take;
-  inherit (super.strings) concatMapStringsSep concatStringsSep fixedWidthString fromJSON hasInfix hasPrefix isString match splitString toLower;
+  inherit (super.strings) concatMapStringsSep concatStringsSep fixedWidthString fromJSON hasInfix hasPrefix isString match optionalString splitString toLower;
   inherit (super.trivial) bitAnd compare deepSeq fromHexString importJSON isInt mod toHexString;
   inherit (super.types) isType setType;
 
@@ -374,6 +374,9 @@ final: super: {scope}: let
     == x.version
     && x.prefixLength >= n.prefixLength
     && (_wordsOf n).network x.words n.prefixLength == n.words;
+
+  # x lies within at least one of the networks ns.
+  _withinAny = ns: x: any (n: _within n x) ns;
 
   # Total order over all IP data: version, words, prefix length, then networks before addresses.
   _compare = a: b: let
@@ -966,12 +969,88 @@ final: super: {scope}: let
         merge = super.options.mergeEqualOption;
       };
 
-    # Data of one version passing `check`; strings are coerced with `parse version`.
-    coerced = name: description: check: parse: version: let
-      v = toString version;
+    # `within` constraint -> list of network data of `version`. Accepts null (no
+    # constraint), or one network or a non-empty list of them, each as CIDR
+    # text or network data.
+    scopesOf = version: within: let
+      one = n:
+        if isString n
+        then network.fromCIDR version n
+        else _expectVersion version (_expectNetwork n);
     in
-      coercedTo str (parse version)
-      (dataType "ipv${v}${name}" "IPv${v} ${description}" (x: check x && x.version == version));
+      if within == null
+      then []
+      else if !(isList within)
+      then [(one within)]
+      else if within == []
+      then throw "`within` must not be an empty list; use null for no constraint"
+      else map one within;
+
+    describeScopes = ns:
+      if ns == []
+      then ""
+      else if length ns == 1
+      then " within ${_cidr (head ns)}"
+      else " within one of ${concatMapStringsSep ", " _cidr ns}";
+
+    inScopes = ns: x: ns == [] || _withinAny ns x;
+
+    addressWith = {
+      version,
+      within ? null,
+      singleHost ? false,
+    }:
+      builtins.addErrorContext "while evaluating ${scope}.types.addressWith" (let
+        w = (_family version).words;
+        v = toString version;
+        scopes = scopesOf version within;
+        kind =
+          if singleHost
+          then {
+            name = "SingleHostAddress";
+            text = "single-host address";
+          }
+          else {
+            name = "Address";
+            text = "address";
+          };
+      in
+        coercedTo str (address.fromString version)
+        (dataType "ipv${v}${kind.name}" "IPv${v} ${kind.text}${describeScopes scopes}"
+          (x:
+            _isAddress x
+            && x.version == version
+            && (!singleHost || x.prefixLength == w.totalBits)
+            && inScopes scopes x)));
+
+    networkWith = {
+      version,
+      within ? null,
+      prefixLength ? null,
+    }:
+      builtins.addErrorContext "while evaluating ${scope}.types.networkWith" (let
+        v = toString version;
+        scopes = scopesOf version within;
+        len =
+          if prefixLength == null
+          then null
+          else _expectPrefixLength version prefixLength;
+        # With a fixed length, "fd00:1:2" means "fd00:1:2::/48".
+        parse = s:
+          if len == null || hasInfix "/" s
+          then network.fromCIDR version s
+          else network.fromParts version s len;
+      in
+        if len != null && scopes != [] && all (n: len < n.prefixLength) scopes
+        then throw "a /${toString len} network can never lie${describeScopes scopes}"
+        else
+          coercedTo str parse
+          (dataType "ipv${v}Network" "IPv${v}${optionalString (len != null) " /${toString len}"} network${describeScopes scopes}"
+            (x:
+              _isNetwork x
+              && x.version == version
+              && (len == null || x.prefixLength == len)
+              && inScopes scopes x)));
   in {
     /**
     * Option types for IP data.
@@ -979,25 +1058,39 @@ final: super: {scope}: let
     * addressData / networkData:
     *   - Accept data of any version; merge by equality.
     *
-    * address / singleHostAddress / network (take a version):
+    * addressWith { version; within ? null; singleHost ? false; }
+    * networkWith { version; within ? null; prefixLength ? null; }:
     *   - Accept data of that version, or a string coerced with
     *     address.fromString / network.fromCIDR.
-    *   - singleHostAddress only accepts /32 or /128 addresses (gateways, DNS
-    *     servers, peer endpoints); "fd00::1/64" is rejected, "fd00::1" accepted.
+    *   - within: one network or a list (any of them), as CIDR text or data.
+    *     An address lies within a network together with its whole network,
+    *     as for network.contains.
+    *   - singleHost: only /32 or /128 addresses (gateways, DNS servers, peer
+    *     endpoints); "fd00::1/64" is rejected, "fd00::1" accepted.
+    *   - prefixLength: the network's exact length; strings may then omit it
+    *     and abbreviate the prefix ("fd00:1:2" for "fd00:1:2::/48").
+    *
+    * address / singleHostAddress / network (take a version):
+    *   - Shorthands for the unconstrained forms above.
     *
     * Example:
     *   options.dns = lib.mkOption { type = lib.types.listOf (lib.extra.ip.types.singleHostAddress 6); };
-    *   options.addresses = lib.mkOption { type = lib.types.listOf (lib.extra.ip.types.address 6); };
+    *   options.ula = lib.mkOption {
+    *     type = lib.extra.ip.types.networkWith { version = 6; within = "fc00::/7"; prefixLength = 48; };
+    *   };
     */
     addressData = dataType "ipAddress" "IP address" _isAddress;
     networkData = dataType "ipNetwork" "IP network" _isNetwork;
 
-    address = coerced "Address" "address" _isAddress address.fromString;
-    singleHostAddress =
-      coerced "SingleHostAddress" "single-host address"
-      (x: _isAddress x && x.prefixLength == (_wordsOf x).totalBits)
-      address.fromString;
-    network = coerced "Network" "network" _isNetwork network.fromCIDR;
+    inherit addressWith networkWith;
+
+    address = version: addressWith {inherit version;};
+    singleHostAddress = version:
+      addressWith {
+        inherit version;
+        singleHost = true;
+      };
+    network = version: networkWith {inherit version;};
   };
 in {
   inherit address network types;
