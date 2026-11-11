@@ -925,6 +925,53 @@ final: super: {scope}: let
       );
 
     /*
+    * Moves x (an address or a network) from network `from` into network `to`,
+    * keeping its host bits. Both networks need the same number of host bits;
+    * their versions may differ.
+    *
+    * Example:
+    *   lib.extra.ip.toCIDR (lib.extra.ip.network.rebase (lib.extra.ip.network.fromCIDR 4 "198.51.100.0/24") (lib.extra.ip.network.fromCIDR 6 "2001:db8:a::/120") "198.51.100.7")
+    *     -> "2001:db8:a::7/128"
+    *   lib.extra.ip.toCIDR (lib.extra.ip.network.rebase (lib.extra.ip.network.fromCIDR 6 "fd00:1:2:abcd::/64") (lib.extra.ip.network.fromCIDR 6 "fd00:1:3:abcd::/64") "fd00:1:2:abcd:2d71:1642:b726:b044")
+    *     -> "fd00:1:3:abcd:2d71:1642:b726:b044/128"
+    *
+    * Uses:
+    * - SIIT explicit address mappings (RFC 7757): an IPv4 prefix paired with an
+    *   IPv6 prefix of the same suffix length, in either direction.
+    * - Renumbering: the same hosts under a new prefix, interface identifiers kept.
+    *
+    * Edge cases:
+    * - Strings are parsed as addresses of `from`'s version.
+    * - x must lie within `from` together with its whole network (see contains);
+    *   its prefix length moves by the difference of the two prefix lengths.
+    */
+    rebase = from: to: x:
+      _guard ["network" "rebase"] (let
+        f = _expectNetwork from;
+        t = _expectNetwork to;
+        wf = _wordsOf f;
+        wt = _wordsOf t;
+        x' =
+          if isString x
+          then address.fromString f.version x
+          else _expectIP x;
+        hostLength = n: (_wordsOf n).totalBits - n.prefixLength;
+      in
+        if hostLength f != hostLength t
+        then throw "${_cidr f} has ${toString (hostLength f)} host bits but ${_cidr t} has ${toString (hostLength t)}"
+        else if !(_within f x')
+        then throw "${_cidr x'} does not lie within ${_cidr f}"
+        else let
+          ws = wt.fromBits (take t.prefixLength (wt.toBits t.words) ++ drop f.prefixLength (wf.toBits x'.words));
+          len = x'.prefixLength - f.prefixLength + t.prefixLength;
+        in
+          _caseOf {
+            address = _: Address t.version ws len;
+            network = _: Network t.version ws len;
+          }
+          x');
+
+    /*
     * Whether two networks share at least one address.
     *
     * Example:
