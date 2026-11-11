@@ -105,6 +105,7 @@ final: super: {scope}: let
   _hextet = n: toLower (toHexString n);
 
   # Canonical IPv6 text per RFC 5952 (lowercase, longest zero run >= 2 compressed, first wins).
+  # Takes any number of hextets, so the leading 96 bits of mixed notation use it too.
   _formatHextets = ws: let
     scan =
       foldl'
@@ -137,7 +138,7 @@ final: super: {scope}: let
         bestStart = 0;
         bestLen = 0;
       }
-      (genList (i: i) 8);
+      (genList (i: i) (length ws));
     join = concatMapStringsSep ":" _hextet;
   in
     if scan.bestLen < 2
@@ -1273,6 +1274,32 @@ in {
       if v'.version == 6
       then "[${_compressed v'}]"
       else _compressed v');
+
+  /*
+  * The address part of IPv6 data in mixed notation (RFC 5952, section 5):
+  * the first 96 bits as canonical hextets, the last 32 bits as a dotted quad.
+  * The usual way to write addresses that carry an IPv4 address in their last
+  * 32 bits: IPv4-mapped addresses and /96 translation prefixes.
+  *
+  * Example:
+  *   lib.extra.ip.toMixed (lib.extra.ip.address.fromString 6 "::ffff:a00:1") -> "::ffff:10.0.0.1"
+  *   lib.extra.ip.toMixed (lib.extra.ip.address.fromString 6 "64:ff9b::c000:221") -> "64:ff9b::192.0.2.33"
+  *
+  * Edge cases:
+  * - Throws for IPv4 data, which has no mixed form.
+  * - Renders any IPv6 data; whether the last 32 bits mean an IPv4 address is
+  *   up to the caller (embedIPv4 with a /96 prefix is the case where they do).
+  */
+  toMixed = v:
+    _guard ["toMixed"] (let
+      v' = _expectVersion 6 (_expectIP v);
+      leading = _formatHextets (take 6 v'.words);
+      octets = concatLists (map (x: [(x / 256) (mod x 256)]) (drop 6 v'.words));
+      dotted = _families."4".format octets;
+    in
+      if match ".*::" leading != null
+      then leading + dotted
+      else "${leading}:${dotted}");
 
   /*
   * Total order over addresses and networks: version, address, prefix length,
