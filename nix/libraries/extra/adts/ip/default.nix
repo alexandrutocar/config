@@ -846,6 +846,23 @@ final: super: {scope}: let
     contains = n: x: _guard ["network" "contains"] (_within (_expectNetwork n) (_expectIP x));
 
     /*
+    * Whether any network in the list ns contains x (see contains). Pairs with
+    * the lists in `ranges`.
+    *
+    * Example:
+    *   lib.extra.ip.network.containsAny lib.extra.ip.ranges.ipv4.private (lib.extra.ip.address.fromString 4 "172.20.1.1") -> true
+    *
+    * Edge cases:
+    * - An empty list contains nothing (false).
+    */
+    containsAny = ns: x:
+      _guard ["network" "containsAny"] (
+        if !(isList ns)
+        then throw "expected a list of IP network data, got ${_show ns}"
+        else _withinAny (map _expectNetwork ns) (_expectIP x)
+      );
+
+    /*
     * Whether two networks share at least one address.
     *
     * Example:
@@ -954,6 +971,47 @@ final: super: {scope}: let
         then fromCIDR version v
         else _guard ["network" "importJSON"] (_expectVersion version (_expectNetwork v)))
       (importJSON path);
+  };
+
+  # RANGES
+  # ------
+
+  /*
+  * Well-known networks as data, per IP version. Every entry is a list, since
+  * some ranges consist of several blocks; test membership with
+  * network.containsAny, or pass an entry as `within` to the option types.
+  *
+  * Example:
+  *   lib.extra.ip.network.containsAny lib.extra.ip.ranges.ipv6.uniqueLocal (lib.extra.ip.address.fromString 6 "fd00::1") -> true
+  *
+  * Edge cases:
+  * - Entries may overlap: documentation prefixes lie within globalUnicast.
+  * - globalUnicast is the allocated unicast space (2000::/3), not a guarantee
+  *   that an address is publicly routed.
+  */
+  ranges = let
+    v4 = map (network.fromCIDR 4);
+    v6 = map (network.fromCIDR 6);
+  in {
+    ipv4 = {
+      private = v4 ["10.0.0.0/8" "172.16.0.0/12" "192.168.0.0/16"]; # RFC 1918
+      sharedAddressSpace = v4 ["100.64.0.0/10"]; # RFC 6598, carrier-grade NAT
+      loopback = v4 ["127.0.0.0/8"]; # RFC 1122
+      linkLocal = v4 ["169.254.0.0/16"]; # RFC 3927
+      documentation = v4 ["192.0.2.0/24" "198.51.100.0/24" "203.0.113.0/24"]; # RFC 5737
+      benchmarking = v4 ["198.18.0.0/15"]; # RFC 2544
+      multicast = v4 ["224.0.0.0/4"]; # RFC 5771
+    };
+    ipv6 = {
+      loopback = v6 ["::1/128"]; # RFC 4291
+      ipv4Mapped = v6 ["::ffff:0:0/96"]; # RFC 4291
+      nat64 = v6 ["64:ff9b::/96"]; # RFC 6052, well-known prefix
+      documentation = v6 ["2001:db8::/32" "3fff::/20"]; # RFC 3849, RFC 9637
+      globalUnicast = v6 ["2000::/3"]; # RFC 4291, IANA IPv6 address space
+      uniqueLocal = v6 ["fc00::/7"]; # RFC 4193
+      linkLocal = v6 ["fe80::/10"]; # RFC 4291
+      multicast = v6 ["ff00::/8"]; # RFC 4291
+    };
   };
 
   # TYPES
@@ -1093,7 +1151,7 @@ final: super: {scope}: let
     network = version: networkWith {inherit version;};
   };
 in {
-  inherit address network types;
+  inherit address network ranges types;
 
   /*
   * Exhaustive elimination over address and network data of any version.
