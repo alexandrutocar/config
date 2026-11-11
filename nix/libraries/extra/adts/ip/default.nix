@@ -16,7 +16,7 @@
 final: super: {scope}: let
   inherit (super.attrsets) attrNames;
   inherit (final.extra.math) clamp floorDiv maxInt pow2;
-  inherit (super.lists) all any compareLists concatLists drop elemAt filter foldl' genList head imap0 isList length reverseList sort tail take;
+  inherit (super.lists) all any compareLists concatLists drop elem elemAt filter findFirst foldl' genList head imap0 isList length reverseList sort tail take;
   inherit (super.strings) concatMapStringsSep concatStringsSep fixedWidthString fromJSON hasInfix hasPrefix isString match optionalString splitString stringLength substring toLower;
   inherit (super.trivial) bitAnd compare deepSeq fromHexString importJSON isInt mod toHexString;
   inherit (super.types) isType setType;
@@ -178,6 +178,11 @@ final: super: {scope}: let
     host = ws: len: zipWith bitAnd ws (hostMask len);
     last = ws: len: zipWith (x: m: x - bitAnd x m + m) ws (hostMask len);
     hasHostBits = ws: len: any (x: x != 0) (zipWith bitAnd ws (hostMask len));
+
+    # Words <-> big-endian bit vector (most significant bit first), for layouts
+    # that do not align with word boundaries (RFC 6052, prefix rebasing).
+    toBits = ws: concatLists (map (x: genList (i: bitAnd (x / pow2 (wordBits - 1 - i)) 1) wordBits) ws);
+    fromBits = bits: genList (i: foldl' (acc: bit: acc * 2 + bit) 0 (take wordBits (drop (i * wordBits) bits))) wordCount;
 
     # Adds a signed n at word index i, carrying/borrowing towards word 0.
     offsetAt = ws: i: n: let
@@ -745,6 +750,17 @@ final: super: {scope}: let
     isParsable = version: v: _succeeds (fromCIDR version v);
 
     /*
+    * Whether a value is IPv6 network data usable as an RFC 6052 prefix for
+    * embedIPv4 / extractIPv4: /32, /40, /48, /56, /64 or /96 with bits 64-71
+    * zero. Never throws.
+    *
+    * Example:
+    *   lib.extra.ip.network.isIPv4EmbeddingPrefix (lib.extra.ip.network.fromCIDR 6 "64:ff9b::/96") -> true
+    *   lib.extra.ip.network.isIPv4EmbeddingPrefix (lib.extra.ip.network.fromCIDR 6 "64:ff9b::/80") -> false
+    */
+    isIPv4EmbeddingPrefix = v: _succeeds (_embedding.expectPrefix v);
+
+    /*
     * The groups touched by the prefix, rounded up to whole groups.
     *
     * Example:
@@ -1019,6 +1035,162 @@ final: super: {scope}: let
       (importJSON path);
   };
 
+  # IPv4 EMBEDDING
+  # --------------
+  #
+  # IPv4 addresses inside IPv6 per RFC 6052, as used by NAT64/DNS64, SIIT and
+  # IPv4-mapped addresses. The 32 IPv4 bits follow the prefix, skipping bits
+  # 64-71 (the "u" octet, always zero); the remaining suffix is zero.
+
+  _embedding = rec {
+    lengths = [32 40 48 56 64 96];
+
+    isU = bit: bit >= 64 && bit < 72;
+
+    # IPv6 bit positions of IPv4 bits 0..31 after a /len prefix.
+    positions = len: take 32 (filter (bit: !(isU bit)) (genList (i: len + i) 40));
+
+    # IPv6 prefix length that covers the first n IPv4 bits (0 <= n <= 32).
+    v6Length = len: n:
+      if n == 0
+      then len
+      else elemAt (positions len) (n - 1) + 1;
+
+    # Inverse of v6Length, or null when an IPv6 /m ends inside the "u" octet
+    # or past the IPv4 bits.
+    v4Length = len: m: findFirst (n: v6Length len n == m) null (genList (n: n) 33);
+
+    uOctet = ws: elemAt ws 4 / 256;
+
+    expectPrefix = p: let
+      p' = _expectVersion 6 (_expectNetwork p);
+    in
+      if !(elem p'.prefixLength lengths)
+      then throw "an RFC 6052 prefix is /32, /40, /48, /56, /64 or /96, got ${_cidr p'}"
+      else if uOctet p'.words != 0
+      then throw "bits 64-71 of an RFC 6052 prefix must be zero, got ${_cidr p'}"
+      else p';
+  };
+
+  /*
+  * Embeds IPv4 data into an RFC 6052 prefix (/32, /40, /48, /56, /64 or /96).
+  * An address becomes a single IPv6 host; a network becomes the IPv6 network
+  * that holds exactly its embedded addresses.
+  *
+  * Example:
+  *   lib.extra.ip.toMixed (lib.extra.ip.embedIPv4 (lib.extra.ip.network.fromCIDR 6 "64:ff9b::/96") "192.0.2.33")
+  *     -> "64:ff9b::192.0.2.33"
+  *   lib.extra.ip.toCIDR (lib.extra.ip.embedIPv4 (lib.extra.ip.network.fromCIDR 6 "2001:db8:100::/40") "192.0.2.33")
+  *     -> "2001:db8:1c0:2:21::/128"
+  *   lib.extra.ip.toCIDR (lib.extra.ip.embedIPv4 (lib.extra.ip.network.fromCIDR 6 "64:ff9b::/96") (lib.extra.ip.network.fromCIDR 4 "140.82.112.0/20"))
+  *     -> "64:ff9b::8c52:7000/116"
+  *
+  * Uses:
+  * - NAT64/DNS64: the IPv6 address a v6-only host uses for an IPv4 service,
+  *   or a network to allow in a firewall rule.
+  * - SIIT: how an IPv4 client appears to a v6-only server.
+  * - IPv4-mapped addresses (::ffff:a.b.c.d) with ranges.ipv6.ipv4Mapped,
+  *   which has the same layout as a /96 prefix.
+  *
+  * Edge cases:
+  * - Strings are parsed as IPv4 addresses; the prefix length of an address
+  *   is not carried over (the result is always /128).
+  * - For prefixes up to /64, a network that crosses bit 64 skips the "u"
+  *   octet: under a /40, 192.0.2.0/24 becomes a /64 but 192.0.2.0/25 a /73.
+  */
+  embedIPv4 = prefix: x:
+    _guard ["embedIPv4"] (let
+      p = _embedding.expectPrefix prefix;
+      x' =
+        if isString x
+        then address.fromString 4 x
+        else _expectVersion 4 (_expectIP x);
+      w6 = (_family 6).words;
+      w4 = (_family 4).words;
+      len = p.prefixLength;
+      pbits = w6.toBits p.words;
+      v4bits = w4.toBits x'.words;
+      # Index of the IPv4 bit carried at IPv6 bit `bit`, or null.
+      indexAt = bit: let
+        i =
+          bit
+          - len
+          - (
+            if len <= 64 && bit >= 72
+            then 8
+            else 0
+          );
+      in
+        if bit < len || _embedding.isU bit || i >= 32
+        then null
+        else i;
+      bits = genList (bit: let
+        i = indexAt bit;
+      in
+        if bit < len
+        then elemAt pbits bit
+        else if i == null
+        then 0
+        else elemAt v4bits i)
+      w6.totalBits;
+      ws = w6.fromBits bits;
+    in
+      _caseOf {
+        address = _: Address 6 ws w6.totalBits;
+        network = n: Network 6 ws (_embedding.v6Length len n.prefixLength);
+      }
+      x');
+
+  /*
+  * The IPv4 data embedded in IPv6 data under an RFC 6052 prefix; the inverse
+  * of embedIPv4.
+  *
+  * Example:
+  *   lib.extra.ip.toCompressed (lib.extra.ip.extractIPv4 (lib.extra.ip.network.fromCIDR 6 "64:ff9b::/96") "64:ff9b::192.0.2.33")
+  *     -> "192.0.2.33"
+  *   lib.extra.ip.toCIDR (lib.extra.ip.extractIPv4 (lib.extra.ip.network.fromCIDR 6 "64:ff9b::/96") (lib.extra.ip.network.fromCIDR 6 "64:ff9b::8c52:7000/116"))
+  *     -> "140.82.112.0/20"
+  *
+  * Uses:
+  * - Reading which IPv4 host a translated address stands for (SIIT clients,
+  *   NAT64 destinations, IPv4-mapped peers).
+  *
+  * Edge cases:
+  * - Strings are parsed as IPv6 addresses. Addresses yield a single IPv4 host
+  *   (/32); their suffix bits are ignored, as RFC 6052 requires of decoders.
+  * - Throws when the data lies outside the prefix, when the "u" octet is not
+  *   zero, or when a network's length ends inside the "u" octet or past the
+  *   embedded IPv4 bits.
+  */
+  extractIPv4 = prefix: x:
+    _guard ["extractIPv4"] (let
+      p = _embedding.expectPrefix prefix;
+      x' =
+        if isString x
+        then address.fromString 6 x
+        else _expectVersion 6 (_expectIP x);
+      w6 = (_family 6).words;
+      w4 = (_family 4).words;
+      len = p.prefixLength;
+      bits = w6.toBits x'.words;
+      ws = w4.fromBits (map (elemAt bits) (_embedding.positions len));
+    in
+      if w6.network x'.words len != p.words || (_isNetwork x' && x'.prefixLength < len)
+      then throw "${_cidr x'} does not lie within ${_cidr p}"
+      else if _embedding.uOctet x'.words != 0
+      then throw "bits 64-71 of ${_cidr x'} are not zero, so it does not embed an IPv4 address"
+      else
+        _caseOf {
+          address = _: Address 4 ws w4.totalBits;
+          network = n: let
+            v4Len = _embedding.v4Length len n.prefixLength;
+          in
+            if v4Len == null
+            then throw "/${toString n.prefixLength} does not end on an embedded IPv4 bit under ${_cidr p}"
+            else Network 4 ws v4Len;
+        }
+        x');
+
   # RANGES
   # ------
 
@@ -1052,6 +1224,7 @@ final: super: {scope}: let
       loopback = v6 ["::1/128"]; # RFC 4291
       ipv4Mapped = v6 ["::ffff:0:0/96"]; # RFC 4291
       nat64 = v6 ["64:ff9b::/96"]; # RFC 6052, well-known prefix
+      nat64Local = v6 ["64:ff9b:1::/48"]; # RFC 8215, to carve local translation prefixes from
       documentation = v6 ["2001:db8::/32" "3fff::/20"]; # RFC 3849, RFC 9637
       globalUnicast = v6 ["2000::/3"]; # RFC 4291, IANA IPv6 address space
       uniqueLocal = v6 ["fc00::/7"]; # RFC 4193
@@ -1195,9 +1368,15 @@ final: super: {scope}: let
         singleHost = true;
       };
     network = version: networkWith {inherit version;};
+
+    # An RFC 6052 prefix (see network.isIPv4EmbeddingPrefix), e.g. a NAT64 or SIIT pool6.
+    ipv4EmbeddingPrefix =
+      coercedTo str (network.fromCIDR 6)
+      (dataType "ipv4EmbeddingPrefix" "IPv6 prefix for embedding IPv4 (RFC 6052: /32, /40, /48, /56, /64 or /96)"
+        (x: _isNetwork x && _succeeds (_embedding.expectPrefix x)));
   };
 in {
-  inherit address network ranges types;
+  inherit address network ranges types embedIPv4 extractIPv4;
 
   /*
   * Exhaustive elimination over address and network data of any version.
