@@ -795,6 +795,28 @@ final: super: {scope}: let
         Address n'.version ((_wordsOf n').last n'.words n'.prefixLength) n'.prefixLength);
 
     /*
+    * The first host address of a network: the address after the network
+    * address, or the network address itself when there is none to skip.
+    *
+    * Example:
+    *   lib.extra.ip.toCIDR (lib.extra.ip.network.getFirstHost (lib.extra.ip.network.fromCIDR 4 "127.0.0.0/8")) -> "127.0.0.1/8"
+    *   lib.extra.ip.toCIDR (lib.extra.ip.network.getFirstHost (lib.extra.ip.network.fromCIDR 6 "::1/128")) -> "::1/128"
+    *
+    * Edge cases:
+    * - /31 and /127 point-to-point links (RFC 3021, RFC 6164) and single
+    *   hosts (/32, /128) have no address to skip: the network address is returned.
+    * - For IPv6 the skipped address is the subnet-router anycast address.
+    */
+    getFirstHost = n:
+      _guard ["network" "getFirstHost"] (let
+        n' = _expectNetwork n;
+        w = _wordsOf n';
+      in
+        if w.totalBits - n'.prefixLength <= 1
+        then Address n'.version n'.words n'.prefixLength
+        else Address n'.version (w.offsetAt n'.words (w.count - 1) 1) n'.prefixLength);
+
+    /*
     * Network mask (network bits set) and host mask (host bits set), as single-host addresses.
     *
     * Example:
