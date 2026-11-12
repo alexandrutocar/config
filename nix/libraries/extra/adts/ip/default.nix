@@ -1309,6 +1309,44 @@ final: super: {scope}: let
     multicast = ipv4.multicast ++ ipv6.multicast;
   };
 
+  # WELL-KNOWN ADDRESSES
+  # --------------------
+
+  /*
+  * Well-known single addresses, per IP version, as single-host data.
+  * Counterpart of `ranges` for one address rather than a set of networks.
+  *
+  * Example:
+  *   lib.extra.ip.toURIHost lib.extra.ip.wellKnown.ipv6.loopback -> "[::1]"
+  *   map lib.extra.ip.toCompressed [ lib.extra.ip.wellKnown.ipv4.loopback lib.extra.ip.wellKnown.ipv6.loopback ]
+  *     -> [ "127.0.0.1" "::1" ]
+  *
+  * Edge cases:
+  * - Entries are /32 or /128; use address.withPrefixLength for an interface
+  *   address such as 127.0.0.1/8.
+  */
+  wellKnown = let
+    v4 = address.fromString 4;
+    v6 = address.fromString 6;
+  in let
+    ipv4 = {
+      broadcast = v4 "255.255.255.255"; # RFC 919, limited broadcast
+      loopback = v4 "127.0.0.1"; # RFC 1122
+      unspecified = v4 "0.0.0.0"; # RFC 1122, "this host"; listen on all
+    };
+    ipv6 = {
+      allRouters = v6 "ff02::2"; # RFC 4291, link-local all-routers multicast
+      allNodes = v6 "ff02::1"; # RFC 4291, link-local all-nodes multicast
+      loopback = v6 "::1"; # RFC 4291
+      unspecified = v6 "::"; # RFC 4291
+    };
+  in {
+    inherit ipv4 ipv6;
+
+    loopback = [ipv4.loopback ipv6.loopback];
+    unspecified = [ipv4.unspecified ipv6.unspecified];
+  };
+
   # TYPES
   # -----
 
@@ -1452,7 +1490,7 @@ final: super: {scope}: let
         (x: _isNetwork x && _succeeds (_embedding.expectPrefix x)));
   };
 in {
-  inherit address network ranges types embedIPv4 extractIPv4;
+  inherit address network ranges wellKnown types embedIPv4 extractIPv4;
 
   /*
   * Exhaustive elimination over address and network data of any version.
