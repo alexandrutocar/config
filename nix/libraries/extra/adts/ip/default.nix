@@ -1279,7 +1279,7 @@ final: super: {scope}: let
   ranges = let
     v4 = map (network.fromCIDR 4);
     v6 = map (network.fromCIDR 6);
-  in {
+  in let
     ipv4 = {
       private = v4 ["10.0.0.0/8" "172.16.0.0/12" "192.168.0.0/16"]; # RFC 1918
       sharedAddressSpace = v4 ["100.64.0.0/10"]; # RFC 6598, carrier-grade NAT
@@ -1300,6 +1300,13 @@ final: super: {scope}: let
       linkLocal = v6 ["fe80::/10"]; # RFC 4291
       multicast = v6 ["ff00::/8"]; # RFC 4291
     };
+  in {
+    inherit ipv4 ipv6;
+
+    documentation = ipv4.documentation ++ ipv6.documentation;
+    linkLocal = ipv4.linkLocal ++ ipv6.linkLocal;
+    loopback = ipv4.loopback ++ ipv6.loopback;
+    multicast = ipv4.multicast ++ ipv6.multicast;
   };
 
   # TYPES
