@@ -137,6 +137,14 @@ in let
     };
   };
 
+  # TRIVIAL
+  # -------
+  trivial = let
+    inherit (super.trivial) flip pipe;
+  in {
+    pipeline = flip pipe;
+  };
+
   # TYPES
   # -----
   types = let
@@ -616,7 +624,7 @@ in let
       concatStrings [userPart hostPart portPart];
   };
 in {
-  inherit colors cs facter files math net strings types url;
+  inherit colors cs facter files math net strings trivial types url;
 
   ip = removeAttrs adts.ip ["types"];
 }
