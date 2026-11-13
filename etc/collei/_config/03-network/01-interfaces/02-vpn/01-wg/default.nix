@@ -6,7 +6,7 @@
   inherit (lib.alias) networks;
   inherit (lib.extra.ip) toCIDR toCompressed;
   inherit (lib.extra.ip.address) singleHostRoute;
-  inherit (lib.extra.url) mkAuthority;
+  inherit (lib.extra.url) mkInterface;
 in let
   containers.beidou = {
     inherit (self.nixosConfigurations.beidou.config.services.sigil.settings.containers.intra) cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a;
@@ -16,7 +16,7 @@ in {
     network = let
       name = "wg0";
       marker = 1010;
-      endpoint = mkAuthority "2a00:5ba0:8009:5f40:1:b03f:2f2a:c1df" 50010 {};
+      endpoint = mkInterface "2a00:5ba0:8009:5f40:1:b03f:2f2a:c1df" 50010;
     in {
       netdevs = {
         "25-${name}" = {

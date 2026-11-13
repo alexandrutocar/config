@@ -4,7 +4,8 @@
   ...
 }: let
   inherit (lib.alias) networks;
-  inherit (lib.extra.ip) toCIDR;
+  inherit (lib.extra.ip) ranges toCIDR;
+  inherit (lib.extra.ip.network) getFirstHost;
   inherit (lib.modules) mkForce;
 in {
   networking = {
@@ -21,9 +22,11 @@ in {
       listen_addresses = mkForce "*";
     };
 
-    authentication = ''
+    authentication = let
+      loopback = (builtins.head ranges.ipv6.loopback) |> getFirstHost |> toCIDR;
+    in ''
       host  stalwart stalwart ${(networks.aether.internal.net._meta.network |> toCIDR)} trust
-      host  stalwart stalwart ::1/128 trust
+      host  stalwart stalwart ${loopback} trust
     '';
 
     ensureUsers = [

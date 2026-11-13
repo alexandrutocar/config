@@ -1,7 +1,12 @@
-{lib, ...}: let
+{
+  hostName,
+  lib,
+  ...
+}: let
   inherit (lib.alias) networks;
-  inherit (lib.extra.ip) toCIDR;
+  inherit (lib.extra.ip) ranges toCIDR;
   inherit (lib.extra.ip.address) singleHostRoute;
+  inherit (lib.extra.ip.network) getFirstHost;
 in {
   systemd = {
     network = {
@@ -10,14 +15,17 @@ in {
           matchConfig = {
             Name = "lo";
           };
-          address =
-            [
-              "::1/128"
-              "127.0.0.1/8"
-            ]
-            ++ [
-              (networks.aether.internal.net.hosts.collei |> singleHostRoute |> toCIDR)
-            ];
+          address = let
+            identityAddresses = let
+              ula = [
+                networks.aether.internal.net.hosts.${hostName}
+              ];
+            in
+              ula |> map singleHostRoute;
+
+            loopbackAddresses = ranges.loopback |> map getFirstHost;
+          in
+            identityAddresses ++ loopbackAddresses |> map toCIDR;
         };
       };
     };

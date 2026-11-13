@@ -1,6 +1,7 @@
 final: super: let
   adts = {
     ip = import ./adts/ip final super {scope = "lib.extra.ip";};
+    url = import ./adts/url final super {scope = "lib.extra.url";};
   };
 in let
   # FACTER
@@ -151,6 +152,8 @@ in let
     inherit (super.types) strMatching;
   in {
     ip = adts.ip.types;
+
+    url = adts.url.types;
 
     colors = {
       /**
@@ -310,47 +313,6 @@ in let
       else if x > hi
       then hi
       else x;
-  };
-
-  # NETWORK
-  # -------
-  net = let
-    inherit (super.strings) concatStringsSep;
-  in {
-    interface = {
-      /*
-      * Builds an interface string of the form "host@port".
-      *
-      * Example:
-      *   mkInterface "example.com" 8080 -> "example.com@8080"
-      *   mkInterface "example.com" "80" -> "example.com@80"
-      *   mkInterface "::1" 443          -> "::1@443"
-      *
-      * Implementation details:
-      * - Joins host and the stringified port with "@" via concatStringsSep.
-      * - port is rendered with toString, so integers and strings both work.
-      * - Neither part is escaped or validated. Unlike mkAuthority, IPv6 hosts are
-      *   not bracketed.
-      *
-      * Edge cases:
-      * - A null port is not omitted: toString null is "", so the result is "host@".
-      * - An empty host yields "@port".
-      * - A host that itself contains "@" is passed through as is, so the result
-      *   is ambiguous to parse back apart.
-      */
-      mkInterface = host: port: concatStringsSep "@" [host (toString port)];
-    };
-
-    port = {
-      prefix = {
-        destination = {
-          wan = port:
-            if port < 10000 && port > 0
-            then 10000 + port
-            else throw "Ports destined to be forwarded externall must be in range between 0 and 9999 (inclusive).";
-        };
-      };
-    };
   };
 
   # FILES
@@ -565,66 +527,10 @@ in let
   strings = {
     lines.asOne = lines: super.strings.concatStrings (super.strings.splitString "\n" lines);
   };
-
-  # URL
-  # ---
-  url = let
-    inherit (super.strings) concatStrings escapeURL hasInfix hasPrefix optionalString;
-  in {
-    /*
-    * Builds the authority component of a URL: [userinfo@]host[:port].
-    *
-    * Example:
-    *   mkAuthority "example.com" 8080 "alice"                                  -> "alice@example.com:8080"
-    *   mkAuthority "example.com" null { username = "alice"; password = "p@ss"; } -> "alice:p%40ss@example.com"
-    *   mkAuthority "::1" 443 null                                              -> "[::1]:443"
-    *   mkAuthority "example.com" null null                                     -> "example.com"
-    *
-    * Implementation details:
-    * - user may be a string (shorthand for { username = "..."; }), an attrset
-    *   with a username and an optional password, or null / {} for no userinfo.
-    * - Username and password are percent-encoded with escapeURL. The host is not escaped.
-    * - A password is only emitted when a username is also present.
-    * - A host containing ":" that does not already start with "[" is treated as an
-    *   IPv6 literal and wrapped in brackets.
-    * - port is rendered with toString, so integers and strings both work.
-    *   A null port is omitted.
-    *
-    * Edge cases:
-    * - A user attrset without a username yields no userinfo, even if a password is set.
-    * - An empty-string username is not treated as absent, so it yields a leading "@".
-    *   Likewise, an empty password yields "user:@".
-    * - An already-bracketed IPv6 host is passed through unchanged (no double brackets).
-    * - Does not validate the host or port; malformed input is passed through as is.
-    */
-    mkAuthority = host: port: user: let
-      userPart = let
-        # Accept a plain string as shorthand for { name = "..."; }
-        _parsed =
-          if builtins.isString user
-          then {username = user;}
-          else user;
-
-        hasUser = _parsed != null && _parsed != {} && (_parsed.username or null) != null;
-        hasPass = hasUser && (_parsed.password or null) != null;
-      in
-        optionalString hasUser (
-          escapeURL _parsed.username
-          + optionalString hasPass ":${escapeURL _parsed.password}"
-          + "@"
-        );
-
-      hostPart =
-        if hasInfix ":" host && !(hasPrefix "[" host)
-        then "[${host}]"
-        else host;
-
-      portPart = optionalString (port != null) ":${toString port}";
-    in
-      concatStrings [userPart hostPart portPart];
-  };
 in {
-  inherit colors cs facter files math net strings trivial types url;
+  inherit colors cs facter files math strings trivial types;
+
+  url = removeAttrs adts.url ["types"];
 
   ip = removeAttrs adts.ip ["types"];
 }

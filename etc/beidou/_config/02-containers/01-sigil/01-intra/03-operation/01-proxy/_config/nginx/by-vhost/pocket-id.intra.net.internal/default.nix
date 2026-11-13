@@ -5,8 +5,8 @@
   ...
 }: let
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
-  inherit (lib.extra.ip) toCompressed;
-  inherit (lib.extra.url) mkAuthority;
+  inherit (lib.extra.ip) toURIHost;
+  inherit (lib.extra.url) mkOrigin;
 in let
   extraConfig = ''
     access_log /var/log/nginx/pocket-id.intra.net.internal.access.log analytics;
@@ -43,7 +43,7 @@ in {
 
       listen = [
         {
-          addr = "[${sigil.self.addresses.ula |> toCompressed}]";
+          addr = sigil.self.addresses.ula |> toURIHost;
           port = 443;
           ssl = true;
         }
@@ -51,7 +51,7 @@ in {
 
       locations = {
         "/" = {
-          proxyPass = "http://${mkAuthority (sigil.containers.intra."c38a828e-58a7-49af-894d-ba02f936d211".addresses.ula |> toCompressed) 8081 {}}";
+          proxyPass = mkOrigin "http" sigil.containers.intra."c38a828e-58a7-49af-894d-ba02f936d211".addresses.ula 8081;
         };
       };
     };

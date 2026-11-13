@@ -6,7 +6,7 @@
   inherit (lib.alias) networks;
   inherit (lib.extra.ip) toCIDR toCompressed;
   inherit (lib.extra.ip.address) singleHostRoute;
-  inherit (lib.extra.url) mkAuthority;
+  inherit (lib.extra.url) mkInterface;
   inherit (lib.modules) mkMerge;
 in let
   containers.beidou = {
@@ -115,22 +115,22 @@ in {
       {
         name = "wg-intra-ipv4";
         marker = 1010;
-        endpoint = mkAuthority "192.168.1.2" 50010 {};
+        endpoint = mkInterface "192.168.1.2" 50010;
       }
       {
         name = "wg-intra-ipv6";
         marker = 1020;
-        endpoint = mkAuthority "fd4b:ad02:1b77:1:0020:61fc:3462:bf01" 50010 {};
+        endpoint = mkInterface "fd4b:ad02:1b77:1:0020:61fc:3462:bf01" 50010;
       }
       {
         name = "wg-inter-ipv4";
         marker = 1030;
-        endpoint = mkAuthority "212.201.75.101" 50010 {};
+        endpoint = mkInterface "212.201.75.101" 50010;
       }
       {
         name = "wg-inter-ipv6";
         marker = 1040;
-        endpoint = mkAuthority "2a00:5ba0:8009:5f40:1:b03f:2f2a:c1df" 50010 {};
+        endpoint = mkInterface "2a00:5ba0:8009:5f40:1:b03f:2f2a:c1df" 50010;
       }
     ];
   };

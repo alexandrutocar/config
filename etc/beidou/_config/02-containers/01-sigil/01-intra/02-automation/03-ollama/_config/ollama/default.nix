@@ -6,7 +6,7 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.ip) toCompressed;
+  inherit (lib.extra.ip) toURIHost;
 in {
   networking = {
     firewall = {
@@ -36,7 +36,7 @@ in {
 
       package = pkgs.ollama-cuda;
 
-      host = "[${sigil.self.addresses.ula |> toCompressed}]";
+      host = sigil.self.addresses.ula |> toURIHost;
       port = 11434;
 
       user = "ollama";

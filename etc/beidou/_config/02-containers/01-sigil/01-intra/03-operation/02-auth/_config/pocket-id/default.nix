@@ -5,7 +5,8 @@
   ...
 }: let
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
-  inherit (lib.extra.ip) toCompressed;
+  inherit (lib.extra.ip) toCompressed wellKnown;
+  inherit (lib.extra.url) mkOrigin;
   inherit (lib.modules) mkMerge;
 in {
   networking = {
@@ -69,7 +70,7 @@ in {
       {
         LDAP_ENABLED = true;
 
-        LDAP_URL = "ldap://[::1]:3890";
+        LDAP_URL = mkOrigin "ldap" wellKnown.ipv6.loopback 3890;
 
         LDAP_BASE = "dc=intra,dc=net,dc=internal";
         LDAP_BIND_DN = "cn=pocket-id,ou=people,dc=intra,dc=net,dc=internal";

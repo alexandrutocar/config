@@ -3,6 +3,8 @@
   lib,
   ...
 }: let
+  inherit (lib.extra.ip.address) singleHostRoute;
+  inherit (lib.extra.ip.network) getFirstHost;
   inherit (lib.extra.ip) ranges toCIDR;
   inherit (lib.lists) filter;
 in {
@@ -13,14 +15,11 @@ in {
           matchConfig = {
             Name = "lo";
           };
-          # ::1/128 plus the container's own addresses, which are /128 by type.
-          address = map toCIDR (
-            ranges.ipv6.loopback
-            ++ filter (a: a != null) [
-              sigil.self.addresses.gua
-              sigil.self.addresses.ula
-            ]
-          );
+          address = let
+            identityAddresses = (with sigil.self.addresses; [gua ula]) |> filter (a: a != null) |> map singleHostRoute;
+            loopbackAddresses = ranges.loopback |> map getFirstHost;
+          in
+            identityAddresses ++ loopbackAddresses |> map toCIDR;
         };
       };
     };

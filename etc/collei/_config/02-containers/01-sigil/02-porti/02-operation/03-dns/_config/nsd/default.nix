@@ -5,7 +5,7 @@
   ...
 }: let
   inherit (lib.extra.ip) toCompressed;
-  inherit (lib.extra.net.interface) mkInterface;
+  inherit (lib.extra.url.interface) fromParts toNLnetLabs;
   inherit (lib.modules) mkForce;
 in {
   networking = {
@@ -23,7 +23,7 @@ in {
         chroot = mkForce "";
 
         interface = [
-          (mkInterface (sigil.self.addresses.gua |> toCompressed) 53)
+          (toNLnetLabs (fromParts sigil.self.addresses.gua 53))
         ];
 
         server-count = 1;

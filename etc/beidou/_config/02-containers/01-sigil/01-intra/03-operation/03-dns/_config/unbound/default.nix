@@ -6,7 +6,8 @@
 }: let
   inherit (lib.alias) networks;
   inherit (lib.extra.ip) toCompressed toCIDR;
-  inherit (lib.extra.net.interface) mkInterface;
+  inherit (lib.extra.url.interface) fromParts toNLnetLabs toNLnetLabsTLS;
+  inherit (lib.lists) concatMap;
   inherit (lib.modules) mkMerge;
 in {
   networking = {
@@ -29,7 +30,7 @@ in {
         server = mkMerge [
           {
             interface = [
-              (mkInterface (sigil.self.addresses.ula |> toCompressed) 53)
+              (toNLnetLabs (fromParts sigil.self.addresses.ula 53))
             ];
 
             do-udp = true;
@@ -106,10 +107,18 @@ in {
 
             forward-tls-upstream = true;
 
-            forward-addr = [
-              "2606:4700:4700::1111#one.one.one.one"
-              "2606:4700:4700::1001#one.one.one.one"
-            ];
+            forward-addr = let
+              resolvers = [
+                {
+                  sniHostname = "one.one.one.one";
+                  ipAddresses = [
+                    "[2606:4700:4700::1111]:853"
+                    "[2606:4700:4700::1001]:853"
+                  ];
+                }
+              ];
+            in
+              resolvers |> concatMap (r: r.ipAddresses |> map (toNLnetLabsTLS r.sniHostname));
           }
         ];
 

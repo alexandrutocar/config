@@ -5,8 +5,8 @@
   ...
 }: let
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
-  inherit (lib.extra.ip) toCompressed;
-  inherit (lib.extra.url) mkAuthority;
+  inherit (lib.extra.ip) toURIHost;
+  inherit (lib.extra.url) mkOrigin;
 in let
   extraConfig = ''
     access_log /var/log/nginx/ollama.ai.intra.net.internal.access.log analytics;
@@ -44,7 +44,7 @@ in {
 
       listen = [
         {
-          addr = "[${sigil.self.addresses.ula |> toCompressed}]";
+          addr = sigil.self.addresses.ula |> toURIHost;
           port = 11434;
           ssl = true;
         }
@@ -75,7 +75,7 @@ in {
             proxy_next_upstream off;
           '';
 
-          proxyPass = "http://${mkAuthority (sigil.containers.intra."d86c8e1c-2bcd-4d2f-a3b2-7962afc28a51".addresses.ula |> toCompressed) 11434 {}}";
+          proxyPass = mkOrigin "http" sigil.containers.intra."d86c8e1c-2bcd-4d2f-a3b2-7962afc28a51".addresses.ula 11434;
         };
       };
     };

@@ -6,9 +6,10 @@
   ...
 }: let
   inherit (lib.extra.ip) toCompressed;
+  inherit (lib.extra.url) mkDefaultOrigin;
 in let
   serverDomain = "ueuie.earth";
-  serverOrigin = "https://${serverDomain}";
+  serverOrigin = mkDefaultOrigin "https" serverDomain;
 in let
   notesPackage = pkgs.notes serverOrigin;
 in {

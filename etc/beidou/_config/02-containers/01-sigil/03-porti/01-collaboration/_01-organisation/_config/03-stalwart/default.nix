@@ -1,4 +1,10 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  lib,
+  ...
+}: let
+  inherit (lib.extra.ip) toCompressed wellKnown;
+in {
   networking = {
     firewall = {
       allowedTCPPorts = [
@@ -11,7 +17,7 @@
     enable = true;
     settings = {
       "@type" = "PostgreSql";
-      host = "::1";
+      host = wellKnown.ipv6.loopback |> toCompressed;
       authSecret = {
         "@type" = "None";
       };
