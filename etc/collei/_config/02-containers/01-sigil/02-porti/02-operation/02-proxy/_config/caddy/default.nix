@@ -1,5 +1,9 @@
 {lib, ...}: let
+  inherit (lib.alias) resolvers;
+  inherit (lib.extra.ip) toCompressed;
+  inherit (lib.extra.trivial) pipeline;
   inherit (lib.modules) mkForce;
+  inherit (lib.strings) concatLines;
 in {
   services.caddy = {
     enable = true;
@@ -9,9 +13,10 @@ in {
 
   networking.resolvconf.enable = false;
 
-  environment.etc."resolv.conf".text = mkForce ''
-    nameserver 2606:4700:4700::1111
-  '';
+  environment.etc."resolv.conf".text = let
+    content = resolvers.cloudflare.standard.ipv6 |> map (pipeline [toCompressed (a: "nameserver ${a}")]) |> concatLines;
+  in
+    mkForce content;
 
   networking = {
     firewall = {

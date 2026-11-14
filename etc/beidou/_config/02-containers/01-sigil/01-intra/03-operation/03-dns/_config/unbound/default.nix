@@ -4,8 +4,9 @@
   lib,
   ...
 }: let
-  inherit (lib.alias) addresses networks;
+  inherit (lib.alias) addresses networks resolvers;
   inherit (lib.extra.ip) toCompressed toCIDR;
+  inherit (lib.extra.url) mkInterface;
   inherit (lib.extra.url.interface) fromParts toNLnetLabs toNLnetLabsTLS;
   inherit (lib.lists) concatMap;
   inherit (lib.modules) mkMerge;
@@ -110,17 +111,16 @@ in {
             forward-tls-upstream = true;
 
             forward-addr = let
-              resolvers = [
+              usedResolvers = [
+                # Cloudflare
+                # ----------
                 {
                   sniHostname = "one.one.one.one";
-                  ipAddresses = [
-                    "[2606:4700:4700::1111]:853"
-                    "[2606:4700:4700::1001]:853"
-                  ];
+                  ipAddresses = resolvers.cloudflare.standard.ipv6 |> map (a: mkInterface a 853);
                 }
               ];
             in
-              resolvers |> concatMap (r: r.ipAddresses |> map (toNLnetLabsTLS r.sniHostname));
+              usedResolvers |> concatMap (r: r.ipAddresses |> map (toNLnetLabsTLS r.sniHostname));
           }
         ];
 
