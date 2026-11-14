@@ -3,36 +3,38 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.ip) ranges toCompressed;
+  inherit (lib.alias) addresses;
+  inherit (lib.extra.ip) ranges toCIDR toCompressed;
   inherit (lib.extra.ip.network) getFirstHost;
+  inherit (lib.extra.trivial) pipeline;
   inherit (lib.strings) toSentenceCase;
 in {
   systemd = {
     network = {
       networks = {
-        # Network Interface [+]
         "30-enp1s0" = let
-          defaultGateway = (builtins.head ranges.ipv6.linkLocal) |> getFirstHost |> toCompressed;
+          gatewayAddresses = let
+            ll = (builtins.head ranges.ipv6.linkLocal) |> getFirstHost;
+          in [
+            ll
+          ];
+
+          hostAddresses = with systemSite.hosts.${hostName}; [ipv6.gua];
+
+          systemSite = addresses.provider.hetzner-cloud-server;
         in {
-          # [Match]
           matchConfig = {
             Name = "enp1s0";
           };
 
-          # [Network]
           networkConfig = {
-            Address = ["2a01:4f8:c0c:687::1/64"];
+            Address = hostAddresses |> map toCIDR;
 
-            Gateway = [defaultGateway];
+            Gateway = gatewayAddresses |> map toCompressed;
           };
 
-          routes = [
-            {
-              Gateway = defaultGateway;
-            }
-          ];
+          routes = gatewayAddresses |> map (pipeline [toCompressed (Gateway: {inherit Gateway;})]);
 
-          # [DHCP]
           dhcpConfig = {
             Hostname = toSentenceCase hostName;
             SendHostname = true;

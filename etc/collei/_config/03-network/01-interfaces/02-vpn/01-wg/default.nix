@@ -3,7 +3,7 @@
   lib,
   ...
 }: let
-  inherit (lib.alias) networks;
+  inherit (lib.alias) addresses networks;
   inherit (lib.extra.ip) toCIDR toCompressed;
   inherit (lib.extra.ip.address) singleHostRoute;
   inherit (lib.extra.url) mkInterface;
@@ -16,7 +16,8 @@ in {
     network = let
       name = "wg0";
       marker = 1010;
-      endpoint = mkInterface "2a00:5ba0:8009:5f40:1:b03f:2f2a:c1df" 50010;
+      endpoint = mkInterface remoteSite.hosts.beidou.ipv6.gua 50010;
+      remoteSite = addresses.on-prem.specht;
     in {
       netdevs = {
         "25-${name}" = {

@@ -1,5 +1,9 @@
-{lib, ...}: let
-  inherit (lib.alias) networks;
+{
+  hostName,
+  lib,
+  ...
+}: let
+  inherit (lib.alias) addresses networks;
   inherit (lib.extra.ip) toCompressed;
   inherit (lib.extra.ip.network) toPrefixGroups;
 in {
@@ -7,13 +11,14 @@ in {
     enable = true;
 
     settings = {
-      network = {
-        # Prefix 2a01:4f80:c0c0:6870::/64 has been provided as is by Hetzner.
-        gua.prefix = "2a01:04f8:0c0c:0687";
+      network = let
+        systemSite = addresses.provider.hetzner-cloud-server;
+      in {
+        gua = {
+          prefix = systemSite.hosts.${hostName}.managedNetworks.ipv6.gua |> toPrefixGroups;
+        };
 
         ula = {
-          # Prefix fd + a0:9527:68ee is generated randomly. The fourth hextet is
-          # derived from the zone name, yielding one deterministic /64 per zone.
           prefix = networks.aether.internal.net._meta.network |> toPrefixGroups;
           source = networks.aether.internal.net.hosts.collei |> toCompressed;
         };

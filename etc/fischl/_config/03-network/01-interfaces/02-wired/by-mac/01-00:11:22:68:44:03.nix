@@ -3,11 +3,19 @@
   lib,
   ...
 }: let
+  inherit (lib.alias) addresses;
+  inherit (lib.extra.ip) toCIDR toCompressed;
   inherit (lib.strings) toSentenceCase;
 in {
   systemd.network = {
     networks = {
-      "10-00:11:22:68:44:03" = {
+      "10-00:11:22:68:44:03" = let
+        gatewayAddresses = with systemSite.router; [ipv4.lan ipv6.ula];
+
+        hostAddresses = with systemSite.hosts.${hostName}; [ipv4.lan ipv6.ula];
+
+        systemSite = addresses.on-prem.storch;
+      in {
         matchConfig = {
           MACAddress = "00:11:22:68:44:03";
         };
@@ -17,26 +25,9 @@ in {
         };
 
         networkConfig = {
-          Gateway =
-            [
-              "192.168.1.1"
-            ]
-            ++ [
-              "fd60:a0ff:34b3:1::1" # ULA
-            ];
+          Address = hostAddresses |> map toCIDR;
 
-          Address =
-            [
-              "192.168.1.3/24"
-            ]
-            ++ [
-              # ────────────────────────────────────────────────────────────────────────
-              # NOTE: Subnet prefix was reused and Interface ID was generated randomly.
-              # ────────────────────────────────────────────────────────────────────────
-              # ´               ┌─────────► openssl rand -hex 8 | fold -w4 | paste -sd:
-              # ────────────────────────────────────────────────────────────────────────
-              "fd60:a0ff:34b3:1:3168:6440:959b:1aca/64" # ULA
-            ];
+          Gateway = gatewayAddresses |> map toCompressed;
         };
 
         dhcpConfig = {

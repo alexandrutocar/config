@@ -3,7 +3,7 @@
   lib,
   ...
 }: let
-  inherit (lib.alias) networks;
+  inherit (lib.alias) addresses networks;
   inherit (lib.extra.ip) toCIDR toCompressed;
   inherit (lib.extra.ip.address) singleHostRoute;
   inherit (lib.extra.url) mkInterface;
@@ -111,28 +111,31 @@ in {
         })
         definitions);
   in {
-    network = mkWireGuardVPN [
-      {
-        name = "wg-intra-ipv4";
-        marker = 1010;
-        endpoint = mkInterface "192.168.1.2" 50010;
-      }
-      {
-        name = "wg-intra-ipv6";
-        marker = 1020;
-        endpoint = mkInterface "fd4b:ad02:1b77:1:0020:61fc:3462:bf01" 50010;
-      }
-      {
-        name = "wg-inter-ipv4";
-        marker = 1030;
-        endpoint = mkInterface "212.201.75.101" 50010;
-      }
-      {
-        name = "wg-inter-ipv6";
-        marker = 1040;
-        endpoint = mkInterface "2a00:5ba0:8009:5f40:1:b03f:2f2a:c1df" 50010;
-      }
-    ];
+    network = let
+      remoteSite = addresses.on-prem.specht;
+    in
+      mkWireGuardVPN [
+        {
+          name = "wg-intra-ipv4";
+          marker = 1010;
+          endpoint = mkInterface remoteSite.hosts.beidou.ipv4.lan 50010;
+        }
+        {
+          name = "wg-intra-ipv6";
+          marker = 1020;
+          endpoint = mkInterface remoteSite.hosts.beidou.ipv6.ula 50010;
+        }
+        {
+          name = "wg-inter-ipv4";
+          marker = 1030;
+          endpoint = mkInterface remoteSite.router.ipv4.wan 50010;
+        }
+        {
+          name = "wg-inter-ipv6";
+          marker = 1040;
+          endpoint = mkInterface remoteSite.hosts.beidou.ipv6.gua 50010;
+        }
+      ];
   };
 
   # PERSISTENCE

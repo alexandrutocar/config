@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  inherit (lib.alias) networks;
+  inherit (lib.alias) addresses networks;
   inherit (lib.extra.ip) toCompressed toCIDR;
   inherit (lib.extra.url.interface) fromParts toNLnetLabs toNLnetLabsTLS;
   inherit (lib.lists) concatMap;
@@ -41,6 +41,8 @@ in {
             access-control = [
               # NOTE: Allow requests from inside the internal network (intra.net®).
               "${(networks.aether.internal.net._meta.network |> toCIDR)} allow"
+              # NOTE: Allow the host itself (Beidou) to use the resolver.
+              "${(addresses.on-prem.specht.hosts.beidou.ipv6.ula |> toCIDR)} allow"
             ];
           }
           {

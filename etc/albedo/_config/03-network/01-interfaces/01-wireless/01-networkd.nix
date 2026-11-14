@@ -3,39 +3,34 @@
   lib,
   ...
 }: let
+  inherit (lib.alias) addresses;
+  inherit (lib.extra.ip) toCIDR toCompressed;
   inherit (lib.strings) toSentenceCase;
 in {
   systemd.network = {
     networks = {
-      # Network Interface [+]
-      "25-wlan0" = {
-        # [Match]
+      "25-wlan0" = let
+        gatewayAddresses = with systemSite.router; [ipv4.lan ipv6.ula];
+
+        hostAddresses = with systemSite.hosts.${hostName}; [ipv4.lan ipv6.ula];
+
+        systemSite = addresses.on-prem.specht;
+      in {
         matchConfig = {
           Type = "wlan";
           SSID = "Specht";
         };
 
-        # [Link]
         linkConfig = {
           RequiredForOnline = "routable";
         };
 
-        # [Network]
         networkConfig = {
-          Address =
-            ["192.168.1.3/24"]
-            ++ [
-              "fd4b:ad02:1b77:1:e567:df0a:5754:97ed/64" # ULA
-            ];
+          Address = hostAddresses |> map toCIDR;
 
-          Gateway =
-            ["192.168.1.1"]
-            ++ [
-              "fd4b:ad02:1b77:1:e228:6dff:fe1d:8a9c" # ULA
-            ];
+          Gateway = gatewayAddresses |> map toCompressed;
         };
 
-        # [DHCP]
         dhcpConfig = {
           Hostname = toSentenceCase hostName;
           SendHostname = true;
