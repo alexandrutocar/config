@@ -11,6 +11,13 @@ in let
 
     ipv4 = {
       lan = fromCIDR 4 "192.168.1.0/24";
+
+      wan = let
+        AS3320 = {
+          DE-TELEKOM-20010806 = fromCIDR 4 "80.128.0.0/11";
+        };
+      in
+        hostAddress AS3320.DE-TELEKOM-20010806 (builtins.fromJSON (builtins.readFile ./_volatile/router.ipv4.wan.json));
     };
   };
 in {
