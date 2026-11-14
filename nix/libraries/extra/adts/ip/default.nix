@@ -1045,6 +1045,37 @@ final: super: {scope}: let
     inherit subnetAt;
 
     /*
+    * The /newLen subnet of a network selected by `bits`: an address (plain
+    * string or address data) in which only the bits between the network's
+    * prefix and newLen are set. Unlike subnetAt it has no 32-bit index limit.
+    *
+    * Example:
+    *   lib.extra.net.adt.ip.toCIDR (lib.extra.net.adt.ip.network.subnetFromBits (lib.extra.net.adt.ip.network.fromCIDR 6 "2a00:5ba0::/29") 64 "0:0:8009:5f40::")
+    *     -> "2a00:5ba0:8009:5f40::/64"
+    *   lib.extra.net.adt.ip.toCIDR (lib.extra.net.adt.ip.network.subnetFromBits (lib.extra.net.adt.ip.network.fromCIDR 4 "10.0.0.0/8") 24 "0.1.2.0")
+    *     -> "10.1.2.0/24"
+    *
+    * Implementation:
+    * - Adds the bits to the network words (no carry: the parts do not overlap).
+    *
+    * Edge cases:
+    * - Throws if `bits` sets any bit inside the network's prefix or beyond newLen.
+    */
+    subnetFromBits = n: newLen: bits:
+      _guard ["network" "subnetFromBits"] (let
+        n' = _expectNetwork n;
+        w = _wordsOf n';
+        bs = _addressWords n'.version "subnet bits string or IP address data" bits;
+      in
+        if !(isInt newLen) || newLen <= n'.prefixLength || newLen > w.totalBits
+        then throw "new prefix length must be an integer in (${toString n'.prefixLength}, ${toString w.totalBits}], got ${_show newLen}"
+        else if any (x: x != 0) (w.network bs n'.prefixLength)
+        then throw "subnet bits ${_show bits} overlap the /${toString n'.prefixLength} prefix of ${_cidr n'}"
+        else if w.hasHostBits bs newLen
+        then throw "subnet bits ${_show bits} set bits beyond /${toString newLen}"
+        else Network n'.version (genList (i: elemAt n'.words i + elemAt bs i) w.count) newLen);
+
+    /*
     * All /newLen subnets of a network, in ascending order.
     *
     * Example:
