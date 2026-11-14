@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.net.interface) mkInterface;
+  inherit (lib.extra) ip url;
   inherit (lib.modules) mkForce;
 in {
   networking = {
@@ -21,8 +21,10 @@ in {
       server = {
         chroot = mkForce "";
 
-        interface = [
-          (mkInterface sigil.self.addresses.gua 53)
+        interface = let
+          inherit (url.interface) fromParts toNLnetLabs;
+        in [
+          (toNLnetLabs (fromParts sigil.self.addresses.gua 53))
         ];
 
         server-count = 1;
@@ -32,7 +34,7 @@ in {
         identity = "COLLEI";
 
         metrics-enable = true;
-        metrics-interface = sigil.self.addresses.ula;
+        metrics-interface = sigil.self.addresses.ula |> ip.toCompressed;
       };
 
       remote-control = {
@@ -40,14 +42,16 @@ in {
       };
 
       zone = let
-        ip = {
-          dns = sigil.self.addresses.gua;
-          web = sigil.containers.porti.c8ac5cd5-7563-4e68-9dce-68bb11224eab.addresses.gua;
+        target = {
+          proxy = {
+            _main = sigil.containers.porti.c8ac5cd5-7563-4e68-9dce-68bb11224eab.addresses.gua |> ip.toCompressed;
+          };
+          dns = sigil.self.addresses.gua |> ip.toCompressed;
         };
       in [
         (pkgs.custom.writeAuthZone "ueuie.earth" {
-          AAAA = [
-            ip.web
+          AAAA = with target.proxy; [
+            _main
           ];
 
           SOA = {
@@ -66,21 +70,19 @@ in {
             "tara.ns.ueuie.earth."
           ];
 
-          subdomains = {
+          subdomains = let
+            AAAA = [
+              target.dns
+            ];
+          in {
             "vega.ns" = {
-              AAAA = [
-                ip.dns
-              ];
+              inherit AAAA;
             };
             "dara.ns" = {
-              AAAA = [
-                ip.dns
-              ];
+              inherit AAAA;
             };
             "tara.ns" = {
-              AAAA = [
-                ip.dns
-              ];
+              inherit AAAA;
             };
           };
         })

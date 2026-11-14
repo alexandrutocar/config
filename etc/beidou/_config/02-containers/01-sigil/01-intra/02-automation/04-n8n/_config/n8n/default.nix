@@ -6,9 +6,10 @@
 }: let
   inherit (lib.alias) networks;
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
-  inherit (lib.extra.ip) toCompressed;
+  inherit (lib.extra) ip;
+  inherit (lib.extra) url;
   inherit (lib.modules) mkMerge;
-  inherit (lib.strings) toInt;
+  inherit (lib.strings) concatStringsSep toInt;
 in {
   networking = {
     firewall = {
@@ -60,11 +61,19 @@ in {
           NODE_ENV = "production";
         }
         {
-          NO_PROXY = ".intra.net.internal,localhost,::1";
-          HTTPS_PROXY = "http://[${networks.aether.internal.net.hosts.beidou |> toCompressed}]:8888";
+          NO_PROXY = let
+            loopback = ip.wellKnown.loopback |> map ip.toCompressed;
+          in
+            concatStringsSep "," (loopback
+              ++ [
+                "ollama.ai.intra.net.internal"
+                "forge.dev.intra.net.internal"
+              ]);
+
+          HTTPS_PROXY = url.mkOrigin "http" networks.aether.internal.net.hosts.beidou 8888;
         }
         {
-          listen-address = sigil.self.addresses.ula;
+          listen-address = sigil.self.addresses.ula |> ip.toCompressed;
           proxy-hops = 1;
           host = "workflows.intra.net.internal";
           port = 8080;

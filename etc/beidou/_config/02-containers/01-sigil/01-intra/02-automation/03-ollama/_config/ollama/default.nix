@@ -3,8 +3,11 @@
   config,
   sigil,
   pkgs,
+  lib,
   ...
-}: {
+}: let
+  inherit (lib.extra) ip;
+in {
   networking = {
     firewall = {
       allowedTCPPorts = [config.services.ollama.port];
@@ -33,7 +36,7 @@
 
       package = pkgs.ollama-cuda;
 
-      host = "[${sigil.self.addresses.ula}]";
+      host = sigil.self.addresses.ula |> ip.toURIHost;
       port = 11434;
 
       user = "ollama";

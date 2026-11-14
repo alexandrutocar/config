@@ -1,4 +1,12 @@
-{sigil, ...}: let
+{
+  sigil,
+  lib,
+  ...
+}: let
+  inherit (lib.extra.ip) toCIDR toCompressed;
+  inherit (lib.attrsets) optionalAttrs;
+  inherit (lib.lists) optional;
+
   mkLCLinkName = bid: mid: "lc-${builtins.substring 0 12 (builtins.hashString "sha256" (bid + mid))}";
 in {
   systemd = {
@@ -9,12 +17,12 @@ in {
         selfIsA = sigil.self.mid < bridge.port.mid;
         selfLL =
           if selfIsA
-          then "fe80::a"
-          else "fe80::b";
+          then sigil.linkLocal.peerA
+          else sigil.linkLocal.peerB;
         peerLL =
           if selfIsA
-          then "fe80::b"
-          else "fe80::a";
+          then sigil.linkLocal.peerB
+          else sigil.linkLocal.peerA;
       in {
         "10-${Name}" = {
           matchConfig = {
@@ -23,15 +31,17 @@ in {
           networkConfig = {
             IPv6LinkLocalAddressGenerationMode = "none";
           };
-          address = ["${selfLL}/64"];
-          routes = [
+          address = [(toCIDR selfLL)];
+          routes = optional (bridge.port.addresses.ula != null) (
             {
-              Destination = "${bridge.port.addresses.ula}/128";
-              Gateway = peerLL;
+              Destination = toCIDR bridge.port.addresses.ula;
+              Gateway = toCompressed peerLL;
               GatewayOnLink = true;
-              PreferredSource = sigil.self.addresses.ula;
             }
-          ];
+            // optionalAttrs (sigil.self.addresses.ula != null) {
+              PreferredSource = toCompressed sigil.self.addresses.ula;
+            }
+          );
         };
       });
     };

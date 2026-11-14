@@ -2,10 +2,13 @@
   config,
   sigil,
   pkgs,
+  lib,
   ...
 }: let
+  inherit (lib.extra) ip url;
+in let
   serverDomain = "ueuie.earth";
-  serverOrigin = "https://${serverDomain}";
+  serverOrigin = url.mkDefaultOrigin "https" serverDomain;
 in let
   notesPackage = pkgs.notes serverOrigin;
 in {
@@ -15,7 +18,7 @@ in {
     virtualHosts = {
       ${serverOrigin} = {
         listenAddresses = [
-          "${sigil.self.addresses.gua}"
+          (sigil.self.addresses.gua |> ip.toCompressed)
         ];
 
         logFormat = ''

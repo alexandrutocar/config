@@ -4,9 +4,9 @@
   lib,
   ...
 }: let
-  inherit (lib.alias) networks;
-  inherit (lib.extra.ip) toCompressed toCIDR;
-  inherit (lib.extra.net.interface) mkInterface;
+  inherit (lib.alias) addresses networks resolvers;
+  inherit (lib.extra) ip url;
+  inherit (lib.lists) concatMap;
   inherit (lib.modules) mkMerge;
 in {
   networking = {
@@ -28,8 +28,10 @@ in {
       settings = {
         server = mkMerge [
           {
-            interface = [
-              (mkInterface sigil.self.addresses.ula 53)
+            interface = let
+              inherit (url.interface) fromParts toNLnetLabs;
+            in [
+              (toNLnetLabs (fromParts sigil.self.addresses.ula 53))
             ];
 
             do-udp = true;
@@ -39,7 +41,9 @@ in {
             # https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html#unbound-conf-access-control
             access-control = [
               # NOTE: Allow requests from inside the internal network (intra.net®).
-              "${(networks.aether.internal.net._meta.network |> toCIDR)} allow"
+              "${(networks.aether.internal.net._meta.network |> ip.toCIDR)} allow"
+              # NOTE: Allow the host itself (Beidou) to use the resolver.
+              "${(addresses.on-prem.specht.hosts.beidou.ipv6.ula |> ip.toCIDR)} allow"
             ];
           }
           {
@@ -106,21 +110,32 @@ in {
 
             forward-tls-upstream = true;
 
-            forward-addr = [
-              "2606:4700:4700::1111#one.one.one.one"
-              "2606:4700:4700::1001#one.one.one.one"
-            ];
+            forward-addr = let
+              usedResolvers = [
+                # Cloudflare
+                # ----------
+                {
+                  sniHostname = "one.one.one.one";
+                  ipAddresses = resolvers.cloudflare.standard.ipv6 |> map (a: url.mkInterface a 853);
+                }
+              ];
+            in
+              usedResolvers |> concatMap (r: r.ipAddresses |> map (url.interface.toNLnetLabsTLS r.sniHostname));
           }
         ];
 
         auth-zone = let
-          ip = {
-            dns = sigil.self.addresses.ula;
-            web = sigil.containers.intra.e079b57e-4727-4408-8c33-39abaae975d9.addresses.ula;
+          target = {
+            proxy = {
+              _main = sigil.containers.intra.e079b57e-4727-4408-8c33-39abaae975d9.addresses.ula |> ip.toCompressed;
+            };
+            dns = sigil.self.addresses.ula |> ip.toCompressed;
           };
         in [
           (pkgs.custom.writeAuthZone "intra.net.internal" {
-            AAAA = [ip.web];
+            AAAA = with target.proxy; [
+              _main
+            ];
 
             SOA = {
               nameServer = "beidou.ns.intra.net.internal.";
@@ -134,54 +149,47 @@ in {
 
             NS = ["beidou.ns.intra.net.internal."];
 
-            subdomains = mkMerge [
-              {
-                "beidou.ns" = {
-                  AAAA = [
-                    ip.dns
+            subdomains = let
+              AAAA = with target.proxy; [
+                _main
+              ];
+            in
+              mkMerge [
+                {
+                  "beidou.ns" = {
+                    inherit AAAA;
+                  };
+                }
+                {
+                  "directory" = {
+                    inherit AAAA;
+                  };
+                  "forge.dev" = {
+                    inherit AAAA;
+                  };
+                  "ollama.ai" = {
+                    inherit AAAA;
+                  };
+                  "pocket-id" = {
+                    inherit AAAA;
+                  };
+                  "proxy.uni" = {
+                    inherit AAAA;
+                  };
+                  "workflows" = {
+                    inherit AAAA;
+                  };
+                }
+                (let
+                  AAAA = with target.proxy; [
+                    _main
                   ];
-                };
-              }
-              {
-                "directory" = {
-                  AAAA = [
-                    ip.web
-                  ];
-                };
-                "forge.dev" = {
-                  AAAA = [
-                    ip.web
-                  ];
-                };
-                "ollama.ai" = {
-                  AAAA = [
-                    ip.web
-                  ];
-                };
-                "pocket-id" = {
-                  AAAA = [
-                    ip.web
-                  ];
-                };
-                "proxy.uni" = {
-                  AAAA = [
-                    ip.web
-                  ];
-                };
-                "workflows" = {
-                  AAAA = [
-                    ip.web
-                  ];
-                };
-              }
-              (let
-                AAAA = [ip.web];
-              in {
-                "music" = {
-                  inherit AAAA;
-                };
-              })
-            ];
+                in {
+                  "music" = {
+                    inherit AAAA;
+                  };
+                })
+              ];
           })
           (pkgs.custom.writeAuthZone "hosts.net.internal" {
             SOA = {
@@ -199,35 +207,35 @@ in {
             subdomains = mkMerge [
               {
                 "beidou.ns" = {
-                  AAAA = [
-                    ip.dns
+                  AAAA = with target; [
+                    dns
                   ];
                 };
               }
               {
                 "albedo" = {
                   AAAA = [
-                    (networks.aether.internal.net.hosts.albedo |> toCompressed)
+                    (networks.aether.internal.net.hosts.albedo |> ip.toCompressed)
                   ];
                 };
                 "beidou" = {
                   AAAA = [
-                    (networks.aether.internal.net.hosts.beidou |> toCompressed)
+                    (networks.aether.internal.net.hosts.beidou |> ip.toCompressed)
                   ];
                 };
                 "collei" = {
                   AAAA = [
-                    (networks.aether.internal.net.hosts.collei |> toCompressed)
+                    (networks.aether.internal.net.hosts.collei |> ip.toCompressed)
                   ];
                 };
                 "fischl" = {
                   AAAA = [
-                    (networks.aether.internal.net.hosts.fischl |> toCompressed)
+                    (networks.aether.internal.net.hosts.fischl |> ip.toCompressed)
                   ];
                 };
                 "keqing" = {
                   AAAA = [
-                    (networks.aether.internal.net.hosts.keqing |> toCompressed)
+                    (networks.aether.internal.net.hosts.keqing |> ip.toCompressed)
                   ];
                 };
               }

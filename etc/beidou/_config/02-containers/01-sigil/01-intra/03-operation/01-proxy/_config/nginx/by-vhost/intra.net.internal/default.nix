@@ -5,6 +5,7 @@
   ...
 }: let
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
+  inherit (lib.extra) ip url;
 in let
   extraConfig = ''
     access_log /var/log/nginx/intra.net.internal.access.log analytics;
@@ -50,7 +51,7 @@ in {
 
       listen = [
         {
-          addr = "[${sigil.self.addresses.ula}]";
+          addr = sigil.self.addresses.ula |> ip.toURIHost;
           port = 443;
           ssl = true;
         }
@@ -62,7 +63,7 @@ in {
 
       listen = [
         {
-          addr = "[${sigil.self.addresses.ula}]";
+          addr = sigil.self.addresses.ula |> ip.toURIHost;
           port = 443;
           ssl = true;
         }
@@ -70,7 +71,7 @@ in {
 
       locations = {
         "/" = {
-          proxyPass = "http://[${sigil.containers.intra."a8e714de-f158-49fc-958a-9176f25d2973".addresses.ula}]:8080";
+          proxyPass = url.mkOrigin "http" sigil.containers.intra."a8e714de-f158-49fc-958a-9176f25d2973".addresses.ula 8080;
         };
         "/.well-known/apple-device-configuration/intra.net.mobileconfig" = let
           inherit (lib.generators) mkPlistData;
