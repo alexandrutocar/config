@@ -5,8 +5,7 @@
   ...
 }: let
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
-  inherit (lib.extra.ip) toCompressed wellKnown;
-  inherit (lib.extra.url) mkOrigin;
+  inherit (lib.extra) ip url;
   inherit (lib.modules) mkMerge;
 in {
   networking = {
@@ -55,7 +54,7 @@ in {
       }
       # Server
       {
-        HOST = sigil.self.addresses.ula |> toCompressed;
+        HOST = sigil.self.addresses.ula |> ip.toCompressed;
         PORT = 8081;
       }
       # Service
@@ -70,7 +69,7 @@ in {
       {
         LDAP_ENABLED = true;
 
-        LDAP_URL = mkOrigin "ldap" wellKnown.ipv6.loopback 3890;
+        LDAP_URL = url.mkOrigin "ldap" ip.wellKnown.ipv6.loopback 3890;
 
         LDAP_BASE = "dc=intra,dc=net,dc=internal";
         LDAP_BIND_DN = "cn=pocket-id,ou=people,dc=intra,dc=net,dc=internal";

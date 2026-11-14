@@ -1,11 +1,11 @@
 {lib, ...}: let
-  inherit (lib.extra.ip) toURIHost wellKnown;
+  inherit (lib.extra) ip;
 in {
   services.tor.relay.onionServices = {
     notes = {
       version = 3;
       map = let
-        loopbackAddresses = wellKnown.loopback |> map toURIHost;
+        loopbackAddresses = ip.wellKnown.loopback |> map ip.toURIHost;
       in
         loopbackAddresses
         |> map (

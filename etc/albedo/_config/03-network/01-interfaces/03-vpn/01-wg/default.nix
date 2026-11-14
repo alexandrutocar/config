@@ -4,9 +4,7 @@
   ...
 }: let
   inherit (lib.alias) addresses networks;
-  inherit (lib.extra.ip) toCIDR toCompressed;
-  inherit (lib.extra.ip.address) singleHostRoute;
-  inherit (lib.extra.url) mkInterface;
+  inherit (lib.extra) ip url;
   inherit (lib.modules) mkMerge;
 in let
   containers.beidou = {
@@ -42,7 +40,7 @@ in {
                   Endpoint = endpoint;
 
                   AllowedIPs = [
-                    (networks.aether.internal.net._meta.network |> toCIDR)
+                    (networks.aether.internal.net._meta.network |> ip.toCIDR)
                   ];
 
                   RouteTable = "off";
@@ -60,14 +58,14 @@ in {
               };
 
               address = [
-                (networks.aether.internal.net.hosts.albedo |> singleHostRoute |> toCIDR)
+                (networks.aether.internal.net.hosts.albedo |> ip.address.singleHostRoute |> ip.toCIDR)
               ];
 
               networkConfig = {
                 DNSDefaultRoute = true;
 
                 DNS = [
-                  (containers.beidou.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a.addresses.ula |> toCompressed)
+                  (containers.beidou.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a.addresses.ula |> ip.toCompressed)
                 ];
 
                 Domains =
@@ -96,7 +94,7 @@ in {
 
               routes = [
                 {
-                  Destination = networks.aether.internal.net._meta.network |> toCIDR;
+                  Destination = networks.aether.internal.net._meta.network |> ip.toCIDR;
                   Table = marker;
                   Scope = "link";
                 }
@@ -118,22 +116,22 @@ in {
         {
           name = "wg-intra-ipv4";
           marker = 1010;
-          endpoint = mkInterface remoteSite.hosts.beidou.ipv4.lan 50010;
+          endpoint = url.mkInterface remoteSite.hosts.beidou.ipv4.lan 50010;
         }
         {
           name = "wg-intra-ipv6";
           marker = 1020;
-          endpoint = mkInterface remoteSite.hosts.beidou.ipv6.ula 50010;
+          endpoint = url.mkInterface remoteSite.hosts.beidou.ipv6.ula 50010;
         }
         {
           name = "wg-inter-ipv4";
           marker = 1030;
-          endpoint = mkInterface remoteSite.router.ipv4.wan 50010;
+          endpoint = url.mkInterface remoteSite.router.ipv4.wan 50010;
         }
         {
           name = "wg-inter-ipv6";
           marker = 1040;
-          endpoint = mkInterface remoteSite.hosts.beidou.ipv6.gua 50010;
+          endpoint = url.mkInterface remoteSite.hosts.beidou.ipv6.gua 50010;
         }
       ];
   };

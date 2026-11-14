@@ -4,7 +4,7 @@
   ...
 }: let
   inherit (lib.alias) addresses;
-  inherit (lib.extra.ip) toCIDR toCompressed;
+  inherit (lib.extra) ip;
   inherit (lib.strings) toSentenceCase;
 in {
   systemd.network = {
@@ -26,9 +26,9 @@ in {
         };
 
         networkConfig = {
-          Address = hostAddresses |> map toCIDR;
+          Address = hostAddresses |> map ip.toCIDR;
 
-          Gateway = gatewayAddresses |> map toCompressed;
+          Gateway = gatewayAddresses |> map ip.toCompressed;
         };
 
         dhcpConfig = {

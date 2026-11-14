@@ -4,9 +4,7 @@
   ...
 }: let
   inherit (lib.alias) networks;
-  inherit (lib.extra.ip) ranges toCIDR;
-  inherit (lib.extra.ip.address) singleHostRoute;
-  inherit (lib.extra.ip.network) getFirstHost;
+  inherit (lib.extra) ip;
 in {
   systemd = {
     network = {
@@ -21,11 +19,11 @@ in {
                 networks.aether.internal.net.hosts.${hostName}
               ];
             in
-              ula |> map singleHostRoute;
+              ula |> map ip.address.singleHostRoute;
 
-            loopbackAddresses = map getFirstHost ranges.loopback;
+            loopbackAddresses = map ip.network.getFirstHost ip.ranges.loopback;
           in
-            identityAddresses ++ loopbackAddresses |> map toCIDR;
+            identityAddresses ++ loopbackAddresses |> map ip.toCIDR;
         };
       };
     };

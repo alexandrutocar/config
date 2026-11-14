@@ -1,6 +1,6 @@
 {lib, ...}: let
   inherit (lib.alias) resolvers;
-  inherit (lib.extra.ip) toCompressed;
+  inherit (lib.extra) ip;
   inherit (lib.extra.trivial) pipeline;
   inherit (lib.modules) mkForce;
   inherit (lib.strings) concatLines;
@@ -14,7 +14,7 @@ in {
   networking.resolvconf.enable = false;
 
   environment.etc."resolv.conf".text = let
-    content = resolvers.cloudflare.standard.ipv6 |> map (pipeline [toCompressed (a: "nameserver ${a}")]) |> concatLines;
+    content = resolvers.cloudflare.standard.ipv6 |> map (pipeline [ip.toCompressed (a: "nameserver ${a}")]) |> concatLines;
   in
     mkForce content;
 

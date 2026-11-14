@@ -5,8 +5,7 @@
   ...
 }: let
   inherit (lib.extra.cs.systemd) mkSetCredentialEncrypted;
-  inherit (lib.extra.ip) toURIHost;
-  inherit (lib.extra.url) mkOrigin;
+  inherit (lib.extra) ip url;
 in {
   networking = {
     firewall = {
@@ -58,7 +57,7 @@ in {
         # Auth
         # ----
         AUTH_METHOD = "LDAP";
-        LDAP_AUTH_URL = mkOrigin "ldap" sigil.containers.intra."c38a828e-58a7-49af-894d-ba02f936d211".addresses.ula 3890;
+        LDAP_AUTH_URL = url.mkOrigin "ldap" sigil.containers.intra."c38a828e-58a7-49af-894d-ba02f936d211".addresses.ula 3890;
         LDAP_DN_PATTERN = "uid=%u,ou=people,dc=intra,dc=net,dc=internal";
         LDAP_MAIL_ATTRIBUTE = "mail";
         LDAP_AUTH_USER_AUTOCREATE = "true";
@@ -98,7 +97,7 @@ in {
       nginx = {
         listen = [
           {
-            addr = sigil.self.addresses.ula |> toURIHost;
+            addr = sigil.self.addresses.ula |> ip.toURIHost;
             port = 8080;
           }
         ];

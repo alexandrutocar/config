@@ -3,7 +3,7 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.ip) toCompressed wellKnown;
+  inherit (lib.extra) ip;
 in {
   networking = {
     firewall = {
@@ -17,7 +17,7 @@ in {
     enable = true;
     settings = {
       "@type" = "PostgreSql";
-      host = wellKnown.ipv6.loopback |> toCompressed;
+      host = ip.wellKnown.ipv6.loopback |> ip.toCompressed;
       authSecret = {
         "@type" = "None";
       };

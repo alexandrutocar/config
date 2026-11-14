@@ -5,7 +5,7 @@
   ...
 }: let
   inherit (lib.alias) networks;
-  inherit (lib.extra.ip) toCompressed;
+  inherit (lib.extra) ip;
 in {
   networking = {
     firewall = {
@@ -18,14 +18,17 @@ in {
       enable = true;
 
       settings = {
-        Listen = networks.aether.internal.net.hosts.beidou |> toCompressed;
+        Listen = networks.aether.internal.net.hosts.beidou |> ip.toCompressed;
 
         Port = 8888;
 
-        Allow = map toCompressed [
-          config.services.sigil.settings.containers.intra."a4205b50-197a-40c8-8057-fe1394630e91".addresses.ula # intra/automation/n8n
-          config.services.sigil.settings.containers.intra."fe616e36-c9d0-4ba9-8938-436e75ef0dc0".addresses.ula # intra/development/actions
-        ];
+        Allow = let
+          allowList = with config.services.sigil.settings.containers.intra; [
+            a4205b50-197a-40c8-8057-fe1394630e91.addresses.ula # intra/automation/n8n
+            fe616e36-c9d0-4ba9-8938-436e75ef0dc0.addresses.ula # intra/development/actions
+          ];
+        in
+          allowList |> map ip.toCompressed;
 
         ConnectPort = [
           443 # HTTPS

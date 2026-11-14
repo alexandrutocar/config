@@ -6,8 +6,8 @@
 }: let
   inherit (lib.alias) networks;
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
-  inherit (lib.extra.ip) toCompressed wellKnown;
-  inherit (lib.extra.url) mkOrigin;
+  inherit (lib.extra) ip;
+  inherit (lib.extra) url;
   inherit (lib.modules) mkMerge;
   inherit (lib.strings) concatStringsSep toInt;
 in {
@@ -62,7 +62,7 @@ in {
         }
         {
           NO_PROXY = let
-            loopback = wellKnown.loopback |> map toCompressed;
+            loopback = ip.wellKnown.loopback |> map ip.toCompressed;
           in
             concatStringsSep "," (loopback
               ++ [
@@ -70,10 +70,10 @@ in {
                 "forge.dev.intra.net.internal"
               ]);
 
-          HTTPS_PROXY = mkOrigin "http" networks.aether.internal.net.hosts.beidou 8888;
+          HTTPS_PROXY = url.mkOrigin "http" networks.aether.internal.net.hosts.beidou 8888;
         }
         {
-          listen-address = sigil.self.addresses.ula |> toCompressed;
+          listen-address = sigil.self.addresses.ula |> ip.toCompressed;
           proxy-hops = 1;
           host = "workflows.intra.net.internal";
           port = 8080;

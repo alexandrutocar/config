@@ -5,8 +5,7 @@
 }: let
   inherit (lib.alias) networks;
   inherit (lib.attrsets) attrValues;
-  inherit (lib.extra.ip) toCIDR;
-  inherit (lib.extra.ip.address) fromString singleHostRoute;
+  inherit (lib.extra) ip;
   inherit (lib.lists) concatMap filter optionals unique;
   inherit (lib.strings) concatLines concatMapStringsSep;
 in let
@@ -30,9 +29,9 @@ in let
     getContainerIPsOnHost = name:
       spokeContainers
       |> filter (e: e.host == name)
-      |> map (e: (fromString 6 e.addr) |> singleHostRoute |> toCIDR);
+      |> map (e: (ip.address.fromString 6 e.addr) |> ip.address.singleHostRoute |> ip.toCIDR);
 
-    getHostIP = name: networks.aether.internal.net.hosts.${name} |> singleHostRoute |> toCIDR;
+    getHostIP = name: networks.aether.internal.net.hosts.${name} |> ip.address.singleHostRoute |> ip.toCIDR;
   in {
     albedo = {
       PersistentKeepalive = 25;

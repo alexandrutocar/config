@@ -4,8 +4,7 @@
   ...
 }: let
   inherit (lib.alias) addresses networks;
-  inherit (lib.extra.ip) toCompressed;
-  inherit (lib.extra.ip.network) toPrefixGroups;
+  inherit (lib.extra) ip;
 in {
   services.sigil = {
     enable = true;
@@ -15,12 +14,12 @@ in {
         systemSite = addresses.on-prem.specht;
       in {
         gua = {
-          prefix = systemSite.hosts.${hostName}.managedNetworks.ipv6.gua |> toPrefixGroups;
+          prefix = systemSite.hosts.${hostName}.managedNetworks.ipv6.gua |> ip.network.toPrefixGroups;
         };
 
         ula = {
-          prefix = networks.aether.internal.net._meta.network |> toPrefixGroups;
-          source = networks.aether.internal.net.hosts.beidou |> toCompressed;
+          prefix = networks.aether.internal.net._meta.network |> ip.network.toPrefixGroups;
+          source = networks.aether.internal.net.hosts.beidou |> ip.toCompressed;
         };
       };
     };

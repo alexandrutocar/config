@@ -5,7 +5,7 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.ip) toURIHost;
+  inherit (lib.extra) ip;
   inherit (lib.modules) mkMerge;
 in {
   networking = {
@@ -32,7 +32,7 @@ in {
       settings = mkMerge [
         {
           DataFolder = "/var/lib/navidrome";
-          Address = sigil.self.addresses.ula |> toURIHost;
+          Address = sigil.self.addresses.ula |> ip.toURIHost;
           Port = 8080;
         }
         {

@@ -5,8 +5,7 @@
   ...
 }: let
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
-  inherit (lib.extra.ip) toURIHost;
-  inherit (lib.extra.url) mkOrigin;
+  inherit (lib.extra) ip url;
 in let
   extraConfig = ''
     access_log /var/log/nginx/music.intra.net.internal.access.log analytics;
@@ -43,7 +42,7 @@ in {
 
       listen = [
         {
-          addr = sigil.self.addresses.ula |> toURIHost;
+          addr = sigil.self.addresses.ula |> ip.toURIHost;
           port = 443;
           ssl = true;
         }
@@ -54,7 +53,7 @@ in {
           extraConfig = ''
             proxy_buffering off;
           '';
-          proxyPass = mkOrigin "http" sigil.containers.intra."fecc0d40-eb4e-43d4-b0ef-c0627fcce582".addresses.ula 8080;
+          proxyPass = url.mkOrigin "http" sigil.containers.intra."fecc0d40-eb4e-43d4-b0ef-c0627fcce582".addresses.ula 8080;
         };
       };
     };

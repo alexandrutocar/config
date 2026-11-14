@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.ip) toCompressed;
+  inherit (lib.extra) ip;
 
   containers.beidou = {
     inherit (self.nixosConfigurations.beidou.config.services.sigil.settings.containers.porti) a8dd2ef7-86c8-4a7e-af8a-b3f98a2f31d3;
@@ -22,7 +22,7 @@ in {
     enable = false;
     settings = {
       "@type" = "PostgreSql";
-      host = containers.beidou.a8dd2ef7-86c8-4a7e-af8a-b3f98a2f31d3.addresses.ula |> toCompressed;
+      host = containers.beidou.a8dd2ef7-86c8-4a7e-af8a-b3f98a2f31d3.addresses.ula |> ip.toCompressed;
       authSecret = {
         "@type" = "None";
       };

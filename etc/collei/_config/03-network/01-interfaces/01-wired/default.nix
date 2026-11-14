@@ -4,8 +4,7 @@
   ...
 }: let
   inherit (lib.alias) addresses;
-  inherit (lib.extra.ip) ranges toCIDR toCompressed;
-  inherit (lib.extra.ip.network) getFirstHost;
+  inherit (lib.extra) ip;
   inherit (lib.extra.trivial) pipeline;
   inherit (lib.strings) toSentenceCase;
 in {
@@ -14,7 +13,7 @@ in {
       networks = {
         "30-enp1s0" = let
           gatewayAddresses = let
-            ll = (builtins.head ranges.ipv6.linkLocal) |> getFirstHost;
+            ll = (builtins.head ip.ranges.ipv6.linkLocal) |> ip.network.getFirstHost;
           in [
             ll
           ];
@@ -28,12 +27,12 @@ in {
           };
 
           networkConfig = {
-            Address = hostAddresses |> map toCIDR;
+            Address = hostAddresses |> map ip.toCIDR;
 
-            Gateway = gatewayAddresses |> map toCompressed;
+            Gateway = gatewayAddresses |> map ip.toCompressed;
           };
 
-          routes = gatewayAddresses |> map (pipeline [toCompressed (Gateway: {inherit Gateway;})]);
+          routes = gatewayAddresses |> map (pipeline [ip.toCompressed (Gateway: {inherit Gateway;})]);
 
           dhcpConfig = {
             Hostname = toSentenceCase hostName;

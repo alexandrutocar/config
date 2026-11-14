@@ -4,7 +4,7 @@
 # ────────────────────────────────────────────────────────────────────────
 {lib, ...}: let
   inherit (lib.alias) networks;
-  inherit (lib.extra.ip) toCompressed;
+  inherit (lib.extra) ip;
 in {
   networking = {
     firewall = {
@@ -19,7 +19,7 @@ in {
       enable = true;
 
       exports = ''
-        /export             ${(networks.aether.internal.net.hosts.albedo |> toCompressed)}(rw,fsid=0,no_subtree_check)
+        /export             ${(networks.aether.internal.net.hosts.albedo |> ip.toCompressed)}(rw,fsid=0,no_subtree_check)
       '';
     };
   };

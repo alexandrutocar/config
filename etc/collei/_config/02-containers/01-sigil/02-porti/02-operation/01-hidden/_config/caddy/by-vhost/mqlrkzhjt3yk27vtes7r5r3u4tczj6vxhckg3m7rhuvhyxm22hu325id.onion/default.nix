@@ -3,11 +3,10 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.ip) toCompressed wellKnown;
-  inherit (lib.extra.url) mkDefaultOrigin;
+  inherit (lib.extra) ip url;
 in let
   serverDomain = "mqlrkzhjt3yk27vtes7r5r3u4tczj6vxhckg3m7rhuvhyxm22hu325id.onion";
-  serverOrigin = mkDefaultOrigin "http" serverDomain;
+  serverOrigin = url.mkDefaultOrigin "http" serverDomain;
 in let
   notesPackage = pkgs.notes serverOrigin;
 in {
@@ -17,7 +16,7 @@ in {
     virtualHosts = {
       ${serverOrigin} = {
         listenAddresses = [
-          (wellKnown.ipv6.loopback |> toCompressed)
+          (ip.wellKnown.ipv6.loopback |> ip.toCompressed)
         ];
 
         # ────────────────────────────────────────────────────────────────────────

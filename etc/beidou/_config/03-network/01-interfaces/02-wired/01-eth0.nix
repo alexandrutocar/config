@@ -5,7 +5,7 @@
   ...
 }: let
   inherit (lib.alias) addresses;
-  inherit (lib.extra.ip) toCIDR toCompressed;
+  inherit (lib.extra) ip;
   inherit (lib.strings) toSentenceCase;
 in let
   containers.beidou = {
@@ -33,7 +33,7 @@ in {
           DNSDefaultRoute = true;
 
           DNS = [
-            (containers.beidou.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a.addresses.ula |> toCompressed)
+            (containers.beidou.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a.addresses.ula |> ip.toCompressed)
           ];
 
           Domains =
@@ -43,9 +43,9 @@ in {
             ]
             ++ ["~."];
 
-          Address = hostAddresses |> map toCIDR;
+          Address = hostAddresses |> map ip.toCIDR;
 
-          Gateway = gatewayAddresses |> map toCompressed;
+          Gateway = gatewayAddresses |> map ip.toCompressed;
         };
 
         dhcpConfig = {
