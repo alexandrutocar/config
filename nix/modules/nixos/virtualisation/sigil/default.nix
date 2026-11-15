@@ -35,7 +35,7 @@ in {
     inherit (lib.extra.types.ip) addressWith networkWith;
     inherit (lib.extra.files.list) recursive;
     inherit (lib.attrsets) attrByPath attrValues mapAttrs mergeAttrsList;
-    inherit (lib.lists) concatMap elemAt foldl' length singleton sort;
+    inherit (lib.lists) any concatMap elemAt foldl' length optional singleton sort;
     inherit (lib.modules) mkBefore;
     inherit (lib.options) literalExpression mkEnableOption mkOption;
     inherit (lib.types) attrsOf deferredModule listOf mkOptionType nullOr raw str submodule;
@@ -52,6 +52,13 @@ in {
         inherit within;
         singleHost = true;
       };
+
+    # HOST PARTS
+    # ----------
+    # Addresses set by the user are written as host parts: the low 64
+    # bits only ("::10"), i.e. single hosts within ::/64. `apply` puts
+    # them on their /64, so they read back as full addresses.
+    hostParts = ip.network.fromCIDR 6 "::/64";
   in {
     services.sigil = {
       enable = mkEnableOption "sigil";
@@ -85,7 +92,7 @@ in {
                     config,
                     name,
                     ...
-                  }: {
+                  } @ containerArgs: {
                     options = let
                       # EVALUATION
                       # ----------
@@ -142,21 +149,39 @@ in {
                       addresses = {
                         ipv6 = {
                           gua = mkOption {
-                            type = nullOr (singleHostWithin ip.ranges.ipv6.globalUnicast);
+                            type = nullOr (singleHostWithin hostParts);
                             default =
                               if cfg.settings.network.gua.prefix == null
                               then null
-                              else getHostAddress cfg.settings.network.gua.prefix config.mid;
+                              else getHostAddress hostParts config.mid;
                             defaultText = literalExpression ''
                               if config.services.sigil.settings.network.gua.prefix == null
                               then null
-                              else <gua prefix>:<iid>/128
+                              else "::<iid>"
                               # <iid>: first 16 hex digits of sha256(mid)
                             '';
+                            example = "::10";
+                            apply = hostPart: let
+                              prefix = cfg.settings.network.gua.prefix;
+                            in
+                              if hostPart == null
+                              then null
+                              else if prefix == null
+                              then throw "sigil: ${config.group}/${config.mid} sets addresses.ipv6.gua, but settings.network.gua.prefix is not set"
+                              else ip.address.singleHostRoute (ip.network.hostAddress prefix hostPart);
                             description = ''
-                              Globally routable address of the container, as
-                              `lib.extra.ip` address data (/128, within 2000::/3).
-                              Render with `lib.extra.ip.toCompressed` or `toCIDR`.
+                              Globally routable address of the container.
+
+                              Set as a host part on `settings.network.gua.prefix`,
+                              e.g. `"::10"`. It reads back as the full address, as
+                              `lib.extra.ip` address data (/128). Render with
+                              `lib.extra.ip.toCompressed` or `toCIDR`.
+
+                              Defaults to the container's derived interface
+                              identifier when a GUA prefix is set, and to null
+                              otherwise. Set it to null to opt out. Setting it
+                              without a GUA prefix is an error, and so is the
+                              host part `::` (the subnet-router anycast address).
                             '';
                           };
 
@@ -180,6 +205,25 @@ in {
                             '';
                           };
                         };
+                      };
+
+                      addressesWithoutPrefix = mkOption {
+                        type = listOf str;
+                        internal = true;
+                        visible = false;
+                        readOnly = true;
+                        # Read from the raw definitions, so nothing is resolved
+                        # (resolving a host part without its prefix throws).
+                        default = optional (
+                          cfg.settings.network.gua.prefix
+                          == null
+                          && any (hostPart: hostPart != null) containerArgs.options.addresses.ipv6.gua.definitions
+                        ) "gua";
+                        description = ''
+                          Labels (relative to `addresses.ipv6`) of host parts this
+                          container sets although their prefix is not configured.
+                          Collected by an assertion that lists every such container.
+                        '';
                       };
 
                       group = mkOption {
@@ -407,9 +451,9 @@ in {
               example = "2001:db8:1:2::/64";
               description = ''
                 A /64 GUA prefix managed by the host, within 2000::/3. Given as
-                CIDR or as its four groups (`"2001:db8:1:2"`). When null,
-                containers get no globally routable address and are reachable
-                only via ULA.
+                CIDR or as its four groups (`"2001:db8:1:2"`). Containers' GUAs
+                are host parts on it. When null, containers get no globally
+                routable address and are reachable only via ULA.
               '';
             };
           };
@@ -445,7 +489,7 @@ in {
   config = let
     inherit (lib.extra) ip;
     inherit (lib.attrsets) attrValues filterAttrs mapAttrsToList mergeAttrsList;
-    inherit (lib.lists) all concatLists concatMap foldl' groupBy length optional singleton unique;
+    inherit (lib.lists) all concatLists concatMap elem foldl' groupBy length optional singleton unique;
     inherit (lib.modules) mkIf mkMerge;
     inherit (lib.strings) concatStringsSep;
   in let
@@ -518,7 +562,8 @@ in {
                         address = container.addresses.ipv6.ula;
                       }
                     ]
-                    ++ optional (container.addresses.ipv6.gua != null) {
+                    # Skip a GUA that cannot be resolved.
+                    ++ optional (!(elem "gua" container.addressesWithoutPrefix) && container.addresses.ipv6.gua != null) {
                       label = "gua";
                       address = container.addresses.ipv6.gua;
                     }
@@ -534,6 +579,24 @@ in {
                   |> filterAttrs (_: entries: length entries > 1);
 
                 describeClash = address: entries: "  ${address}: ${concatStringsSep ", " (entries |> map (entry: "${entry.container} (${entry.label})"))}";
+
+                describeContainer = container: label: "${container.group}/${container.mid} (${label})";
+
+                # Host parts set although their prefix is missing.
+                withoutPrefix =
+                  containers.lib.mapToList (container:
+                    map (describeContainer container) container.addressesWithoutPrefix);
+
+                # The all-zero host part is the subnet-router anycast address.
+                subnetRouterAnycast = containers.lib.mapToList (container: let
+                  inherit (container.addresses.ipv6) gua;
+                in
+                  optional (
+                    container.addressesWithoutPrefix
+                    == []
+                    && gua != null
+                    && ip.toCompressed gua == ip.toCompressed (ip.network.getNetworkAddress cfg.settings.network.gua.prefix)
+                  ) (describeContainer container "gua"));
               in [
                 {
                   assertion = let
@@ -545,6 +608,14 @@ in {
                 {
                   assertion = all (c: builtins.match "[0-9a-f-]{36}" c.mid != null) containers.all;
                   message = "sigil: Machine ID (MID) must be a UUID (passed to --uuid=)";
+                }
+                {
+                  assertion = withoutPrefix == [];
+                  message = "sigil: settings.network.gua.prefix is not set, but GUA host parts are: ${concatStringsSep ", " withoutPrefix}";
+                }
+                {
+                  assertion = subnetRouterAnycast == [];
+                  message = "sigil: host part :: is the subnet-router anycast address and cannot be a container address: ${concatStringsSep ", " subnetRouterAnycast}";
                 }
                 {
                   assertion = clashes == {};
