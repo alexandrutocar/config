@@ -34,8 +34,8 @@ in {
     inherit (lib.extra) ip;
     inherit (lib.extra.types.ip) addressWith networkWith;
     inherit (lib.extra.files.list) recursive;
-    inherit (lib.attrsets) attrByPath attrValues mapAttrs mergeAttrsList;
-    inherit (lib.lists) any concatMap elemAt foldl' length optional singleton sort;
+    inherit (lib.attrsets) attrByPath attrNames attrValues mapAttrs mergeAttrsList;
+    inherit (lib.lists) any concatMap elemAt foldl' length optional optionals singleton sort;
     inherit (lib.modules) mkBefore;
     inherit (lib.options) literalExpression mkEnableOption mkOption;
     inherit (lib.types) attrsOf deferredModule listOf mkOptionType nullOr raw str submodule;
@@ -145,6 +145,23 @@ in {
                           };
                         };
                       };
+
+                      # HOST PART RESOLUTION
+                      # --------------------
+                      # The container's zone /64, home of its ULA and ULA extras.
+                      ulaSubnet = getULASubnet cfg.settings.network.ula.prefix config.group;
+
+                      onSubnet = subnet: hostPart:
+                        ip.address.singleHostRoute (ip.network.hostAddress subnet hostPart);
+
+                      # Throws without a GUA prefix; the assertion on
+                      # addressesWithoutPrefix reports this first, for all containers.
+                      onGUAPrefix = label: hostPart: let
+                        prefix = cfg.settings.network.gua.prefix;
+                      in
+                        if prefix == null
+                        then throw "sigil: ${config.group}/${config.mid} sets addresses.ipv6.${label}, but settings.network.gua.prefix is not set"
+                        else onSubnet prefix hostPart;
                     in {
                       addresses = {
                         ipv6 = {
@@ -161,14 +178,10 @@ in {
                               # <iid>: first 16 hex digits of sha256(mid)
                             '';
                             example = "::10";
-                            apply = hostPart: let
-                              prefix = cfg.settings.network.gua.prefix;
-                            in
+                            apply = hostPart:
                               if hostPart == null
                               then null
-                              else if prefix == null
-                              then throw "sigil: ${config.group}/${config.mid} sets addresses.ipv6.gua, but settings.network.gua.prefix is not set"
-                              else ip.address.singleHostRoute (ip.network.hostAddress prefix hostPart);
+                              else onGUAPrefix "gua" hostPart;
                             description = ''
                               Globally routable address of the container.
 
@@ -182,13 +195,18 @@ in {
                               otherwise. Set it to null to opt out. Setting it
                               without a GUA prefix is an error, and so is the
                               host part `::` (the subnet-router anycast address).
+
+                              Opting out while keeping `extra.gua` addresses leaves
+                              the container reachable on them, but its outgoing
+                              internet traffic then leaves from its ULA and fails:
+                              extras are never chosen as source addresses.
                             '';
                           };
 
                           ula = mkOption {
                             type = singleHostWithin ip.ranges.ipv6.uniqueLocal;
                             readOnly = true;
-                            default = getHostAddress (getULASubnet cfg.settings.network.ula.prefix config.group) config.mid;
+                            default = getHostAddress ulaSubnet config.mid;
                             defaultText = literalExpression ''
                               <ula prefix>:<subnet>:<iid>/128
                               # <subnet>: first 4 hex digits of sha256(group)
@@ -204,6 +222,48 @@ in {
                               Render with `lib.extra.ip.toCompressed` or `toCIDR`.
                             '';
                           };
+
+                          extra = {
+                            ula = mkOption {
+                              type = attrsOf (singleHostWithin hostParts);
+                              default = {};
+                              example = {dns = "::53";};
+                              apply = mapAttrs (_: onSubnet ulaSubnet);
+                              description = ''
+                                Additional zone-local addresses, keyed by a name of
+                                your choosing. Set as host parts on the container's
+                                zone /64 (that of its ULA), e.g. `dns = "::53"`; each
+                                reads back as the full address, as `lib.extra.ip`
+                                address data (/128).
+
+                                They are added to `lo` as deprecated addresses: they
+                                accept traffic but are never chosen as source
+                                addresses, so a service that must send from one has
+                                to bind to it. The host part `::` is an error, and so
+                                is an address held twice, by this or another container.
+                              '';
+                            };
+
+                            gua = mkOption {
+                              type = attrsOf (singleHostWithin hostParts);
+                              default = {};
+                              apply = mapAttrs (name: onGUAPrefix "extra.gua.${name}");
+                              description = ''
+                                Additional globally routable addresses, keyed by a
+                                name of your choosing. Set as host parts on
+                                `settings.network.gua.prefix`, e.g. `ssh = "::22"`;
+                                each reads back as the full address, as
+                                `lib.extra.ip` address data (/128).
+
+                                They are added to `lo` as deprecated addresses: they
+                                accept traffic but are never chosen as source
+                                addresses, so a service that must send from one has
+                                to bind to it. Setting any without a GUA prefix is an
+                                error, as are the host part `::` and an address held
+                                twice, by this or another container.
+                              '';
+                            };
+                          };
                         };
                       };
 
@@ -214,11 +274,11 @@ in {
                         readOnly = true;
                         # Read from the raw definitions, so nothing is resolved
                         # (resolving a host part without its prefix throws).
-                        default = optional (
-                          cfg.settings.network.gua.prefix
-                          == null
-                          && any (hostPart: hostPart != null) containerArgs.options.addresses.ipv6.gua.definitions
-                        ) "gua";
+                        default = optionals (cfg.settings.network.gua.prefix == null) (
+                          optional (any (hostPart: hostPart != null) containerArgs.options.addresses.ipv6.gua.definitions) "gua"
+                          # Names only: their values are not resolved.
+                          ++ map (name: "extra.gua.${name}") (attrNames config.addresses.ipv6.extra.gua)
+                        );
                         description = ''
                           Labels (relative to `addresses.ipv6`) of host parts this
                           container sets although their prefix is not configured.
@@ -489,7 +549,7 @@ in {
   config = let
     inherit (lib.extra) ip;
     inherit (lib.attrsets) attrValues filterAttrs mapAttrsToList mergeAttrsList;
-    inherit (lib.lists) all concatLists concatMap elem foldl' groupBy length optional singleton unique;
+    inherit (lib.lists) all concatLists concatMap elem filter foldl' groupBy length optional singleton unique;
     inherit (lib.modules) mkIf mkMerge;
     inherit (lib.strings) concatStringsSep;
   in let
@@ -554,29 +614,44 @@ in {
               assertions = let
                 # Every address a container holds, labelled with the option it
                 # comes from (relative to addresses.ipv6).
-                addressEntries = container:
+                addressEntries = container: let
+                  inherit (container.addresses.ipv6) ula gua extra;
+                  unresolvable = container.addressesWithoutPrefix;
+                  named = kind:
+                    mapAttrsToList (name: address: {
+                      label = "extra.${kind}.${name}";
+                      inherit address;
+                    });
+                in
                   (
                     [
                       {
                         label = "ula";
-                        address = container.addresses.ipv6.ula;
+                        address = ula;
                       }
                     ]
                     # Skip a GUA that cannot be resolved.
-                    ++ optional (!(elem "gua" container.addressesWithoutPrefix) && container.addresses.ipv6.gua != null) {
+                    ++ optional (!(elem "gua" unresolvable) && gua != null) {
                       label = "gua";
-                      address = container.addresses.ipv6.gua;
+                      address = gua;
                     }
+                    ++ named "ula" extra.ula
+                    ++ named "gua" extra.gua
                   )
+                  # Labels are checked without touching the addresses, so
+                  # unresolvable extras are never forced.
+                  |> filter (entry: !(elem entry.label unresolvable))
                   |> map (entry: entry // {container = "${container.group}/${container.mid}";});
+
+                entries = containers.lib.mapToList addressEntries;
 
                 # The same address held twice would get conflicting /128 host
                 # routes. All addresses are /128 data, so grouping by canonical
                 # text is the same as comparing the data.
                 clashes =
-                  containers.lib.mapToList addressEntries
+                  entries
                   |> groupBy (entry: ip.toCompressed entry.address)
-                  |> filterAttrs (_: entries: length entries > 1);
+                  |> filterAttrs (_: holders: length holders > 1);
 
                 describeClash = address: entries: "  ${address}: ${concatStringsSep ", " (entries |> map (entry: "${entry.container} (${entry.label})"))}";
 
@@ -587,16 +662,15 @@ in {
                   containers.lib.mapToList (container:
                     map (describeContainer container) container.addressesWithoutPrefix);
 
-                # The all-zero host part is the subnet-router anycast address.
-                subnetRouterAnycast = containers.lib.mapToList (container: let
-                  inherit (container.addresses.ipv6) gua;
-                in
-                  optional (
-                    container.addressesWithoutPrefix
-                    == []
-                    && gua != null
-                    && ip.toCompressed gua == ip.toCompressed (ip.network.getNetworkAddress cfg.settings.network.gua.prefix)
-                  ) (describeContainer container "gua"));
+                # The all-zero host part is the subnet-router anycast address:
+                # an address equal to the network address of its /64.
+                isSubnetRouterAnycast = address:
+                  ip.toCompressed address == ip.toCompressed (ip.address.getNetwork (ip.address.withPrefixLength 64 address));
+
+                subnetRouterAnycast =
+                  entries
+                  |> filter (entry: isSubnetRouterAnycast entry.address)
+                  |> map (entry: "${entry.container} (${entry.label})");
               in [
                 {
                   assertion = let
@@ -734,20 +808,25 @@ in {
                         }
                       ];
                       # Container addresses are /128 by type, so toCIDR yields host routes.
-                      routes =
-                        optional (container.addresses.ipv6.gua != null) {
-                          Destination = container.addresses.ipv6.gua |> ip.toCIDR;
+                      routes = let
+                        inherit (container.addresses.ipv6) ula gua extra;
+
+                        guaRoute = address: {
+                          Destination = address |> ip.toCIDR;
                           Gateway = linkLocal.container |> ip.toCompressed;
                           GatewayOnLink = true;
-                        }
-                        ++ [
-                          {
-                            Destination = container.addresses.ipv6.ula |> ip.toCIDR;
-                            Gateway = linkLocal.container |> ip.toCompressed;
-                            GatewayOnLink = true;
+                        };
+
+                        ulaRoute = address:
+                          guaRoute address
+                          // {
                             PreferredSource = cfg.settings.network.ula.source |> ip.toCompressed;
-                          }
-                        ];
+                          };
+                      in
+                        optional (gua != null) (guaRoute gua)
+                        ++ [(ulaRoute ula)]
+                        ++ map guaRoute (attrValues extra.gua)
+                        ++ map ulaRoute (attrValues extra.ula);
                     };
                   });
                 };
