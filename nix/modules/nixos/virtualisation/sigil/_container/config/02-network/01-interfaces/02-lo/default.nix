@@ -3,9 +3,7 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.ip.address) singleHostRoute;
-  inherit (lib.extra.ip.network) getFirstHost;
-  inherit (lib.extra.ip) ranges toCIDR;
+  inherit (lib.extra) ip;
   inherit (lib.lists) filter;
 in {
   systemd = {
@@ -16,10 +14,10 @@ in {
             Name = "lo";
           };
           address = let
-            identityAddresses = (with sigil.self.addresses; [gua ula]) |> filter (a: a != null) |> map singleHostRoute;
-            loopbackAddresses = ranges.loopback |> map getFirstHost;
+            identityAddresses = (with sigil.self.addresses; [gua ula]) |> filter (a: a != null) |> map ip.address.singleHostRoute;
+            loopbackAddresses = ip.ranges.loopback |> map ip.network.getFirstHost;
           in
-            identityAddresses ++ loopbackAddresses |> map toCIDR;
+            identityAddresses ++ loopbackAddresses |> map ip.toCIDR;
         };
       };
     };

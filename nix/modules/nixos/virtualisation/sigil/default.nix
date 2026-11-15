@@ -31,9 +31,7 @@ in let
 in {
   options = let
     inherit (lib) hashString;
-    inherit (lib.extra.ip) ranges;
-    inherit (lib.extra.ip.address) singleHostRoute;
-    inherit (lib.extra.ip.network) hostAddressFromHex subnetAt;
+    inherit (lib.extra) ip;
     inherit (lib.extra.types.ip) addressWith networkWith;
     inherit (lib.extra.files.list) recursive;
     inherit (lib.attrsets) attrByPath attrValues mapAttrs mergeAttrsList;
@@ -71,14 +69,14 @@ in {
               # identifier is the first 16 hex digits of sha256(mid). Same
               # addresses as the former "<prefix>:<aaaa:bbbb:cccc:dddd>" strings.
               getHostAddress = subnet: mid:
-                singleHostRoute
-                (hostAddressFromHex subnet (hashString "sha256" mid));
+                ip.address.singleHostRoute
+                (ip.network.hostAddressFromHex subnet (hashString "sha256" mid));
 
               # The group's /64 within the ULA /48: the first 4 hex digits of
               # sha256(group) select one of its 2^16 subnets. Same subnets as the
               # former "<prefix>:<first 4 hex digits>" strings.
               getULASubnet = prefix: group:
-                subnetAt prefix 64
+                ip.network.subnetAt prefix 64
                 (fromHexString (substring 0 4 (hashString "sha256" group)));
             in
               group:
@@ -143,7 +141,7 @@ in {
                     in {
                       addresses = {
                         gua = mkOption {
-                          type = nullOr (singleHostWithin ranges.ipv6.globalUnicast);
+                          type = nullOr (singleHostWithin ip.ranges.ipv6.globalUnicast);
                           default =
                             if cfg.settings.network.gua.prefix == null
                             then null
@@ -162,7 +160,7 @@ in {
                         };
 
                         ula = mkOption {
-                          type = nullOr (singleHostWithin ranges.ipv6.uniqueLocal);
+                          type = nullOr (singleHostWithin ip.ranges.ipv6.uniqueLocal);
                           default = getHostAddress (getULASubnet cfg.settings.network.ula.prefix config.group) config.mid;
                           defaultText = literalExpression ''
                             <ula prefix>:<subnet>:<iid>/128
@@ -395,7 +393,7 @@ in {
             prefix = mkOption {
               type = nullOr (networkWith {
                 version = 6;
-                within = ranges.ipv6.globalUnicast;
+                within = ip.ranges.ipv6.globalUnicast;
                 prefixLength = 64;
               });
               default = null;
@@ -412,7 +410,7 @@ in {
             prefix = mkOption {
               type = networkWith {
                 version = 6;
-                within = ranges.ipv6.uniqueLocal;
+                within = ip.ranges.ipv6.uniqueLocal;
                 prefixLength = 48;
               };
               example = "fd00:1:2::/48";
@@ -423,7 +421,7 @@ in {
               '';
             };
             source = mkOption {
-              type = singleHostWithin ranges.ipv6.uniqueLocal;
+              type = singleHostWithin ip.ranges.ipv6.uniqueLocal;
               example = "fd00:1:2::1";
               description = ''
                 `PreferredSource=` for the host-side ULA route toward
@@ -438,7 +436,7 @@ in {
   };
 
   config = let
-    inherit (lib.extra.ip) toCIDR toCompressed;
+    inherit (lib.extra) ip;
     inherit (lib.attrsets) attrValues mapAttrsToList mergeAttrsList;
     inherit (lib.lists) all concatLists concatMap count filter foldl' optional singleton unique;
     inherit (lib.modules) mkIf mkMerge;
@@ -511,7 +509,7 @@ in {
                   duplicates = unique (filter (a: count (b: b == a) addresses > 1) addresses);
                 in {
                   assertion = duplicates == [];
-                  message = "sigil: ${kind} assigned to more than one container: ${concatStringsSep ", " (map toCompressed duplicates)}";
+                  message = "sigil: ${kind} assigned to more than one container: ${concatStringsSep ", " (duplicates |> map ip.toCompressed)}";
                 };
               in [
                 {
@@ -637,21 +635,21 @@ in {
                       };
                       addresses = [
                         {
-                          Address = toCIDR linkLocal.host;
+                          Address = linkLocal.host |> ip.toCIDR;
                         }
                       ];
                       # Container addresses are /128 by type, so toCIDR yields host routes.
                       routes =
                         optional (container.addresses.gua != null) {
-                          Destination = toCIDR container.addresses.gua;
-                          Gateway = toCompressed linkLocal.container;
+                          Destination = container.addresses.gua |> ip.toCIDR;
+                          Gateway = linkLocal.container |> ip.toCompressed;
                           GatewayOnLink = true;
                         }
                         ++ optional (container.addresses.ula != null) {
-                          Destination = toCIDR container.addresses.ula;
-                          Gateway = toCompressed linkLocal.container;
+                          Destination = container.addresses.ula |> ip.toCIDR;
+                          Gateway = linkLocal.container |> ip.toCompressed;
                           GatewayOnLink = true;
-                          PreferredSource = toCompressed cfg.settings.network.ula.source;
+                          PreferredSource = cfg.settings.network.ula.source |> ip.toCompressed;
                         };
                     };
                   });

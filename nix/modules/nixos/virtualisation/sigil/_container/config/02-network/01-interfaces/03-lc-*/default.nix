@@ -3,8 +3,8 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.ip) toCIDR toCompressed;
   inherit (lib.attrsets) optionalAttrs;
+  inherit (lib.extra) ip;
   inherit (lib.lists) optional;
 
   mkLCLinkName = bid: mid: "lc-${builtins.substring 0 12 (builtins.hashString "sha256" (bid + mid))}";
@@ -31,15 +31,15 @@ in {
           networkConfig = {
             IPv6LinkLocalAddressGenerationMode = "none";
           };
-          address = [(toCIDR selfLL)];
+          address = [(selfLL |> ip.toCIDR)];
           routes = optional (bridge.port.addresses.ula != null) (
             {
-              Destination = toCIDR bridge.port.addresses.ula;
-              Gateway = toCompressed peerLL;
+              Destination = bridge.port.addresses.ula |> ip.toCIDR;
+              Gateway = peerLL |> ip.toCompressed;
               GatewayOnLink = true;
             }
             // optionalAttrs (sigil.self.addresses.ula != null) {
-              PreferredSource = toCompressed sigil.self.addresses.ula;
+              PreferredSource = sigil.self.addresses.ula |> ip.toCompressed;
             }
           );
         };
