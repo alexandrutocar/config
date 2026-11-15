@@ -3,9 +3,7 @@
   lib,
   ...
 }: let
-  inherit (lib.attrsets) optionalAttrs;
   inherit (lib.extra) ip;
-  inherit (lib.lists) optional;
 
   mkLCLinkName = bid: mid: "lc-${builtins.substring 0 12 (builtins.hashString "sha256" (bid + mid))}";
 in {
@@ -32,16 +30,14 @@ in {
             IPv6LinkLocalAddressGenerationMode = "none";
           };
           address = [(selfLL |> ip.toCIDR)];
-          routes = optional (bridge.port.addresses.ipv6.ula != null) (
+          routes = [
             {
               Destination = bridge.port.addresses.ipv6.ula |> ip.toCIDR;
               Gateway = peerLL |> ip.toCompressed;
               GatewayOnLink = true;
-            }
-            // optionalAttrs (sigil.self.addresses.ipv6.ula != null) {
               PreferredSource = sigil.self.addresses.ipv6.ula |> ip.toCompressed;
             }
-          );
+          ];
         };
       });
     };

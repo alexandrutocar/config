@@ -4,7 +4,7 @@
   ...
 }: let
   inherit (lib.extra) ip;
-  inherit (lib.lists) filter;
+  inherit (lib.lists) optional;
 in {
   systemd = {
     network = {
@@ -14,7 +14,7 @@ in {
             Name = "lo";
           };
           address = let
-            identityAddresses = (with sigil.self.addresses.ipv6; [gua ula]) |> filter (a: a != null) |> map ip.address.singleHostRoute;
+            identityAddresses = (with sigil.self.addresses.ipv6; [ula] ++ optional (gua != null) gua) |> map ip.address.singleHostRoute;
             loopbackAddresses = ip.ranges.loopback |> map ip.network.getFirstHost;
           in
             identityAddresses ++ loopbackAddresses |> map ip.toCIDR;

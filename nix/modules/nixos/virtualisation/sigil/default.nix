@@ -161,7 +161,8 @@ in {
                           };
 
                           ula = mkOption {
-                            type = nullOr (singleHostWithin ip.ranges.ipv6.uniqueLocal);
+                            type = singleHostWithin ip.ranges.ipv6.uniqueLocal;
+                            readOnly = true;
                             default = getHostAddress (getULASubnet cfg.settings.network.ula.prefix config.group) config.mid;
                             defaultText = literalExpression ''
                               <ula prefix>:<subnet>:<iid>/128
@@ -169,8 +170,12 @@ in {
                               # <iid>: first 16 hex digits of sha256(mid)
                             '';
                             description = ''
-                              Zone-local address of the container, as `lib.extra.ip`
-                              address data (/128, within fc00::/7).
+                              The container's identity on the internal network: a
+                              zone-local address derived from its group and MID, as
+                              `lib.extra.ip` address data (/128, within fc00::/7).
+                              Always present and read-only, so it stays unique across
+                              hosts without coordination; a container's ULA changes
+                              only with its group or MID.
                               Render with `lib.extra.ip.toCompressed` or `toCIDR`.
                             '';
                           };
@@ -647,12 +652,14 @@ in {
                           Gateway = linkLocal.container |> ip.toCompressed;
                           GatewayOnLink = true;
                         }
-                        ++ optional (container.addresses.ipv6.ula != null) {
-                          Destination = container.addresses.ipv6.ula |> ip.toCIDR;
-                          Gateway = linkLocal.container |> ip.toCompressed;
-                          GatewayOnLink = true;
-                          PreferredSource = cfg.settings.network.ula.source |> ip.toCompressed;
-                        };
+                        ++ [
+                          {
+                            Destination = container.addresses.ipv6.ula |> ip.toCIDR;
+                            Gateway = linkLocal.container |> ip.toCompressed;
+                            GatewayOnLink = true;
+                            PreferredSource = cfg.settings.network.ula.source |> ip.toCompressed;
+                          }
+                        ];
                     };
                   });
                 };
@@ -666,10 +673,6 @@ in {
         (mkMerge [
           {
             assertions = [
-              {
-                assertion = all (c: c.addresses.ipv6.gua != null || c.addresses.ipv6.ula != null) containers.all;
-                message = "sigil: container has neither a GUA nor a ULA address";
-              }
               {
                 assertion = all (e: e.source != e.target) links.policies;
                 message = "sigil: container declares a link to itself";
