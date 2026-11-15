@@ -444,8 +444,8 @@ in {
 
   config = let
     inherit (lib.extra) ip;
-    inherit (lib.attrsets) attrValues mapAttrsToList mergeAttrsList;
-    inherit (lib.lists) all concatLists concatMap count filter foldl' optional singleton unique;
+    inherit (lib.attrsets) attrValues filterAttrs mapAttrsToList mergeAttrsList;
+    inherit (lib.lists) all concatLists concatMap foldl' groupBy length optional singleton unique;
     inherit (lib.modules) mkIf mkMerge;
     inherit (lib.strings) concatStringsSep;
   in let
@@ -508,16 +508,32 @@ in {
           mkMerge [
             {
               assertions = let
-                # Two containers with the same address would get conflicting
-                # /128 host routes. Addresses are data, so equality is
-                # semantic, not textual.
-                mkUniqueAddressAssertion = kind: addressOf: let
-                  addresses = filter (a: a != null) (map addressOf containers.all);
-                  duplicates = unique (filter (a: count (b: b == a) addresses > 1) addresses);
-                in {
-                  assertion = duplicates == [];
-                  message = "sigil: ${kind} assigned to more than one container: ${concatStringsSep ", " (duplicates |> map ip.toCompressed)}";
-                };
+                # Every address a container holds, labelled with the option it
+                # comes from (relative to addresses.ipv6).
+                addressEntries = container:
+                  (
+                    [
+                      {
+                        label = "ula";
+                        address = container.addresses.ipv6.ula;
+                      }
+                    ]
+                    ++ optional (container.addresses.ipv6.gua != null) {
+                      label = "gua";
+                      address = container.addresses.ipv6.gua;
+                    }
+                  )
+                  |> map (entry: entry // {container = "${container.group}/${container.mid}";});
+
+                # The same address held twice would get conflicting /128 host
+                # routes. All addresses are /128 data, so grouping by canonical
+                # text is the same as comparing the data.
+                clashes =
+                  containers.lib.mapToList addressEntries
+                  |> groupBy (entry: ip.toCompressed entry.address)
+                  |> filterAttrs (_: entries: length entries > 1);
+
+                describeClash = address: entries: "  ${address}: ${concatStringsSep ", " (entries |> map (entry: "${entry.container} (${entry.label})"))}";
               in [
                 {
                   assertion = let
@@ -530,9 +546,10 @@ in {
                   assertion = all (c: builtins.match "[0-9a-f-]{36}" c.mid != null) containers.all;
                   message = "sigil: Machine ID (MID) must be a UUID (passed to --uuid=)";
                 }
-                (mkUniqueAddressAssertion "GUA" (c: c.addresses.ipv6.gua))
-                # Also catches two groups whose derived /64s collide.
-                (mkUniqueAddressAssertion "ULA" (c: c.addresses.ipv6.ula))
+                {
+                  assertion = clashes == {};
+                  message = concatStringsSep "\n" (["sigil: addresses held more than once:"] ++ mapAttrsToList describeClash clashes);
+                }
               ];
             }
             {
