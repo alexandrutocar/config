@@ -65,7 +65,7 @@ in {
                 DNSDefaultRoute = true;
 
                 DNS = [
-                  (containers.beidou.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a.addresses.ula |> ip.toCompressed)
+                  (containers.beidou.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a.addresses.ipv6.ula |> ip.toCompressed)
                 ];
 
                 Domains =

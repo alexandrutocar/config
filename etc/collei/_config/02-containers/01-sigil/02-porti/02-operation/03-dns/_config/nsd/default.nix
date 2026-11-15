@@ -24,7 +24,7 @@ in {
         interface = let
           inherit (url.interface) fromParts toNLnetLabs;
         in [
-          (toNLnetLabs (fromParts sigil.self.addresses.gua 53))
+          (toNLnetLabs (fromParts sigil.self.addresses.ipv6.gua 53))
         ];
 
         server-count = 1;
@@ -34,7 +34,7 @@ in {
         identity = "COLLEI";
 
         metrics-enable = true;
-        metrics-interface = sigil.self.addresses.ula |> ip.toCompressed;
+        metrics-interface = sigil.self.addresses.ipv6.ula |> ip.toCompressed;
       };
 
       remote-control = {
@@ -44,9 +44,9 @@ in {
       zone = let
         target = {
           proxy = {
-            _main = sigil.containers.porti.c8ac5cd5-7563-4e68-9dce-68bb11224eab.addresses.gua |> ip.toCompressed;
+            _main = sigil.containers.porti.c8ac5cd5-7563-4e68-9dce-68bb11224eab.addresses.ipv6.gua |> ip.toCompressed;
           };
-          dns = sigil.self.addresses.gua |> ip.toCompressed;
+          dns = sigil.self.addresses.ipv6.gua |> ip.toCompressed;
         };
       in [
         (pkgs.custom.writeAuthZone "ueuie.earth" {

@@ -42,7 +42,7 @@ in {
 
       listen = [
         {
-          addr = sigil.self.addresses.ula |> ip.toURIHost;
+          addr = sigil.self.addresses.ipv6.ula |> ip.toURIHost;
           port = 443;
           ssl = true;
         }
@@ -53,7 +53,7 @@ in {
           extraConfig = ''
             proxy_buffering off;
           '';
-          proxyPass = url.mkOrigin "http" sigil.containers.intra."fecc0d40-eb4e-43d4-b0ef-c0627fcce582".addresses.ula 8080;
+          proxyPass = url.mkOrigin "http" sigil.containers.intra."fecc0d40-eb4e-43d4-b0ef-c0627fcce582".addresses.ipv6.ula 8080;
         };
       };
     };

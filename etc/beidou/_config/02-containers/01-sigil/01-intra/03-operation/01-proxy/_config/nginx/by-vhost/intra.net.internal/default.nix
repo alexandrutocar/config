@@ -51,7 +51,7 @@ in {
 
       listen = [
         {
-          addr = sigil.self.addresses.ula |> ip.toURIHost;
+          addr = sigil.self.addresses.ipv6.ula |> ip.toURIHost;
           port = 443;
           ssl = true;
         }
@@ -63,7 +63,7 @@ in {
 
       listen = [
         {
-          addr = sigil.self.addresses.ula |> ip.toURIHost;
+          addr = sigil.self.addresses.ipv6.ula |> ip.toURIHost;
           port = 443;
           ssl = true;
         }
@@ -71,7 +71,7 @@ in {
 
       locations = {
         "/" = {
-          proxyPass = url.mkOrigin "http" sigil.containers.intra."a8e714de-f158-49fc-958a-9176f25d2973".addresses.ula 8080;
+          proxyPass = url.mkOrigin "http" sigil.containers.intra."a8e714de-f158-49fc-958a-9176f25d2973".addresses.ipv6.ula 8080;
         };
         "/.well-known/apple-device-configuration/intra.net.mobileconfig" = let
           inherit (lib.generators) mkPlistData;

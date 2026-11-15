@@ -18,7 +18,7 @@ in {
     virtualHosts = {
       ${serverOrigin} = {
         listenAddresses = [
-          (sigil.self.addresses.gua |> ip.toCompressed)
+          (sigil.self.addresses.ipv6.gua |> ip.toCompressed)
         ];
 
         logFormat = ''

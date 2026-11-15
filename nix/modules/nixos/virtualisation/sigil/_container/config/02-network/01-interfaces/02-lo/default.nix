@@ -14,7 +14,7 @@ in {
             Name = "lo";
           };
           address = let
-            identityAddresses = (with sigil.self.addresses; [gua ula]) |> filter (a: a != null) |> map ip.address.singleHostRoute;
+            identityAddresses = (with sigil.self.addresses.ipv6; [gua ula]) |> filter (a: a != null) |> map ip.address.singleHostRoute;
             loopbackAddresses = ip.ranges.loopback |> map ip.network.getFirstHost;
           in
             identityAddresses ++ loopbackAddresses |> map ip.toCIDR;

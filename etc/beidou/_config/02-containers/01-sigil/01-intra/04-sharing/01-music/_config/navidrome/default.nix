@@ -32,7 +32,7 @@ in {
       settings = mkMerge [
         {
           DataFolder = "/var/lib/navidrome";
-          Address = sigil.self.addresses.ula |> ip.toURIHost;
+          Address = sigil.self.addresses.ipv6.ula |> ip.toURIHost;
           Port = 8080;
         }
         {

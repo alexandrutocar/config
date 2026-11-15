@@ -36,7 +36,7 @@ in {
 
       package = pkgs.ollama-cuda;
 
-      host = sigil.self.addresses.ula |> ip.toURIHost;
+      host = sigil.self.addresses.ipv6.ula |> ip.toURIHost;
       port = 11434;
 
       user = "ollama";

@@ -26,12 +26,12 @@ in {
       enable = true;
 
       settings = {
-        Listen = sigil.self.addresses.ula |> ip.toCompressed;
+        Listen = sigil.self.addresses.ipv6.ula |> ip.toCompressed;
 
         Port = 8888;
 
         Allow = [
-          (sigil.containers.intra."e079b57e-4727-4408-8c33-39abaae975d9".addresses.ula |> ip.toCompressed)
+          (sigil.containers.intra."e079b57e-4727-4408-8c33-39abaae975d9".addresses.ipv6.ula |> ip.toCompressed)
         ];
 
         ConnectPort = [

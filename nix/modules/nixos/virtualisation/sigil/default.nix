@@ -59,9 +59,9 @@ in {
       settings = {
         containers = mkOption {
           type = let
-            # A single container, parameterized over the zone it is declared in.
-            # `id` defaults to the attribute name and `zone` to the enclosing
-            # attribute, so `inherit id zone;` at the call site is optional.
+            # A single container, parameterized over the group it is declared in.
+            # `mid` defaults to the attribute name and `group` to the enclosing
+            # attribute, so neither has to be set at the call site.
             containerModule = let
               # ADDRESS DERIVATION
               # ------------------
@@ -90,7 +90,7 @@ in {
                       # EVALUATION
                       # ----------
                       # Address book handed to the container's own module system through
-                      # `specialArgs.container`.
+                      # `specialArgs.sigil`.
                       infosFor = container: {
                         inherit (container) mid group addresses;
                         links = linksFor container;
@@ -140,38 +140,40 @@ in {
                       };
                     in {
                       addresses = {
-                        gua = mkOption {
-                          type = nullOr (singleHostWithin ip.ranges.ipv6.globalUnicast);
-                          default =
-                            if cfg.settings.network.gua.prefix == null
-                            then null
-                            else getHostAddress cfg.settings.network.gua.prefix config.mid;
-                          defaultText = literalExpression ''
-                            if config.services.sigil.settings.network.gua.prefix == null
-                            then null
-                            else <gua prefix>:<iid>/128
-                            # <iid>: first 16 hex digits of sha256(mid)
-                          '';
-                          description = ''
-                            Globally routable address of the container, as
-                            `lib.extra.ip` address data (/128, within 2000::/3).
-                            Render with `lib.extra.ip.toCompressed` or `toCIDR`.
-                          '';
-                        };
+                        ipv6 = {
+                          gua = mkOption {
+                            type = nullOr (singleHostWithin ip.ranges.ipv6.globalUnicast);
+                            default =
+                              if cfg.settings.network.gua.prefix == null
+                              then null
+                              else getHostAddress cfg.settings.network.gua.prefix config.mid;
+                            defaultText = literalExpression ''
+                              if config.services.sigil.settings.network.gua.prefix == null
+                              then null
+                              else <gua prefix>:<iid>/128
+                              # <iid>: first 16 hex digits of sha256(mid)
+                            '';
+                            description = ''
+                              Globally routable address of the container, as
+                              `lib.extra.ip` address data (/128, within 2000::/3).
+                              Render with `lib.extra.ip.toCompressed` or `toCIDR`.
+                            '';
+                          };
 
-                        ula = mkOption {
-                          type = nullOr (singleHostWithin ip.ranges.ipv6.uniqueLocal);
-                          default = getHostAddress (getULASubnet cfg.settings.network.ula.prefix config.group) config.mid;
-                          defaultText = literalExpression ''
-                            <ula prefix>:<subnet>:<iid>/128
-                            # <subnet>: first 4 hex digits of sha256(group)
-                            # <iid>: first 16 hex digits of sha256(mid)
-                          '';
-                          description = ''
-                            Zone-local address of the container, as `lib.extra.ip`
-                            address data (/128, within fc00::/7).
-                            Render with `lib.extra.ip.toCompressed` or `toCIDR`.
-                          '';
+                          ula = mkOption {
+                            type = nullOr (singleHostWithin ip.ranges.ipv6.uniqueLocal);
+                            default = getHostAddress (getULASubnet cfg.settings.network.ula.prefix config.group) config.mid;
+                            defaultText = literalExpression ''
+                              <ula prefix>:<subnet>:<iid>/128
+                              # <subnet>: first 4 hex digits of sha256(group)
+                              # <iid>: first 16 hex digits of sha256(mid)
+                            '';
+                            description = ''
+                              Zone-local address of the container, as `lib.extra.ip`
+                              address data (/128, within fc00::/7).
+                              Render with `lib.extra.ip.toCompressed` or `toCIDR`.
+                            '';
+                          };
                         };
                       };
 
@@ -379,13 +381,13 @@ in {
               }
             '';
             description = ''
-              Linked peers per container, keyed by zone and then by
+              Linked peers per container, keyed by group and then by
               container UUID, mirroring `settings.containers`.
               Elements are container definitions taken directly from
-              `settings.containers.<zone>.<uuid>`. They are flattened
-              to plain data (id, zone, machine, gua, ula) before
-              reaching the container's modules as
-              `container.network.links`; host-side enforcement
+              `settings.containers.<group>.<uuid>`. They reach the
+              container's modules through `sigil.self.links`, where each
+              bridge's `port` is the peer container (its `mid`,
+              `addresses.ipv6`, …); host-side enforcement
               (routes/firewall) is still open.
             '';
           };
@@ -523,9 +525,9 @@ in {
                   assertion = all (c: builtins.match "[0-9a-f-]{36}" c.mid != null) containers.all;
                   message = "sigil: Machine ID (MID) must be a UUID (passed to --uuid=)";
                 }
-                (mkUniqueAddressAssertion "GUA" (c: c.addresses.gua))
+                (mkUniqueAddressAssertion "GUA" (c: c.addresses.ipv6.gua))
                 # Also catches two groups whose derived /64s collide.
-                (mkUniqueAddressAssertion "ULA" (c: c.addresses.ula))
+                (mkUniqueAddressAssertion "ULA" (c: c.addresses.ipv6.ula))
               ];
             }
             {
@@ -640,13 +642,13 @@ in {
                       ];
                       # Container addresses are /128 by type, so toCIDR yields host routes.
                       routes =
-                        optional (container.addresses.gua != null) {
-                          Destination = container.addresses.gua |> ip.toCIDR;
+                        optional (container.addresses.ipv6.gua != null) {
+                          Destination = container.addresses.ipv6.gua |> ip.toCIDR;
                           Gateway = linkLocal.container |> ip.toCompressed;
                           GatewayOnLink = true;
                         }
-                        ++ optional (container.addresses.ula != null) {
-                          Destination = container.addresses.ula |> ip.toCIDR;
+                        ++ optional (container.addresses.ipv6.ula != null) {
+                          Destination = container.addresses.ipv6.ula |> ip.toCIDR;
                           Gateway = linkLocal.container |> ip.toCompressed;
                           GatewayOnLink = true;
                           PreferredSource = cfg.settings.network.ula.source |> ip.toCompressed;
@@ -665,7 +667,7 @@ in {
           {
             assertions = [
               {
-                assertion = all (c: c.addresses.gua != null || c.addresses.ula != null) containers.all;
+                assertion = all (c: c.addresses.ipv6.gua != null || c.addresses.ipv6.ula != null) containers.all;
                 message = "sigil: container has neither a GUA nor a ULA address";
               }
               {

@@ -54,7 +54,7 @@ in {
       }
       # Server
       {
-        HOST = sigil.self.addresses.ula |> ip.toCompressed;
+        HOST = sigil.self.addresses.ipv6.ula |> ip.toCompressed;
         PORT = 8081;
       }
       # Service

@@ -59,7 +59,7 @@ in {
             DOMAIN = "forge.dev.intra.net.internal";
           }
           {
-            HTTP_ADDR = sigil.self.addresses.ula |> ip.toCompressed;
+            HTTP_ADDR = sigil.self.addresses.ipv6.ula |> ip.toCompressed;
             HTTP_PORT = 8080;
           }
           {

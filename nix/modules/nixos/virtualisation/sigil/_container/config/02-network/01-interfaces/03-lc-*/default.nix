@@ -32,14 +32,14 @@ in {
             IPv6LinkLocalAddressGenerationMode = "none";
           };
           address = [(selfLL |> ip.toCIDR)];
-          routes = optional (bridge.port.addresses.ula != null) (
+          routes = optional (bridge.port.addresses.ipv6.ula != null) (
             {
-              Destination = bridge.port.addresses.ula |> ip.toCIDR;
+              Destination = bridge.port.addresses.ipv6.ula |> ip.toCIDR;
               Gateway = peerLL |> ip.toCompressed;
               GatewayOnLink = true;
             }
-            // optionalAttrs (sigil.self.addresses.ula != null) {
-              PreferredSource = sigil.self.addresses.ula |> ip.toCompressed;
+            // optionalAttrs (sigil.self.addresses.ipv6.ula != null) {
+              PreferredSource = sigil.self.addresses.ipv6.ula |> ip.toCompressed;
             }
           );
         };

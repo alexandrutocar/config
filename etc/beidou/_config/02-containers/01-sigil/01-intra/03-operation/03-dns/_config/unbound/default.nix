@@ -31,7 +31,7 @@ in {
             interface = let
               inherit (url.interface) fromParts toNLnetLabs;
             in [
-              (toNLnetLabs (fromParts sigil.self.addresses.ula 53))
+              (toNLnetLabs (fromParts sigil.self.addresses.ipv6.ula 53))
             ];
 
             do-udp = true;
@@ -127,9 +127,9 @@ in {
         auth-zone = let
           target = {
             proxy = {
-              _main = sigil.containers.intra.e079b57e-4727-4408-8c33-39abaae975d9.addresses.ula |> ip.toCompressed;
+              _main = sigil.containers.intra.e079b57e-4727-4408-8c33-39abaae975d9.addresses.ipv6.ula |> ip.toCompressed;
             };
-            dns = sigil.self.addresses.ula |> ip.toCompressed;
+            dns = sigil.self.addresses.ipv6.ula |> ip.toCompressed;
           };
         in [
           (pkgs.custom.writeAuthZone "intra.net.internal" {

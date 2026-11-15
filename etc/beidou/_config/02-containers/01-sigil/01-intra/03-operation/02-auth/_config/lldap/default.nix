@@ -50,7 +50,7 @@ in {
       enable = true;
       settings = {
         force_ldap_user_pass_reset = "always";
-        http_host = sigil.self.addresses.ula |> ip.toCompressed;
+        http_host = sigil.self.addresses.ipv6.ula |> ip.toCompressed;
         http_port = 8080;
         http_url = "https://directory.intra.net.internal";
 

@@ -43,14 +43,14 @@ in {
 
       listen = [
         {
-          addr = sigil.self.addresses.ula |> ip.toURIHost;
+          addr = sigil.self.addresses.ipv6.ula |> ip.toURIHost;
           port = 443;
           ssl = true;
         }
       ];
 
       locations = let
-        proxyPass = url.mkOrigin "http" sigil.containers.intra."acda4bf3-2678-43c5-bae9-e67bd8cb710d".addresses.ula 8080;
+        proxyPass = url.mkOrigin "http" sigil.containers.intra."acda4bf3-2678-43c5-bae9-e67bd8cb710d".addresses.ipv6.ula 8080;
       in {
         "/" = {
           inherit proxyPass;

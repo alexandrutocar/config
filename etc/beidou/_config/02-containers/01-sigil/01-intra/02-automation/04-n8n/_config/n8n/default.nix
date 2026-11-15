@@ -73,7 +73,7 @@ in {
           HTTPS_PROXY = url.mkOrigin "http" networks.aether.internal.net.hosts.beidou 8888;
         }
         {
-          listen-address = sigil.self.addresses.ula |> ip.toCompressed;
+          listen-address = sigil.self.addresses.ipv6.ula |> ip.toCompressed;
           proxy-hops = 1;
           host = "workflows.intra.net.internal";
           port = 8080;
