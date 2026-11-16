@@ -13,7 +13,7 @@ in let
   mkBridgeName = bid: "br-${bid}";
   mkLHLinkName = bid: mid: "lh-${builtins.substring 0 12 (builtins.hashString "sha256" (bid + mid))}";
   mkLCLinkName = bid: mid: "lc-${builtins.substring 0 12 (builtins.hashString "sha256" (bid + mid))}";
-
+in let
   # LINK-LOCAL ADDRESSING
   # ---------------------
   # Every veth (host ve-* <-> container host0) and every container link (lc-*)
@@ -28,6 +28,48 @@ in let
     peerA = on "::a"; # lc-* end of the linked container with the lower MID
     peerB = on "::b"; # lc-* end of the other linked container
   };
+
+  # TRAFFIC RULE RENDERING
+  # ----------------------
+  # A container's incoming rules as nftables rules: one counted accept per
+  # allowed traffic of each rule, labelled with its place in the container's
+  # rules. The host's forward chain and the container's own firewall use the
+  # same lines.
+  incomingRuleLines = container: let
+    inherit (lib.extra) ip;
+    inherit (lib.lists) concatLists elem imap0;
+    inherit (lib.strings) concatStringsSep;
+
+    # nft merges duplicate and overlapping elements of a set.
+    setOf = elements: "{ ${concatStringsSep ", " elements} }";
+
+    portText = port:
+      if builtins.isAttrs port
+      then "${toString port.from}-${toString port.to}"
+      else toString port;
+
+    # A source list holding ::/0 matches anything, so it needs no match.
+    matchSources = sources: let
+      cidrs = map ip.toCIDR sources;
+    in
+      if elem "::/0" cidrs
+      then ""
+      else "ip6 saddr ${setOf cidrs} ";
+
+    matchTraffic = traffic:
+      if traffic.protocol == "icmpv6"
+      then "meta l4proto ipv6-icmp"
+      else "${traffic.protocol} dport ${setOf (map portText traffic.ports)}";
+  in
+    container.rules.networkTraffic.incoming
+    |> imap0 (ruleIndex: rule:
+      rule.allowedTraffic
+      |> imap0 (trafficIndex: traffic:
+        matchSources rule.sourceAddresses
+        + "ip6 daddr ${setOf (map ip.toCompressed rule.destinationAddresses)} "
+        + "${matchTraffic traffic} counter accept "
+        + ''comment "${container.group}/${container.mid} incoming.${toString ruleIndex}.allowedTraffic.${toString trafficIndex}"''))
+    |> concatLists;
 in {
   options = let
     inherit (lib) hashString;
@@ -389,12 +431,13 @@ in {
                               when one rule matches its source, its destination and
                               its protocol and port.
 
-                              The host checks traffic it forwards to the container
-                              against these rules. Until
+                              They are enforced in two places. The container's own
+                              firewall accepts what they allow, next to any openings
+                              set by hand, so it also covers traffic from the host
+                              itself. The host checks traffic it forwards to the
+                              container against them. Until
                               `settings.network.enforceTrafficRules` is set, traffic
                               no rule allows is counted and forwarded anyway.
-                              Traffic the host itself sends to the container is not
-                              forwarded, so these rules do not cover it on the host.
                             '';
                           };
                         };
@@ -467,6 +510,16 @@ in {
                                     inherit pkgs;
                                   };
                                 };
+                              })
+
+                              # CONTAINER FIREWALL
+                              # ------------------
+                              (_: {
+                                # The container's incoming rules, added to the NixOS
+                                # firewall's input-allow chain next to any openings set
+                                # by hand. They only accept, so nothing set by hand
+                                # stops working.
+                                networking.firewall.extraInputRules = concatStringsSep "\n" (incomingRuleLines config);
                               })
                             ];
 
@@ -1098,40 +1151,6 @@ in {
                   if cfg.settings.network.enforceTrafficRules
                   then "drop"
                   else "accept";
-
-                # nft merges duplicate and overlapping elements of a set.
-                setOf = elements: "{ ${concatStringsSep ", " elements} }";
-
-                portText = port:
-                  if builtins.isAttrs port
-                  then "${toString port.from}-${toString port.to}"
-                  else toString port;
-
-                # A source list holding ::/0 matches anything, so it needs no match.
-                matchSources = sources: let
-                  cidrs = map ip.toCIDR sources;
-                in
-                  if elem "::/0" cidrs
-                  then ""
-                  else "ip6 saddr ${setOf cidrs} ";
-
-                matchTraffic = traffic:
-                  if traffic.protocol == "icmpv6"
-                  then "meta l4proto ipv6-icmp"
-                  else "${traffic.protocol} dport ${setOf (map portText traffic.ports)}";
-
-                # One counted accept per allowed traffic of each rule, labelled
-                # with its place in the container's rules.
-                ruleLines = container:
-                  container.rules.networkTraffic.incoming
-                  |> imap0 (ruleIndex: rule:
-                    rule.allowedTraffic
-                    |> imap0 (trafficIndex: traffic:
-                      matchSources rule.sourceAddresses
-                      + "ip6 daddr ${setOf (map ip.toCompressed rule.destinationAddresses)} "
-                      + "${matchTraffic traffic} counter accept "
-                      + ''comment "${container.group}/${container.mid} incoming.${toString ruleIndex}.allowedTraffic.${toString trafficIndex}"''))
-                  |> concatLists;
               in ''
                 counter undeclared-incoming {
                   comment "forwarded to a container, allowed by no traffic rule"
@@ -1154,7 +1173,7 @@ in {
                   # ICMPv6 errors that IPv6 needs to work (path MTU among them).
                   icmpv6 type { destination-unreachable, packet-too-big, time-exceeded, parameter-problem } accept
 
-                  ${concatStringsSep "\n  " (containers.lib.mapToList ruleLines)}
+                  ${concatStringsSep "\n  " (containers.lib.mapToList incomingRuleLines)}
 
                   counter name undeclared-incoming ${verdict}
                 }
