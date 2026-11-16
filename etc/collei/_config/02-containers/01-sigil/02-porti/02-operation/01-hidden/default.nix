@@ -10,6 +10,8 @@ in {
         containers = {
           porti = {
             ${mid} = {
+              modules = recursive ./_config;
+
               nspawn = {
                 settings = {
                   Files = {
@@ -22,7 +24,6 @@ in {
                   "--load-credential=credential.secret:%d/credential.secret"
                 ];
               };
-              modules = recursive ./_config;
             };
           };
         };

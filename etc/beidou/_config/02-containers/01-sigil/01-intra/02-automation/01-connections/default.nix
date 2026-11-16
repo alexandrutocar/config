@@ -4,8 +4,15 @@
   ...
 }: let
   inherit (lib.extra.files.list) recursive;
+  inherit (lib.extra.sigil) getConfig getULA shortPathToContainers;
   inherit (lib.modules) mkAfter;
 in let
+  targetConfig = getConfig target;
+
+  containers = shortPathToContainers config;
+
+  target = containers.intra.${mid};
+
   mid = "b6cab864-64cc-454d-8647-30348af279da";
 in {
   services = {
@@ -15,14 +22,37 @@ in {
           intra = {
             ${mid} = {
               modules = recursive ./_config;
+
               nspawn = {
                 flags = mkAfter [
                   "--load-credential=credential.secret:%d/credential.secret"
                 ];
               };
+
+              rules = {
+                networkTraffic = {
+                  incoming = [
+                    {
+                      destinationAddresses = [(target |> getULA)];
+
+                      allowedTraffic = [
+                        {
+                          protocol = "tcp";
+                          ports = [
+                            targetConfig.services.tinyproxy.settings.Port
+                          ];
+                        }
+                      ];
+
+                      sourceAddresses = [(containers.intra.e079b57e-4727-4408-8c33-39abaae975d9 |> getULA)];
+                    }
+                  ];
+                };
+              };
             };
           };
         };
+
         network = {
           links = {
             intra = {

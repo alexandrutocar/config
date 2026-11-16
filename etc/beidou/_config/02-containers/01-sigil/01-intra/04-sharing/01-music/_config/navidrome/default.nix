@@ -1,21 +1,13 @@
 {
-  config,
   sigil,
   pkgs,
   lib,
   ...
 }: let
   inherit (lib.extra) ip;
+  inherit (lib.extra.sigil) getULA;
   inherit (lib.modules) mkMerge;
 in {
-  networking = {
-    firewall = {
-      allowedTCPPorts = [
-        config.services.navidrome.settings.Port # HTTP
-      ];
-    };
-  };
-
   services = {
     navidrome = let
       package = pkgs.navidrome.withPlugins (
@@ -32,7 +24,7 @@ in {
       settings = mkMerge [
         {
           DataFolder = "/var/lib/navidrome";
-          Address = sigil.self.addresses.ipv6.ula |> ip.toURIHost;
+          Address = sigil.self |> getULA |> ip.toURIHost;
           Port = 8080;
         }
         {

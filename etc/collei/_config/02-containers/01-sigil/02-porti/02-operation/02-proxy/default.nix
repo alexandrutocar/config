@@ -1,7 +1,16 @@
-{lib, ...}: let
+{
+  config,
+  lib,
+  ...
+}: let
   inherit (lib.extra.files.list) recursive;
+  inherit (lib.extra.sigil) getGUA shortPathToContainers;
   inherit (lib.modules) mkAfter;
 in let
+  containers = shortPathToContainers config;
+
+  target = containers.porti.${mid};
+
   mid = "c8ac5cd5-7563-4e68-9dce-68bb11224eab";
 in {
   services = {
@@ -10,6 +19,8 @@ in {
         containers = {
           porti = {
             ${mid} = {
+              modules = recursive ./_config;
+
               nspawn = {
                 settings = {
                   Files = {
@@ -22,7 +33,29 @@ in {
                   "--load-credential=credential.secret:%d/credential.secret"
                 ];
               };
-              modules = recursive ./_config;
+
+              rules = {
+                networkTraffic = {
+                  incoming = [
+                    {
+                      destinationAddresses = [(target |> getGUA)];
+
+                      allowedTraffic = [
+                        {
+                          protocol = "tcp";
+                          ports = [80 443];
+                        }
+                        {
+                          protocol = "udp";
+                          ports = [443];
+                        }
+                      ];
+
+                      sourceAddresses = ["::/0"];
+                    }
+                  ];
+                };
+              };
             };
           };
         };

@@ -5,6 +5,7 @@
   ...
 }: let
   inherit (lib.extra) ip;
+  inherit (lib.extra.sigil) getULA;
   inherit (lib.modules) mkMerge;
 in let
   group = "git";
@@ -24,14 +25,6 @@ in {
     createHome = true;
     isSystemUser = true;
     useDefaultShell = true;
-  };
-
-  networking = {
-    firewall = {
-      allowedTCPPorts = [
-        config.services.forgejo.settings.server.HTTP_PORT
-      ];
-    };
   };
 
   services = {
@@ -59,7 +52,7 @@ in {
             DOMAIN = "forge.dev.intra.net.internal";
           }
           {
-            HTTP_ADDR = sigil.self.addresses.ipv6.ula |> ip.toCompressed;
+            HTTP_ADDR = sigil.self |> getULA |> ip.toCompressed;
             HTTP_PORT = 8080;
           }
           {

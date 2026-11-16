@@ -4,8 +4,15 @@
   ...
 }: let
   inherit (lib.extra.files.list) recursive;
+  inherit (lib.extra.sigil) getConfig getULA shortPathToContainers;
   inherit (lib.modules) mkAfter;
 in let
+  targetConfig = getConfig target;
+
+  containers = shortPathToContainers config;
+
+  target = containers.intra.${mid};
+
   mid = "acda4bf3-2678-43c5-bae9-e67bd8cb710d";
 in {
   services = {
@@ -32,6 +39,28 @@ in {
                 flags = mkAfter [
                   "--load-credential=credential.secret:%d/credential.secret"
                 ];
+              };
+
+              rules = {
+                networkTraffic = {
+                  incoming = [
+                    {
+                      destinationAddresses = [(target |> getULA)];
+
+                      allowedTraffic = [
+                        {
+                          protocol = "tcp";
+                          ports = [
+                            targetConfig.services.forgejo.settings.server.HTTP_PORT
+                            22
+                          ];
+                        }
+                      ];
+
+                      sourceAddresses = [(containers.intra.e079b57e-4727-4408-8c33-39abaae975d9 |> getULA)];
+                    }
+                  ];
+                };
               };
             };
           };

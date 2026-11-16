@@ -1,10 +1,4 @@
 _: {
-  networking = {
-    firewall = {
-      allowedTCPPorts = [443 11434];
-    };
-  };
-
   services = {
     nginx = {
       enable = true;

@@ -6,16 +6,10 @@
 }: let
   inherit (lib.alias) addresses networks resolvers;
   inherit (lib.extra) ip url;
+  inherit (lib.extra.sigil) getULA;
   inherit (lib.lists) concatMap;
   inherit (lib.modules) mkMerge;
 in {
-  networking = {
-    firewall = {
-      allowedTCPPorts = [53];
-      allowedUDPPorts = [53];
-    };
-  };
-
   services = {
     unbound = {
       enable = true;
@@ -31,7 +25,7 @@ in {
             interface = let
               inherit (url.interface) fromParts toNLnetLabs;
             in [
-              (toNLnetLabs (fromParts sigil.self.addresses.ipv6.ula 53))
+              (toNLnetLabs (fromParts (sigil.self |> getULA) 53))
             ];
 
             do-udp = true;
@@ -127,9 +121,9 @@ in {
         auth-zone = let
           target = {
             proxy = {
-              _main = sigil.containers.intra.e079b57e-4727-4408-8c33-39abaae975d9.addresses.ipv6.ula |> ip.toCompressed;
+              _main = sigil.containers.intra.e079b57e-4727-4408-8c33-39abaae975d9 |> getULA |> ip.toCompressed;
             };
-            dns = sigil.self.addresses.ipv6.ula |> ip.toCompressed;
+            dns = sigil.self |> getULA |> ip.toCompressed;
           };
         in [
           (pkgs.custom.writeAuthZone "intra.net.internal" {

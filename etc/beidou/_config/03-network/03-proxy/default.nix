@@ -6,6 +6,8 @@
 }: let
   inherit (lib.alias) networks;
   inherit (lib.extra) ip;
+  inherit (lib.extra.sigil) getULA;
+  inherit (lib.extra.trivial) pipeline;
 in {
   networking = {
     firewall = {
@@ -24,11 +26,11 @@ in {
 
         Allow = let
           allowList = with config.services.sigil.settings.containers.intra; [
-            a4205b50-197a-40c8-8057-fe1394630e91.addresses.ipv6.ula # intra/automation/n8n
-            fe616e36-c9d0-4ba9-8938-436e75ef0dc0.addresses.ipv6.ula # intra/development/actions
+            a4205b50-197a-40c8-8057-fe1394630e91 # intra/automation/n8n
+            fe616e36-c9d0-4ba9-8938-436e75ef0dc0 # intra/development/actions
           ];
         in
-          allowList |> map ip.toCompressed;
+          allowList |> map (pipeline [getULA ip.toCompressed]);
 
         ConnectPort = [
           443 # HTTPS

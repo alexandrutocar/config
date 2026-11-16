@@ -5,10 +5,9 @@
   ...
 }: let
   inherit (lib.extra) ip;
+  inherit (lib.extra.sigil) getULA shortPathToContainers;
 
-  containers.beidou = {
-    inherit (self.nixosConfigurations.beidou.config.services.sigil.settings.containers.porti) a8dd2ef7-86c8-4a7e-af8a-b3f98a2f31d3;
-  };
+  beidouContainers = shortPathToContainers self.nixosConfigurations.beidou.config;
 in {
   networking = {
     firewall = {
@@ -22,7 +21,7 @@ in {
     enable = false;
     settings = {
       "@type" = "PostgreSql";
-      host = containers.beidou.a8dd2ef7-86c8-4a7e-af8a-b3f98a2f31d3.addresses.ipv6.ula |> ip.toCompressed;
+      host = beidouContainers.porti.a8dd2ef7-86c8-4a7e-af8a-b3f98a2f31d3 |> getULA |> ip.toCompressed;
       authSecret = {
         "@type" = "None";
       };

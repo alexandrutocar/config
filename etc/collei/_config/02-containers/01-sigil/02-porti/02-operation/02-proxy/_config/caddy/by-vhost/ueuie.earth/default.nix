@@ -6,6 +6,7 @@
   ...
 }: let
   inherit (lib.extra) ip url;
+  inherit (lib.extra.sigil) getGUA;
 in let
   serverDomain = "ueuie.earth";
   serverOrigin = url.mkDefaultOrigin "https" serverDomain;
@@ -18,7 +19,7 @@ in {
     virtualHosts = {
       ${serverOrigin} = {
         listenAddresses = [
-          (sigil.self.addresses.ipv6.gua |> ip.toCompressed)
+          (sigil.self |> getGUA |> ip.toCompressed)
         ];
 
         logFormat = ''

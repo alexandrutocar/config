@@ -5,17 +5,10 @@
   ...
 }: let
   inherit (lib.alias) networks;
-  inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
   inherit (lib.extra) ip url;
+  inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
+  inherit (lib.extra.sigil) getULA;
 in {
-  networking = {
-    firewall = {
-      allowedTCPPorts = [
-        8443 # PROXY (TLS)
-      ];
-    };
-  };
-
   systemd = {
     services = {
       nginx = {
@@ -44,17 +37,19 @@ in {
 
       sslCertificateKey = "${credentialsDirectory "nginx"}/proxy.uni.intra.net.internal-key.pem";
     in {
-      streamConfig = ''
+      streamConfig = let
+        target = sigil.containers.intra.b6cab864-64cc-454d-8647-30348af279da;
+      in ''
         upstream uni_proxy {
-          server ${url.mkInterface sigil.containers.intra."b6cab864-64cc-454d-8647-30348af279da".addresses.ipv6.ula 8888};
+          server ${url.mkInterface (getULA target) 8888};
         }
 
         server {
           listen 8443 ssl default_server;
 
-          listen ${url.mkInterface sigil.self.addresses.ipv6.ula 8443} ssl default_server;
+          listen ${url.mkInterface (sigil.self |> getULA) 8443} ssl default_server;
 
-          allow ${sigil.containers.intra."a4205b50-197a-40c8-8057-fe1394630e91".addresses.ipv6.ula |> ip.toCIDR};
+          allow ${(getULA sigil.containers.intra.a4205b50-197a-40c8-8057-fe1394630e91) |> ip.toCIDR};
           allow ${(networks.aether.internal.net.hosts.albedo |> ip.address.singleHostRoute |> ip.toCIDR)};
           deny all;
 
@@ -68,7 +63,7 @@ in {
 
         server {
           listen 8443 ssl;
-          listen ${url.mkInterface sigil.self.addresses.ipv6.ula 8443} ssl;
+          listen ${url.mkInterface (sigil.self |> getULA) 8443} ssl;
           server_name ${serverName};
 
           ssl_certificate_key ${sslCertificateKey};
@@ -77,7 +72,7 @@ in {
 
           ssl_conf_command Options KTLS;
 
-          proxy_bind [${sigil.self.addresses.ipv6.ula |> ip.toCompressed}];
+          proxy_bind [${(sigil.self |> getULA) |> ip.toCompressed}];
           proxy_pass uni_proxy;
         }
       '';
@@ -97,7 +92,7 @@ in {
 
           listen = [
             {
-              addr = sigil.self.addresses.ipv6.ula |> ip.toURIHost;
+              addr = sigil.self |> getULA |> ip.toURIHost;
               port = 443;
               ssl = true;
             }

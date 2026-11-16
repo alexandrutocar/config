@@ -5,10 +5,9 @@
 }: let
   inherit (lib.alias) addresses networks;
   inherit (lib.extra) ip url;
+  inherit (lib.extra.sigil) getULA shortPathToContainers;
 in let
-  containers.beidou = {
-    inherit (self.nixosConfigurations.beidou.config.services.sigil.settings.containers.intra) cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a;
-  };
+  beidouContainers = shortPathToContainers self.nixosConfigurations.beidou.config;
 in {
   systemd = {
     network = let
@@ -64,7 +63,7 @@ in {
             DNSDefaultRoute = true;
 
             DNS = [
-              (containers.beidou.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a.addresses.ipv6.ula |> ip.toCompressed)
+              (beidouContainers.intra.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a |> getULA |> ip.toCompressed)
             ];
 
             Domains =

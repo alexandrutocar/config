@@ -1,21 +1,12 @@
 {
-  config,
   sigil,
   lib,
   ...
 }: let
-  inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
   inherit (lib.extra) ip;
+  inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
+  inherit (lib.extra.sigil) getULA;
 in {
-  networking = {
-    firewall = {
-      allowedTCPPorts = [
-        config.services.lldap.settings.ldap_port # LDAP
-        config.services.lldap.settings.http_port # HTTP
-      ];
-    };
-  };
-
   systemd = {
     services = {
       lldap = {
@@ -50,7 +41,7 @@ in {
       enable = true;
       settings = {
         force_ldap_user_pass_reset = "always";
-        http_host = sigil.self.addresses.ipv6.ula |> ip.toCompressed;
+        http_host = sigil.self |> getULA |> ip.toCompressed;
         http_port = 8080;
         http_url = "https://directory.intra.net.internal";
 

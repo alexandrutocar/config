@@ -4,8 +4,15 @@
   ...
 }: let
   inherit (lib.extra.files.list) recursive;
+  inherit (lib.extra.sigil) getConfig getULA shortPathToContainers;
   inherit (lib.modules) mkAfter;
 in let
+  targetConfig = getConfig target;
+
+  containers = shortPathToContainers config;
+
+  target = containers.intra.${mid};
+
   mid = "d86c8e1c-2bcd-4d2f-a3b2-7962afc28a51";
 in {
   services = {
@@ -15,6 +22,7 @@ in {
           intra = {
             ${mid} = {
               modules = recursive ./_config;
+
               nspawn = {
                 settings = {
                   Files = {
@@ -29,9 +37,31 @@ in {
                       ];
                   };
                 };
+
                 flags = mkAfter [
                   "--load-credential=credential.secret:%d/credential.secret"
                 ];
+              };
+
+              rules = {
+                networkTraffic = {
+                  incoming = [
+                    {
+                      destinationAddresses = [(target |> getULA)];
+
+                      allowedTraffic = [
+                        {
+                          protocol = "tcp";
+                          ports = [
+                            targetConfig.services.ollama.port
+                          ];
+                        }
+                      ];
+
+                      sourceAddresses = [(containers.intra.e079b57e-4727-4408-8c33-39abaae975d9 |> getULA)];
+                    }
+                  ];
+                };
               };
             };
           };

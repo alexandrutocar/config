@@ -17,12 +17,4 @@ in {
     content = resolvers.cloudflare.standard.ipv6 |> map (pipeline [ip.toCompressed (a: "nameserver ${a}")]) |> concatLines;
   in
     mkForce content;
-
-  networking = {
-    firewall = {
-      allowedTCPPorts = [
-        443 # HTTPS
-      ];
-    };
-  };
 }

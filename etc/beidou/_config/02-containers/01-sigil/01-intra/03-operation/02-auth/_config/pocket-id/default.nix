@@ -4,18 +4,11 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
   inherit (lib.extra) ip url;
+  inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
+  inherit (lib.extra.sigil) getULA;
   inherit (lib.modules) mkMerge;
 in {
-  networking = {
-    firewall = {
-      allowedTCPPorts = [
-        config.services.pocket-id.settings.PORT # HTTP
-      ];
-    };
-  };
-
   systemd = {
     services = {
       pocket-id = {
@@ -54,7 +47,7 @@ in {
       }
       # Server
       {
-        HOST = sigil.self.addresses.ipv6.ula |> ip.toCompressed;
+        HOST = sigil.self |> getULA |> ip.toCompressed;
         PORT = 8081;
       }
       # Service
@@ -69,7 +62,7 @@ in {
       {
         LDAP_ENABLED = true;
 
-        LDAP_URL = url.mkOrigin "ldap" ip.wellKnown.ipv6.loopback 3890;
+        LDAP_URL = url.mkOrigin "ldap" ip.wellKnown.ipv6.loopback config.services.lldap.settings.ldap_port;
 
         LDAP_BASE = "dc=intra,dc=net,dc=internal";
         LDAP_BIND_DN = "cn=pocket-id,ou=people,dc=intra,dc=net,dc=internal";
