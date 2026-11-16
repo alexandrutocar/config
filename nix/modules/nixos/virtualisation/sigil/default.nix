@@ -718,6 +718,10 @@ in {
                   assertion = clashes == {};
                   message = concatStringsSep "\n" (["sigil: addresses held more than once:"] ++ mapAttrsToList describeClash clashes);
                 }
+                {
+                  assertion = config.networking.nftables.enable;
+                  message = "sigil: source validation runs on nftables, but networking.nftables.enable is not set";
+                }
               ];
             }
             {
@@ -853,6 +857,62 @@ in {
                     };
                   });
                 };
+              };
+            }
+            {
+              # SOURCE VALIDATION
+              # -----------------
+              # Container addresses are accepted only from their own veth. Always
+              # on: it drops only forged traffic, so both counters stay at zero.
+              # Runs at priority raw, before conntrack and the routing decision,
+              # so forged packets never reach the host's or containers' rules.
+              #
+              # A route lookup on the source address must lead back out the
+              # interface the packet came in on (strict reverse path), which
+              # needs no interface names: nspawn shortens `ve-<mid>` with a hash.
+              networking.nftables.tables.sigil = {
+                family = "inet";
+                content = let
+                  # Each address on its own (/128): the /48 may be shared with
+                  # other hosts, whose containers arrive over the overlay.
+                  addresses =
+                    containers.lib.mapToList (container: let
+                      inherit (container.addresses.ipv6) ula gua extra;
+                    in
+                      [ula]
+                      ++ optional (gua != null) gua
+                      ++ attrValues extra.ula
+                      ++ attrValues extra.gua)
+                    |> map ip.toCompressed;
+                in ''
+                  counter forged-on-veth {
+                    comment "from a container's veth, with a source address that is not the container's"
+                  }
+
+                  counter forged-container-address {
+                    comment "with a container's source address, from anywhere but its veth"
+                  }
+
+                  set container-addresses {
+                    type ipv6_addr
+                    elements = { ${concatStringsSep ", " addresses} }
+                  }
+
+                  chain validate-source {
+                    type filter hook prerouting priority raw; policy accept;
+
+                    # Duplicate address detection and MLD, sent before the
+                    # container's link-local address is in use.
+                    iifname "ve-*" ip6 saddr :: icmpv6 type { nd-neighbor-solicit, mld-listener-report, mld2-listener-report } accept
+
+                    # From a container: its own addresses or link-local only.
+                    # Containers have no IPv4, so all IPv4 is dropped here too.
+                    iifname "ve-*" fib saddr . iif oif missing counter name forged-on-veth drop
+
+                    # To a container's address: only through its own veth.
+                    ip6 saddr @container-addresses fib saddr . iif oif missing counter name forged-container-address drop
+                  }
+                '';
               };
             }
           ]
