@@ -38,7 +38,7 @@ in {
     inherit (lib.lists) any concatMap elemAt foldl' length optional optionals singleton sort;
     inherit (lib.modules) mkBefore;
     inherit (lib.options) literalExpression mkEnableOption mkOption;
-    inherit (lib.types) attrsOf deferredModule either enum ints listOf mkOptionType nonEmptyListOf nullOr raw str submodule;
+    inherit (lib.types) attrsOf bool deferredModule either enum ints listOf mkOptionType nonEmptyListOf nullOr raw str submodule;
     inherit (lib.strings) concatStringsSep substring;
     inherit (lib.trivial) fromHexString;
 
@@ -389,8 +389,12 @@ in {
                               when one rule matches its source, its destination and
                               its protocol and port.
 
-                              Not enforced yet: nothing is generated from these
-                              rules so far.
+                              The host checks traffic it forwards to the container
+                              against these rules. Until
+                              `settings.network.enforceTrafficRules` is set, traffic
+                              no rule allows is counted and forwarded anyway.
+                              Traffic the host itself sends to the container is not
+                              forwarded, so these rules do not cover it on the host.
                             '';
                           };
                         };
@@ -625,6 +629,22 @@ in {
 
               Replaces `ula.source`, which still works as a deprecated
               alias.
+            '';
+          };
+          # ──────────────────────────────────────────────────────────────────
+          # TODO: Remove once hosts have moved over, enforcing always.
+          # ──────────────────────────────────────────────────────────────────
+          enforceTrafficRules = mkOption {
+            type = bool;
+            default = false;
+            description = ''
+              Whether the host drops forwarded traffic to containers that
+              no traffic rule allows. When false, such traffic is counted
+              (counters `undeclared-incoming` and `invalid-incoming` in the
+              nftables table `inet sigil`) and forwarded as before.
+
+              Temporary: once every host has moved over, the rules are
+              always enforced and this option is removed.
             '';
           };
           gua = {
@@ -1064,6 +1084,81 @@ in {
                   }
                 '';
               };
+            }
+            {
+              # HOST FILTERING
+              # --------------
+              # Forwarded traffic to container addresses must be allowed by a
+              # traffic rule of the container holding the destination. Until
+              # enforceTrafficRules is set, the last two rules count and accept,
+              # so the host forwards exactly what it did before. Shares the
+              # `inet sigil` table with source validation.
+              networking.nftables.tables.sigil.content = let
+                verdict =
+                  if cfg.settings.network.enforceTrafficRules
+                  then "drop"
+                  else "accept";
+
+                # nft merges duplicate and overlapping elements of a set.
+                setOf = elements: "{ ${concatStringsSep ", " elements} }";
+
+                portText = port:
+                  if builtins.isAttrs port
+                  then "${toString port.from}-${toString port.to}"
+                  else toString port;
+
+                # A source list holding ::/0 matches anything, so it needs no match.
+                matchSources = sources: let
+                  cidrs = map ip.toCIDR sources;
+                in
+                  if elem "::/0" cidrs
+                  then ""
+                  else "ip6 saddr ${setOf cidrs} ";
+
+                matchTraffic = traffic:
+                  if traffic.protocol == "icmpv6"
+                  then "meta l4proto ipv6-icmp"
+                  else "${traffic.protocol} dport ${setOf (map portText traffic.ports)}";
+
+                # One counted accept per allowed traffic of each rule, labelled
+                # with its place in the container's rules.
+                ruleLines = container:
+                  container.rules.networkTraffic.incoming
+                  |> imap0 (ruleIndex: rule:
+                    rule.allowedTraffic
+                    |> imap0 (trafficIndex: traffic:
+                      matchSources rule.sourceAddresses
+                      + "ip6 daddr ${setOf (map ip.toCompressed rule.destinationAddresses)} "
+                      + "${matchTraffic traffic} counter accept "
+                      + ''comment "${container.group}/${container.mid} incoming.${toString ruleIndex}.allowedTraffic.${toString trafficIndex}"''))
+                  |> concatLists;
+              in ''
+                counter undeclared-incoming {
+                  comment "forwarded to a container, allowed by no traffic rule"
+                }
+
+                counter invalid-incoming {
+                  comment "forwarded to a container, belonging to no known connection"
+                }
+
+                chain filter-incoming {
+                  type filter hook forward priority filter; policy accept;
+
+                  # Not for a container: left to the host's other rules.
+                  ip6 daddr != @container-addresses accept
+
+                  # Replies to allowed connections, and their ICMPv6 errors.
+                  ct state established,related accept
+                  ct state invalid counter name invalid-incoming ${verdict}
+
+                  # ICMPv6 errors that IPv6 needs to work (path MTU among them).
+                  icmpv6 type { destination-unreachable, packet-too-big, time-exceeded, parameter-problem } accept
+
+                  ${concatStringsSep "\n  " (containers.lib.mapToList ruleLines)}
+
+                  counter name undeclared-incoming ${verdict}
+                }
+              '';
             }
           ]
         )
