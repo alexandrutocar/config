@@ -13,13 +13,14 @@ in {
       network = let
         systemSite = addresses.provider.hetzner-cloud-server;
       in {
+        hostAddress = networks.aether.internal.net.hosts.${hostName} |> ip.toCompressed;
+
         gua = {
           prefix = systemSite.hosts.${hostName}.managedNetworks.ipv6.gua |> ip.network.toPrefixGroups;
         };
 
         ula = {
           prefix = networks.aether.internal.net._meta.network |> ip.network.toPrefixGroups;
-          source = networks.aether.internal.net.hosts.collei |> ip.toCompressed;
         };
       };
     };

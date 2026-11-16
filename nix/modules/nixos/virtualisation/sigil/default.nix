@@ -500,6 +500,23 @@ in {
               (routes/firewall) is still open.
             '';
           };
+          hostAddress = mkOption {
+            type = singleHostWithin ip.ranges.ipv6.uniqueLocal;
+            example = "fd00:1:2::1";
+            description = ''
+              The host's own address on the internal network: a single
+              host within fc00::/7, as `lib.extra.ip` address data (/128).
+              The host-side routes toward containers' unique local
+              addresses prefer it as source address (`PreferredSource=`).
+
+              It may lie outside `ula.prefix`. Inside it, it must stay out
+              of every group /64, as those belong to the containers.
+              sigil does not assign it to an interface.
+
+              Replaces `ula.source`, which still works as a deprecated
+              alias.
+            '';
+          };
           gua = {
             prefix = mkOption {
               type = nullOr (networkWith {
@@ -529,15 +546,6 @@ in {
                 A /48 ULA prefix managed by the host, within fc00::/7. Given as
                 CIDR or as its three groups (`"fd00:1:2"`). Each group of
                 containers gets one /64 of it.
-              '';
-            };
-            source = mkOption {
-              type = singleHostWithin ip.ranges.ipv6.uniqueLocal;
-              example = "fd00:1:2::1";
-              description = ''
-                `PreferredSource=` for the host-side ULA route toward
-                each container: the host's own ULA address (a single host
-                within fc00::/7).
               '';
             };
           };
@@ -662,10 +670,21 @@ in {
                   containers.lib.mapToList (container:
                     map (describeContainer container) container.addressesWithoutPrefix);
 
+                # The /64 an address lies in.
+                subnetOf = address: ip.address.getNetwork (ip.address.withPrefixLength 64 address);
+
                 # The all-zero host part is the subnet-router anycast address:
                 # an address equal to the network address of its /64.
                 isSubnetRouterAnycast = address:
-                  ip.toCompressed address == ip.toCompressed (ip.address.getNetwork (ip.address.withPrefixLength 64 address));
+                  ip.toCompressed address == ip.toCompressed (subnetOf address);
+
+                # Groups whose /64 holds the host address. Every group /64
+                # lies in the ULA /48, so an address outside it never clashes.
+                groupsHoldingHostAddress =
+                  containers.all
+                  |> filter (container: ip.network.contains (subnetOf container.addresses.ipv6.ula) cfg.settings.network.hostAddress)
+                  |> map (container: container.group)
+                  |> unique;
 
                 subnetRouterAnycast =
                   entries
@@ -690,6 +709,10 @@ in {
                 {
                   assertion = subnetRouterAnycast == [];
                   message = "sigil: host part :: is the subnet-router anycast address and cannot be a container address: ${concatStringsSep ", " subnetRouterAnycast}";
+                }
+                {
+                  assertion = groupsHoldingHostAddress == [];
+                  message = "sigil: settings.network.hostAddress ${ip.toCompressed cfg.settings.network.hostAddress} lies in the /64 of group ${concatStringsSep ", " groupsHoldingHostAddress}, which belongs to its containers";
                 }
                 {
                   assertion = clashes == {};
@@ -820,7 +843,7 @@ in {
                         ulaRoute = address:
                           guaRoute address
                           // {
-                            PreferredSource = cfg.settings.network.ula.source |> ip.toCompressed;
+                            PreferredSource = cfg.settings.network.hostAddress |> ip.toCompressed;
                           };
                       in
                         optional (gua != null) (guaRoute gua)
