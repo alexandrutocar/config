@@ -1050,9 +1050,9 @@ final: super: {scope}: let
     * prefix and newLen are set. Unlike subnetAt it has no 32-bit index limit.
     *
     * Example:
-    *   lib.extra.net.adt.ip.toCIDR (lib.extra.net.adt.ip.network.subnetFromBits (lib.extra.net.adt.ip.network.fromCIDR 6 "2a00:5ba0::/29") 64 "0:0:8009:5f40::")
+    *   lib.extra.ip.toCIDR (lib.extra.ip.network.subnetFromBits (lib.extra.ip.network.fromCIDR 6 "2a00:5ba0::/29") 64 "0:0:8009:5f40::")
     *     -> "2a00:5ba0:8009:5f40::/64"
-    *   lib.extra.net.adt.ip.toCIDR (lib.extra.net.adt.ip.network.subnetFromBits (lib.extra.net.adt.ip.network.fromCIDR 4 "10.0.0.0/8") 24 "0.1.2.0")
+    *   lib.extra.ip.toCIDR (lib.extra.ip.network.subnetFromBits (lib.extra.ip.network.fromCIDR 4 "10.0.0.0/8") 24 "0.1.2.0")
     *     -> "10.1.2.0/24"
     *
     * Implementation:
