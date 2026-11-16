@@ -38,7 +38,7 @@ in {
     inherit (lib.lists) any concatMap elemAt foldl' length optional optionals singleton sort;
     inherit (lib.modules) mkBefore;
     inherit (lib.options) literalExpression mkEnableOption mkOption;
-    inherit (lib.types) attrsOf deferredModule listOf mkOptionType nullOr raw str submodule;
+    inherit (lib.types) attrsOf deferredModule either enum ints listOf mkOptionType nonEmptyListOf nullOr raw str submodule;
     inherit (lib.strings) concatStringsSep substring;
     inherit (lib.trivial) fromHexString;
 
@@ -284,6 +284,116 @@ in {
                           container sets although their prefix is not configured.
                           Collected by an assertion that lists every such container.
                         '';
+                      };
+
+                      rules = {
+                        networkTraffic = let
+                          # TRAFFIC RULES
+                          # -------------
+                          # One incoming rule: traffic from any source, to any destination, of
+                          # any allowed kind. Every list is written out, none has a default.
+                          incomingRule = let
+                            portNumber = ints.between 1 65535;
+
+                            portRange = submodule {
+                              options = {
+                                from = mkOption {
+                                  type = portNumber;
+                                  description = "First port of the range.";
+                                };
+                                to = mkOption {
+                                  type = portNumber;
+                                  description = "Last port of the range, included. Not below `from`.";
+                                };
+                              };
+                            };
+
+                            allowedTraffic = submodule {
+                              options = {
+                                protocol = mkOption {
+                                  type = enum ["tcp" "udp" "sctp" "icmpv6"];
+                                  description = "Protocol of the allowed traffic.";
+                                };
+                                ports = mkOption {
+                                  type = listOf (either portNumber portRange);
+                                  default = [];
+                                  example = literalExpression ''
+                                    [ 80 443 { from = 8000; to = 8080; } ]
+                                  '';
+                                  description = ''
+                                    Destination ports, as numbers or `{ from; to; }` ranges.
+                                    Required for `tcp`, `udp` and `sctp`, and an error for
+                                    `icmpv6`, which has no ports.
+                                  '';
+                                };
+                              };
+                            };
+                          in
+                            submodule {
+                              options = {
+                                sourceAddresses = mkOption {
+                                  # Address first: a bare address is not valid CIDR, so trying the
+                                  # network type first would throw instead of falling through.
+                                  type = nonEmptyListOf (either (singleHostWithin null) (networkWith {version = 6;}));
+                                  apply = map (source:
+                                    if ip.isAddress source
+                                    then ip.address.getNetwork source
+                                    else source);
+                                  example = ["::/0" "fd00:1:2:3::10"];
+                                  description = ''
+                                    Where the traffic may come from: IPv6 single-host addresses
+                                    or networks, as `lib.extra.ip` data or text. They read back
+                                    as networks, a single host as its /128. Name remote
+                                    containers through their hosts'
+                                    `services.sigil.settings.containers`.
+                                  '';
+                                };
+
+                                destinationAddresses = mkOption {
+                                  type = nonEmptyListOf (singleHostWithin null);
+                                  example = literalExpression ''
+                                    with config.services.sigil.settings.containers.<group>.<uuid>.addresses.ipv6;
+                                      [ extra.gua.ssh ]
+                                  '';
+                                  description = ''
+                                    Which of the container's own addresses the traffic may reach.
+                                    An address the container does not hold is an error.
+                                  '';
+                                };
+
+                                allowedTraffic = mkOption {
+                                  type = nonEmptyListOf allowedTraffic;
+                                  example = literalExpression ''
+                                    [ { protocol = "tcp"; ports = [ 22 ]; } { protocol = "icmpv6"; } ]
+                                  '';
+                                  description = "What traffic is allowed, by protocol and destination port.";
+                                };
+                              };
+                            };
+                        in {
+                          incoming = mkOption {
+                            type = listOf incomingRule;
+                            default = [];
+                            example = literalExpression ''
+                              [
+                                {
+                                  sourceAddresses = [ "::/0" ];
+                                  destinationAddresses = [ config.services.sigil.settings.containers.<group>.<uuid>.addresses.ipv6.extra.gua.ssh ];
+                                  allowedTraffic = [ { protocol = "tcp"; ports = [ 22 ]; } ];
+                                }
+                              ]
+                            '';
+                            description = ''
+                              Traffic this container accepts, as rules of sources,
+                              destinations and allowed traffic. A packet is accepted
+                              when one rule matches its source, its destination and
+                              its protocol and port.
+
+                              Not enforced yet: nothing is generated from these
+                              rules so far.
+                            '';
+                          };
+                        };
                       };
 
                       group = mkOption {
@@ -557,7 +667,7 @@ in {
   config = let
     inherit (lib.extra) ip;
     inherit (lib.attrsets) attrValues filterAttrs mapAttrsToList mergeAttrsList;
-    inherit (lib.lists) all concatLists concatMap elem filter foldl' groupBy length optional singleton unique;
+    inherit (lib.lists) all concatLists concatMap elem filter foldl' groupBy imap0 length optional singleton unique;
     inherit (lib.modules) mkIf mkMerge;
     inherit (lib.strings) concatStringsSep;
   in let
@@ -690,6 +800,38 @@ in {
                   entries
                   |> filter (entry: isSubnetRouterAnycast entry.address)
                   |> map (entry: "${entry.container} (${entry.label})");
+
+                # A container's incoming rules, each labelled with its position.
+                incomingRules = container:
+                  container.rules.networkTraffic.incoming
+                  |> imap0 (index: rule: rule // {label = "${container.group}/${container.mid} rules.networkTraffic.incoming.${toString index}";});
+
+                # Destinations the container does not hold. Its own addresses
+                # come from addressEntries, which skips unresolvable ones.
+                foreignDestinations = containers.lib.mapToList (container: let
+                  own = addressEntries container |> map (entry: ip.toCompressed entry.address);
+                in
+                  incomingRules container
+                  |> concatMap (rule:
+                    rule.destinationAddresses
+                    |> filter (address: !(elem (ip.toCompressed address) own))
+                    |> map (address: "  ${rule.label}: ${ip.toCompressed address}")));
+
+                # Missing ports where the protocol has them, ports where it has
+                # none, and ranges that run backwards.
+                portErrors = containers.lib.mapToList (container:
+                  incomingRules container
+                  |> concatMap (rule:
+                    rule.allowedTraffic
+                    |> imap0 (index: traffic: let
+                      where = "  ${rule.label}.allowedTraffic.${toString index} (${traffic.protocol})";
+                      hasPorts = traffic.protocol != "icmpv6";
+                      backwards = traffic.ports |> filter (port: builtins.isAttrs port && port.from > port.to);
+                    in
+                      optional (hasPorts && traffic.ports == []) "${where}: needs ports"
+                      ++ optional (!hasPorts && traffic.ports != []) "${where}: takes no ports"
+                      ++ map (range: "${where}: range ${toString range.from}-${toString range.to} runs backwards") backwards)
+                    |> concatLists));
               in [
                 {
                   assertion = let
@@ -717,6 +859,14 @@ in {
                 {
                   assertion = clashes == {};
                   message = concatStringsSep "\n" (["sigil: addresses held more than once:"] ++ mapAttrsToList describeClash clashes);
+                }
+                {
+                  assertion = foreignDestinations == [];
+                  message = concatStringsSep "\n" (["sigil: traffic rules name destinations their container does not hold:"] ++ foreignDestinations);
+                }
+                {
+                  assertion = portErrors == [];
+                  message = concatStringsSep "\n" (["sigil: traffic rules with invalid ports:"] ++ portErrors);
                 }
                 {
                   assertion = config.networking.nftables.enable;
