@@ -735,7 +735,7 @@ in {
                 targets = {
                   machines = {
                     wants = containers.lib.mapToList (container: [
-                      "${systemd-nspawn.service.name container}.service"
+                      "${systemd-nspawn.service.name container.mid}.service"
                     ]);
                   };
                 };
