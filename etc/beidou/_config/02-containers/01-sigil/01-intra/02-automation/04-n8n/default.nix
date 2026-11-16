@@ -61,20 +61,6 @@ in {
             };
           };
         };
-        network = {
-          links = {
-            intra = {
-              ${mid} = [
-                {
-                  target = config.services.sigil.settings.containers.intra.d86c8e1c-2bcd-4d2f-a3b2-7962afc28a51; # intra/automation/ollama
-                }
-                {
-                  target = config.services.sigil.settings.containers.intra.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a; # intra/operation/dns
-                }
-              ];
-            };
-          };
-        };
       };
     };
   };

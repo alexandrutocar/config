@@ -10,14 +10,10 @@
   globalConfig = config;
   cfg = config.services.sigil;
 in let
-  mkBridgeName = bid: "br-${bid}";
-  mkLHLinkName = bid: mid: "lh-${builtins.substring 0 12 (builtins.hashString "sha256" (bid + mid))}";
-  mkLCLinkName = bid: mid: "lc-${builtins.substring 0 12 (builtins.hashString "sha256" (bid + mid))}";
-in let
   # LINK-LOCAL ADDRESSING
   # ---------------------
-  # Every veth (host ve-* <-> container host0) and every container link (lc-*)
-  # is its own fe80::/64, so the same few addresses repeat on each of them.
+  # Every veth (host ve-* <-> container host0) is its own fe80::/64, so the
+  # same two addresses repeat on each of them.
   # Built from the link network, so each carries /64 and lies within fe80::/10.
   # Handed to the containers as `sigil.linkLocal`.
   linkLocal = let
@@ -25,8 +21,6 @@ in let
   in {
     host = on "::1"; # ve-* end on the host
     container = on "::c"; # host0 end in the container
-    peerA = on "::a"; # lc-* end of the linked container with the lower MID
-    peerB = on "::b"; # lc-* end of the other linked container
   };
 
   # TRAFFIC RULE RENDERING
@@ -76,11 +70,11 @@ in {
     inherit (lib.extra) ip;
     inherit (lib.extra.types.ip) addressWith networkWith;
     inherit (lib.extra.files.list) recursive;
-    inherit (lib.attrsets) attrByPath attrNames attrValues mapAttrs mergeAttrsList;
-    inherit (lib.lists) any concatMap elemAt foldl' length optional optionals singleton sort;
+    inherit (lib.attrsets) attrNames mapAttrs;
+    inherit (lib.lists) any optional optionals singleton;
     inherit (lib.modules) mkBefore;
     inherit (lib.options) literalExpression mkEnableOption mkOption;
-    inherit (lib.types) attrsOf bool deferredModule either enum ints listOf mkOptionType nonEmptyListOf nullOr raw str submodule;
+    inherit (lib.types) attrsOf bool deferredModule either enum ints listOf nonEmptyListOf nullOr raw str submodule;
     inherit (lib.strings) concatStringsSep substring;
     inherit (lib.trivial) fromHexString;
 
@@ -142,50 +136,6 @@ in {
                       # `specialArgs.sigil`.
                       infosFor = container: {
                         inherit (container) mid group addresses;
-                        links = linksFor container;
-                      };
-
-                      # Links declared for a container under
-                      # `settings.network.links.<group>.<id>`, if any.
-                      linksFor = container: let
-                        policies = {
-                          outgoing = attrByPath [container.group container.mid] [] cfg.settings.network.links;
-
-                          incoming = concatMap (
-                            group:
-                              concatMap (
-                                source:
-                                  builtins.filter (l: l.target.mid == container.mid) group.${source}
-                              ) (builtins.attrNames group)
-                          ) (builtins.attrValues cfg.settings.network.links);
-                        };
-
-                        bridges = attrValues (foldl' (acc: link:
-                          if acc ? ${link.bid}
-                          then acc
-                          else
-                            acc
-                            // {
-                              ${link.bid} = {
-                                inherit (link) bid;
-                                port =
-                                  if link.source.mid == container.mid
-                                  then link.target
-                                  else link.source;
-                              };
-                            }) {}
-                        (policies.outgoing ++ policies.incoming));
-                      in {
-                        lib = {
-                          bridge = {
-                            mapToAttrs = f: mergeAttrsList (map f bridges);
-                            mapToList = f: concatMap f bridges;
-                          };
-                          policy = {
-                            mapToAttrs = f: mergeAttrsList (map f policies.outgoing);
-                            mapToList = f: concatMap f policies.outgoing;
-                          };
-                        };
                       };
 
                       # HOST PART RESOLUTION
@@ -589,84 +539,6 @@ in {
         };
 
         network = {
-          links = mkOption {
-            type = let
-              linkModule = let
-                getBIdentity = a: b:
-                  substring 0 12 (hashString "sha256"
-                    (concatStringsSep ":" (sort (x: y: x < y) [a b])));
-
-                getPIdentity = a: b: substring 0 12 (hashString "sha256" "${a}:${b}");
-              in
-                group: source:
-                  submodule (
-                    {config, ...}: {
-                      options = {
-                        source = lib.mkOption {
-                          type = str;
-                          readOnly = true;
-                          apply = mid: attrByPath [mid] null cfg.settings.containers.${group};
-                          default = source;
-                        };
-
-                        target = mkOption {
-                          type = attrsOf raw;
-                          description = "Target container. Must be a container's UUID.";
-                        };
-
-                        bid = mkOption {
-                          type = str;
-                          readOnly = true;
-                          default = getBIdentity config.source.mid config.target.mid; # direction-free: sorted before hashing
-                          defaultText = literalExpression "mkBID <source> config.target";
-                          description = "Bridge id — identical for a→b and b→a.";
-                        };
-
-                        pid = mkOption {
-                          type = str;
-                          readOnly = true;
-                          default = getPIdentity config.source.mid config.target.mid; # directional
-                          defaultText = literalExpression "mkPID <source> config.target";
-                          description = "Policy id — distinct per direction.";
-                        };
-                      };
-                    }
-                  );
-
-              linksList = mkOptionType {
-                name = "listOfLinks";
-                description = "list of links";
-                merge = loc: defs: let
-                  n = length loc;
-                  source = elemAt loc (n - 1);
-                  group = elemAt loc (n - 2);
-                in
-                  (listOf (linkModule group source)).merge loc defs;
-                getSubOptions = prefix:
-                  (listOf (linkModule "<group>" "<source>")).getSubOptions prefix;
-              };
-            in
-              attrsOf (attrsOf linksList);
-
-            default = {};
-            example = literalExpression ''
-              {
-                intra.''${mid} = [
-                  { target = config.services.sigil.settings.containers.intra."fd0cac8e-…"; }
-                ];
-              }
-            '';
-            description = ''
-              Linked peers per container, keyed by group and then by
-              container UUID, mirroring `settings.containers`.
-              Elements are container definitions taken directly from
-              `settings.containers.<group>.<uuid>`. They reach the
-              container's modules through `sigil.self.links`, where each
-              bridge's `port` is the peer container (its `mid`,
-              `addresses.ipv6`, …); host-side enforcement
-              (routes/firewall) is still open.
-            '';
-          };
           hostAddress = mkOption {
             type = singleHostWithin ip.ranges.ipv6.uniqueLocal;
             example = "fd00:1:2::1";
@@ -740,7 +612,7 @@ in {
   config = let
     inherit (lib.extra) ip;
     inherit (lib.attrsets) attrValues filterAttrs mapAttrsToList mergeAttrsList;
-    inherit (lib.lists) all concatLists concatMap elem filter foldl' groupBy imap0 length optional singleton unique;
+    inherit (lib.lists) all concatLists concatMap elem filter groupBy imap0 length optional singleton unique;
     inherit (lib.modules) mkIf mkMerge;
     inherit (lib.strings) concatStringsSep;
   in let
@@ -763,37 +635,6 @@ in {
 
         # f :: container -> list; results concatenated into one list
         mapToList = f: concatMap f all;
-      };
-    };
-  in let
-    links = rec {
-      collected = cfg.settings.network.links;
-      policies = concatLists (concatMap attrValues (attrValues collected));
-      bridges = attrValues (foldl' (acc: link:
-        if acc ? ${link.bid}
-        then acc
-        else
-          acc
-          // {
-            ${link.bid} = {
-              inherit (link) bid;
-              ports = [
-                link.source
-                link.target
-              ];
-            };
-          }) {}
-      policies);
-
-      lib = {
-        bridge = {
-          mapToAttrs = f: mergeAttrsList (map f bridges);
-          mapToList = f: concatMap f bridges;
-        };
-        policy = {
-          mapToAttrs = f: mergeAttrsList (map f policies);
-          mapToList = f: concatMap f policies;
-        };
       };
     };
   in
@@ -1181,109 +1022,6 @@ in {
             }
           ]
         )
-      )
-      (
-        mkIf (cfg.settings.network.links != {})
-        (mkMerge [
-          {
-            assertions = [
-              {
-                assertion = all (e: e.source != e.target) links.policies;
-                message = "sigil: container declares a link to itself";
-              }
-              {
-                assertion = builtins.length (unique (map (e: e.bid) links.bridges)) == builtins.length links.bridges;
-                message = "sigil: Bridge ID (BID) collision — widen getBIdentity substring";
-              }
-            ];
-          }
-          {
-            # NSPAWN CONFIG
-            # -------------
-            systemd.nspawn = let
-              inherit (lib.lists) concatMap foldl';
-
-              # one {mid, extra} record per (bridge, port)
-              entries =
-                concatMap (
-                  bridge:
-                    map (port: {
-                      inherit (port) mid;
-                      extra = "${mkLHLinkName bridge.bid port.mid}:${mkLCLinkName bridge.bid port.mid}";
-                    })
-                    bridge.ports
-                )
-                links.bridges;
-
-              # fold into { <mid> = { settings.Network.VirtualEthernetExtra = [ … all its links … ]; }; }
-              byMID = foldl' (acc: e:
-                acc
-                // {
-                  ${e.mid} = {
-                    settings = {
-                      Network = {
-                        VirtualEthernetExtra = (acc.${e.mid}.settings.Network.VirtualEthernetExtra or []) ++ [e.extra];
-                      };
-                    };
-                  };
-                }) {}
-              entries;
-            in
-              byMID;
-          }
-          {
-            # NETWORK CONFIG
-            # --------------
-            systemd = {
-              network = {
-                netdevs = links.lib.bridge.mapToAttrs (bridge: let
-                  Name = mkBridgeName bridge.bid;
-                in {
-                  "10-${Name}" = {
-                    netdevConfig = {
-                      inherit Name;
-                      Kind = "bridge";
-                    };
-                  };
-                });
-                networks =
-                  (
-                    links.lib.bridge.mapToAttrs (bridge:
-                      mergeAttrsList (map (port: let
-                          Name = mkLHLinkName bridge.bid port.mid;
-                        in {
-                          "10-${Name}" = {
-                            matchConfig = {
-                              inherit Name;
-                            };
-                            networkConfig = {
-                              Bridge = mkBridgeName bridge.bid;
-                              LinkLocalAddressing = "no";
-                            };
-                          };
-                        })
-                        bridge.ports))
-                  )
-                  // (
-                    links.lib.bridge.mapToAttrs (bridge: let
-                      Name = mkBridgeName bridge.bid;
-                    in {
-                      "10-${Name}" = {
-                        matchConfig = {
-                          inherit Name;
-                        };
-                        networkConfig = {
-                          LinkLocalAddressing = "no";
-                          ConfigureWithoutCarrier = true;
-                        };
-                        linkConfig.RequiredForOnline = false;
-                      };
-                    })
-                  );
-              };
-            };
-          }
-        ])
       )
     ]);
 }

@@ -66,17 +66,6 @@ in {
             };
           };
         };
-        network = {
-          links = {
-            intra = {
-              ${mid} = [
-                {
-                  target = config.services.sigil.settings.containers.intra.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a; # intra/operation/dns
-                }
-              ];
-            };
-          };
-        };
       };
     };
   };

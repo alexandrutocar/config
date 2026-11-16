@@ -140,27 +140,6 @@ in {
             };
           };
         };
-
-        network = {
-          links = {
-            intra = {
-              ${mid} = [
-                {
-                  target = config.services.sigil.settings.containers.intra.a8e714de-f158-49fc-958a-9176f25d2973; # intra/sharing/dav
-                }
-                {
-                  target = config.services.sigil.settings.containers.intra.c38a828e-58a7-49af-894d-ba02f936d211; # intra/operation/auth
-                }
-                {
-                  target = config.services.sigil.settings.containers.intra.acda4bf3-2678-43c5-bae9-e67bd8cb710d; # intra/development/forge
-                }
-                {
-                  target = config.services.sigil.settings.containers.intra.a4205b50-197a-40c8-8057-fe1394630e91; # intra/automation/n8n
-                }
-              ];
-            };
-          };
-        };
       };
     };
   };
