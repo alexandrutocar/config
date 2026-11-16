@@ -100,7 +100,7 @@ in {
           ];
 
           linkConfig = {
-            ActivationPolicy = "manual";
+            ActivationPolicy = "always-up";
             RequiredForOnline = false;
           };
         };
