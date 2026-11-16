@@ -148,7 +148,7 @@ in {
 
                       # HOST PART RESOLUTION
                       # --------------------
-                      # The container's zone /64, home of its ULA and ULA extras.
+                      # The container's group /64, home of its ULA and ULA extras.
                       ulaSubnet = getULASubnet cfg.settings.network.ula.prefix config.group;
 
                       onSubnet = subnet: hostPart:
@@ -214,7 +214,7 @@ in {
                             '';
                             description = ''
                               The container's identity on the internal network: a
-                              zone-local address derived from its group and MID, as
+                              unique local address derived from its group and MID, as
                               `lib.extra.ip` address data (/128, within fc00::/7).
                               Always present and read-only, so it stays unique across
                               hosts without coordination; a container's ULA changes
@@ -230,9 +230,9 @@ in {
                               example = {dns = "::53";};
                               apply = mapAttrs (_: onSubnet ulaSubnet);
                               description = ''
-                                Additional zone-local addresses, keyed by a name of
+                                Additional unique local addresses, keyed by a name of
                                 your choosing. Set as host parts on the container's
-                                zone /64 (that of its ULA), e.g. `dns = "::53"`; each
+                                group /64 (that of its ULA), e.g. `dns = "::53"`; each
                                 reads back as the full address, as `lib.extra.ip`
                                 address data (/128).
 
@@ -404,7 +404,7 @@ in {
 
           # Container values coerce to their MID.
           apply = mapAttrs (
-            _zone:
+            _group:
               mapAttrs (
                 _: container:
                   container
@@ -416,7 +416,7 @@ in {
 
           default = {};
           description = ''
-            Declarative systemd-nspawn containers, keyed by zone and
+            Declarative systemd-nspawn containers, keyed by group and
             then by container UUID.
           '';
         };
