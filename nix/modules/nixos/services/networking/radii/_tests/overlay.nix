@@ -111,7 +111,10 @@
       };
     };
 
-    environment.systemPackages = [pkgs.wireguard-tools];
+    environment.systemPackages = [pkgs.wireguard-tools pkgs.socat];
+
+    # Lets the test read babeld's neighbours and routes (read-only, on ::1).
+    services.babeld.extraConfig = "local-port 33123";
 
     services.radii = {
       enable = true;
@@ -140,13 +143,14 @@ in
 
     testScript = ''
       import json
+      from datetime import timedelta
 
 
       def handshook(machine, interface: str) -> None:
           """Waits until the tunnel has had a handshake."""
           machine.wait_until_succeeds(
               f"wg show {interface} latest-handshakes | awk '$2 > 0 {{ found = 1 }} END {{ exit !found }}'",
-              timeout=240,
+              timeout=timedelta(seconds=240),
           )
 
 
@@ -161,6 +165,28 @@ in
 
       def route_device(machine, destination: str) -> str:
           return machine.succeed(f"ip -6 route get {destination}").split(" dev ")[1].split()[0]
+
+
+      def diagnose() -> None:
+          """Prints every machine's overlay state, for when a check fails."""
+          commands = [
+              "wg show all latest-handshakes",
+              "wg show all endpoints",
+              "ip -6 address show",
+              "ip -6 rule show",
+              "ip -6 route show table all",
+              "ip -6 route get fd00:d::4",
+              "ip -6 route get fd00:c::3",
+              "ping -c1 -W2 fd00:d::4",
+              "sysctl net.ipv6.conf.all.forwarding",
+              "echo dump | socat -t2 - TCP6:[::1]:33123",
+              "nft list ruleset",
+              "journalctl -u babeld --no-pager | tail -n 40",
+          ]
+          for machine in (hub1, hub2, spoke1, spoke2):
+              for command in commands:
+                  status, output = machine.execute(command)
+                  print(f"=== {machine.name}: {command} (exit {status})\n{output}")
 
 
       start_all()
@@ -180,10 +206,14 @@ in
               assert endpoint(spoke2, interface).startswith("192.168.1."), endpoint(spoke2, interface)
 
       with subtest("spokes reach each other through a hub"):
-          spoke1.wait_until_succeeds("ping -c1 -W2 fd00:d::4", timeout=180)
-          spoke2.wait_until_succeeds("ping -c1 -W2 fd00:c::3", timeout=180)
-          spoke1.wait_until_succeeds("ping -c1 -W2 fd00:a::1", timeout=180)
-          spoke1.wait_until_succeeds("ping -c1 -W2 fd00:b::1", timeout=180)
+          try:
+              spoke1.wait_until_succeeds("ping -c1 -W2 fd00:d::4", timeout=timedelta(seconds=180))
+              spoke2.wait_until_succeeds("ping -c1 -W2 fd00:c::3", timeout=timedelta(seconds=180))
+              spoke1.wait_until_succeeds("ping -c1 -W2 fd00:a::1", timeout=timedelta(seconds=180))
+              spoke1.wait_until_succeeds("ping -c1 -W2 fd00:b::1", timeout=timedelta(seconds=180))
+          except Exception:
+              diagnose()
+              raise
 
       with subtest("a spoke's forged source is dropped at the hub"):
           spoke1.succeed("ip -6 address add fd00:d::99/128 dev lo")
@@ -191,7 +221,7 @@ in
           spoke1.succeed("ip -6 address del fd00:d::99/128 dev lo")
 
       with subtest("a source the site does not route is dropped from a hub's tunnel"):
-          hub2.wait_until_succeeds("ping -c1 -W2 fd00:a::1", timeout=180)
+          hub2.wait_until_succeeds("ping -c1 -W2 fd00:a::1", timeout=timedelta(seconds=180))
           assert route_device(hub2, "fd00:a::1") == "rd-hub1", "hub2 does not reach hub1 directly"
           before = counter(hub1, "forged-on-tunnel")
           hub2.succeed("ip -6 address add 2001:db8:ffff::1/128 dev lo")
@@ -213,7 +243,7 @@ in
           used = route_device(spoke1, "fd00:d::4")
           failed, other = (hub1, "rd-hub2") if used == "rd-hub1" else (hub2, "rd-hub1")
           failed.crash()
-          spoke1.wait_until_succeeds("ping -c1 -W2 fd00:d::4", timeout=240)
+          spoke1.wait_until_succeeds("ping -c1 -W2 fd00:d::4", timeout=timedelta(seconds=240))
           assert route_device(spoke1, "fd00:d::4") == other, "traffic did not move to the other hub"
     '';
   }
