@@ -25,6 +25,10 @@
       specialArgs = {inherit lib pkgs;};
       modules = [
         ../default.nix
+        # The module also defines NixOS options (systemd, babeld, the
+        # firewall) that no stub declares; radii is off here, so they are
+        # ignored. Typos in the site table are still caught by its own types.
+        {_module.check = false;}
         ({lib, ...}: let
           inherit (lib.options) mkOption;
           inherit (lib.types) listOf str unspecified;

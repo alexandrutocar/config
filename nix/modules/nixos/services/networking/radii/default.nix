@@ -8,6 +8,19 @@
 
   # Derivation, device tunnels and checks, shared with the flake check.
   radii = import ./_module/lib {inherit lib;};
+
+  # The peers this host has tunnels to; none while it is missing from the
+  # site table, which an assertion reports.
+  peers =
+    if cfg.settings.site ? ${cfg.settings.self}
+    then cfg.derived.peers
+    else {};
+
+  # Unit names in systemd.network.{netdevs,networks}, one per tunnel.
+  unitOf = peer: "40-${peer.interface}";
+
+  # The credential networkd reads the private key from.
+  keyCredential = "radii.private-key";
 in {
   options = let
     inherit (lib.extra) ip;
@@ -208,6 +221,48 @@ in {
     services.radii = {
       enable = mkEnableOption "radii, the overlay between the site's hosts";
 
+      privateKey = mkOption {
+        type = nullOr str;
+        default = null;
+        example = literalExpression ''
+          # systemd-creds encrypt --with-key=host --name=${keyCredential} radii.key -
+          '''
+            Whxqht+dQJax1aZeCGLxmiAAAAABAAAADAAAABAAAAD…
+          '''
+        '';
+        description = ''
+          This host's WireGuard private key, encrypted for this host: the
+          output of `systemd-creds encrypt --with-key=host
+          --name=${keyCredential} <key file> -`, run on the host itself. Its
+          public key is the one in the site table. Required when radii is
+          enabled; systemd-networkd receives it as the credential
+          `${keyCredential}`, and it never enters the Nix store unencrypted.
+        '';
+      };
+
+      units = mkOption {
+        type = raw;
+        readOnly = true;
+        default = let
+          names = map unitOf (attrValues peers);
+        in {
+          netdevs = names;
+          networks = names;
+        };
+        defaultText = literalExpression "{ netdevs = [ \"40-rd-<peer>\" … ]; networks = [ … ]; }";
+        description = ''
+          The units radii creates for its tunnels, as names in
+          `systemd.network.netdevs` and `systemd.network.networks`, so a
+          host can override them at once, e.g. to bring tunnels up only by
+          hand:
+
+              systemd.network.networks = lib.genAttrs config.services.radii.units.networks
+                (_: { linkConfig.ActivationPolicy = "manual"; });
+
+          The `radii` interface holding the host address is not among them.
+        '';
+      };
+
       settings = {
         self = mkOption {
           type = str;
@@ -272,7 +327,12 @@ in {
             `listenPort` (this host's port for that tunnel, null for any),
             `endpointPort` (the port of the peer's endpoints, null when
             the peer is a spoke) and `candidates` (the peer's endpoints
-            within this host's `availableNetworks`; DNS names always)
+            within this host's `availableNetworks`; DNS names always), and
+            for the tunnel: `interface` (`rd-<peer>`), `linkLocal.self` and
+            `linkLocal.peer` (`fe80::<id>/64` on each end), `allowedIPs`
+            (`::/0` towards a hub; a spoke's owned networks, link-local
+            address and babel's group on a hub) and `endpoint` (where the
+            tunnel to a hub starts, null towards a spoke)
           - `hosts.<device>.wg.<hub>-<n>` (also under `peers` on hubs):
             a device's WireGuard tunnels, one per hub and endpoint it can
             reach, `n` counting the hub's endpoints in preference order.
@@ -292,28 +352,115 @@ in {
   };
 
   config = let
-    inherit (lib.lists) optional unique;
-    inherit (lib.modules) mkIf;
+    inherit (lib.extra) ip;
+    inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
+    inherit (lib.attrsets) attrValues mapAttrs' nameValuePair optionalAttrs;
+    inherit (lib.lists) filter optional optionals unique;
+    inherit (lib.modules) mkIf mkMerge;
     inherit (lib.strings) concatStringsSep;
   in
-    mkIf cfg.enable (let
-      inherit (cfg.settings) self site;
-      host = radii.checkHost site self;
+    mkIf cfg.enable (mkMerge [
+      # CHECKS
+      # ------
+      (let
+        inherit (cfg.settings) self site;
+        host = radii.checkHost site self;
 
-      errors = unique (
-        radii.checkSite site
-        ++ host.errors
-        ++ optional (site ? ${self} && site.${self}.kind != "nixos")
-        "${self} is a device in the site table: only hosts of kind nixos run radii"
-      );
-    in {
-      assertions = [
-        {
-          assertion = errors == [];
-          message = concatStringsSep "\n" (["radii: the site table has problems:"] ++ map (error: "  ${error}") errors);
-        }
-      ];
+        errors = unique (
+          radii.checkSite site
+          ++ host.errors
+          ++ optional (site ? ${self} && site.${self}.kind != "nixos")
+          "${self} is a device in the site table: only hosts of kind nixos run radii"
+          ++ optional (cfg.privateKey == null)
+          "services.radii.privateKey is not set: ${self} has no key for its tunnels"
+        );
+      in {
+        assertions = [
+          {
+            assertion = errors == [];
+            message = concatStringsSep "\n" (["radii: the site table has problems:"] ++ map (error: "  ${error}") errors);
+          }
+        ];
 
-      warnings = map (warning: "radii: ${warning}") host.warnings;
-    });
+        warnings = map (warning: "radii: ${warning}") host.warnings;
+      })
+
+      # TUNNELS
+      # -------
+      # One WireGuard interface per peer, so each peer is its own link: babel
+      # can run on every tunnel, and a hub can tell spokes apart. No routes
+      # come from WireGuard itself (RouteTable=off); babeld provides them.
+      {
+        systemd.services.systemd-networkd.serviceConfig.SetCredentialEncrypted =
+          optionals (cfg.privateKey != null) (mkSetCredentialEncrypted {${keyCredential} = cfg.privateKey;});
+
+        systemd.network = {
+          netdevs =
+            {
+              # The host address lives on its own interface, apart from any
+              # tunnel, so it stays up whichever tunnels are.
+              "40-radii".netdevConfig = {
+                Kind = "dummy";
+                Name = "radii";
+              };
+            }
+            // mapAttrs' (_: peer:
+              nameValuePair (unitOf peer) {
+                netdevConfig = {
+                  Kind = "wireguard";
+                  Name = peer.interface;
+                };
+
+                wireguardConfig =
+                  {
+                    PrivateKeyFile = "${credentialsDirectory "systemd-networkd"}/${keyCredential}";
+                    RouteTable = "off";
+                  }
+                  # A spoke binds no fixed port.
+                  // optionalAttrs (peer.listenPort != null) {ListenPort = peer.listenPort;};
+
+                wireguardPeers = [
+                  ({
+                      PublicKey = peer.publicKey;
+                      AllowedIPs = map ip.toCIDR peer.allowedIPs;
+                      RouteTable = "off";
+                    }
+                    # Towards a hub: where to start, and keep NAT open.
+                    // optionalAttrs (peer.endpoint != null) {
+                      Endpoint = peer.endpoint;
+                      PersistentKeepalive = 25;
+                    })
+                ];
+              })
+            peers;
+
+          networks =
+            {
+              "40-radii" = {
+                matchConfig.Name = "radii";
+                address = [(ip.toCIDR cfg.derived.self.hostAddress)];
+                networkConfig.LinkLocalAddressing = "no";
+                linkConfig.RequiredForOnline = "no";
+              };
+            }
+            // mapAttrs' (_: peer:
+              nameValuePair (unitOf peer) {
+                matchConfig.Name = peer.interface;
+                address = [(ip.toCIDR peer.linkLocal.self)];
+                networkConfig = {
+                  LinkLocalAddressing = "no";
+                  IPv6AcceptRA = false;
+                };
+                linkConfig.RequiredForOnline = "no";
+              })
+            peers;
+        };
+
+        # A hub opens exactly its listen ports, one per peer.
+        networking.firewall.allowedUDPPorts =
+          attrValues peers
+          |> filter (peer: peer.listenPort != null)
+          |> map (peer: peer.listenPort);
+      }
+    ]);
 }

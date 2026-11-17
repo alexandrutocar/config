@@ -1,13 +1,13 @@
 # RADII LIBRARY
 # -------------
 # Pure functions of the typed site table, shared by the module (derived
-# values, per-host assertions, device files) and the flake check (the whole
+# values, tunnels, per-host assertions, device files) and the flake check (the whole
 # table), so both see the same site.
 {lib}: let
   inherit (lib.extra) ip;
   inherit (lib.attrsets) attrNames attrValues filterAttrs listToAttrs mapAttrs mapAttrsToList;
   inherit (lib.generators) mkKeyValueDefault toINI;
-  inherit (lib.lists) concatLists concatMap drop filter foldl' groupBy head imap0 imap1 length optional;
+  inherit (lib.lists) concatLists concatMap drop filter foldl' groupBy head imap0 imap1 length optional optionals;
   inherit (lib.strings) concatStringsSep;
   inherit (lib.trivial) max;
 
@@ -35,6 +35,29 @@
     else null;
 
   validPort = port: port != null && port >= 1 && port <= 65535;
+
+  # An endpoint as WireGuard writes it: IPv6 in brackets, then the port.
+  hostText = endpoint:
+    if ip.isAddress endpoint
+    then ip.toURIHost endpoint
+    else endpoint;
+
+  endpointText = endpoint: port: "${hostText endpoint}:${toString port}";
+
+  # TUNNELS
+  # -------
+  # The tunnel to a peer is named after it: "rd-" plus the peer's name, so
+  # names in the site table are at most 12 characters (checked below).
+  interfaceOf = host: "rd-${host.name}";
+
+  # A host's link-local address on every tunnel: fe80::<id>/64. Each tunnel
+  # is its own link, so the pair is unique there.
+  linkLocalOf = host: ip.address.add (ip.address.fromString 6 "fe80::/64") host.id;
+
+  anywhere = ip.network.fromCIDR 6 "::/0";
+
+  # Babel's multicast group: hubs send hellos to it on every tunnel.
+  babelGroup = ip.address.fromString 6 "ff02::1:6";
 
   # DERIVATION
   # ----------
@@ -69,6 +92,36 @@
           if isHub peer
           then candidatesFor me peer
           else [];
+
+        # The tunnel's interface, and both ends' link-local addresses.
+        interface = interfaceOf peer;
+        linkLocal = {
+          self = linkLocalOf me;
+          peer = linkLocalOf peer;
+        };
+
+        # What the tunnel sends to and accepts from `peer`. Towards a hub
+        # anything, since routes through it lead anywhere; from a spoke only
+        # what it owns, plus its link-local address and babel's group for
+        # routing (devices run no babel).
+        allowedIPs =
+          if isHub peer
+          then [anywhere]
+          else
+            peer.ownedNetworks
+            ++ optionals (peer.kind == "nixos") [
+              (ip.address.singleHostRoute (linkLocalOf peer))
+              babelGroup
+            ];
+
+        # Where the tunnel starts: the first endpoint this host can reach,
+        # or null for a spoke (it roams; the hub learns where it is).
+        endpoint = let
+          reachable = candidatesFor me peer;
+        in
+          if isHub peer && reachable != [] && portOf peer me != null
+          then endpointText (head reachable) (portOf peer me)
+          else null;
       })
     (filterAttrs (_: connects) hosts);
   };
@@ -92,11 +145,6 @@
       |> concatMap (host: host.ownedNetworks)
       |> map ip.toCIDR;
 
-    hostText = endpoint:
-      if ip.isAddress endpoint
-      then ip.toURIHost endpoint
-      else endpoint;
-
     tunnel = hub: endpoint: let
       port =
         if hub.endpointPort == null
@@ -112,7 +160,7 @@
         };
         Peer = {
           PublicKey = hub.publicKey;
-          Endpoint = "${hostText endpoint}:${port}";
+          Endpoint = endpointText endpoint port;
           AllowedIPs = concatStringsSep ", " siteNetworks;
           PersistentKeepalive = 25;
         };
@@ -176,7 +224,11 @@
         |> map (b: "${ip.toCIDR a.network} (${a.name}) overlaps ${ip.toCIDR b.network} (${b.name})"))
       |> concatLists;
   in
-    duplicates "id" (host: toString host.id)
+    # Interface names allow 15 characters; "rd-" takes three.
+    (hosts
+      |> filter (host: builtins.match "[A-Za-z0-9_.-]{1,12}" host.name == null)
+      |> map (host: "${host.name}: names must be 1 to 12 letters, digits, '_', '.' or '-' (its tunnels are named rd-${host.name})"))
+    ++ duplicates "id" (host: toString host.id)
     ++ duplicates "host address" (host: ip.toCompressed host.hostAddress)
     ++ duplicates "public key" (host: host.publicKey)
     ++ overlaps
