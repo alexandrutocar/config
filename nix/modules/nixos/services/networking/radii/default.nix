@@ -284,14 +284,17 @@ in {
         };
 
         staleAfter = mkOption {
-          type = ints.positive;
+          # A working tunnel's handshake gets up to about 150 seconds old
+          # (WireGuard renews it after 120, on the next keepalive), so
+          # anything lower calls working tunnels stale.
+          type = ints.between 150 86400;
           default = 180;
           description = ''
             Seconds without a handshake after which a tunnel counts as
-            stale. A working tunnel renews its handshake about every two
-            minutes. A stale tunnel to a hub moves to the hub's next
-            endpoint; on a hub, a device whose tunnel is stale loses its
-            route there.
+            stale, at least 150: a working tunnel renews its handshake
+            about every two minutes. A stale tunnel to a hub moves to the
+            hub's next endpoint; on a hub, a device whose tunnel is stale
+            loses its route there.
           '';
         };
       };
@@ -450,6 +453,8 @@ in {
           "${self} is a device in the site table: only hosts of kind nixos run radii"
           ++ optional (cfg.privateKey == null)
           "services.radii.privateKey is not set: ${self} has no key for its tunnels"
+          ++ optional (!config.systemd.network.enable)
+          "systemd.network.enable is not set: radii's tunnels and rules are systemd-networkd units"
           ++ optional (!config.networking.nftables.enable)
           "networking.nftables.enable is not set: radii validates overlay sources with nftables"
           ++ optionals isHub heldDown
@@ -575,14 +580,37 @@ in {
         routerId = let
           hex = fixedWidthString 4 "0" (toLower (toHexString me.id));
         in "00:00:00:00:00:00:${builtins.substring 0 2 hex}:${builtins.substring 2 2 hex}";
+
+        # Every network of the site but this host's own.
+        siteNetworks =
+          attrValues cfg.derived.hosts
+          |> filter (host: host.name != me.name)
+          |> concatMap (host: host.ownedNetworks);
+
+        # Above babeld's routes (1024) and its placeholders for routes it
+        # is retracting (65535), so a fallback only answers when babeld
+        # has nothing.
+        fallbackMetric = 100000;
       in {
         # The /48 as a route babeld can announce. It leads to the dummy
         # interface, which drops what no container route claims.
         systemd.network.networks."40-radii" = {
-          routes = optional (me.prefix != null) {
-            Destination = ip.toCIDR me.prefix;
-            Protocol = "static";
-          };
+          routes =
+            optional (me.prefix != null) {
+              Destination = ip.toCIDR me.prefix;
+              Protocol = "static";
+            }
+            # While babeld has no route to a network of the site (tunnels
+            # down, babeld stopped, hubs out of reach), it is unreachable:
+            # without this the lookup goes on to main's default route and
+            # the site's traffic leaves through the uplink, unencrypted.
+            ++ map (network: {
+              Destination = ip.toCIDR network;
+              Type = "unreachable";
+              Table = cfg.routeTable;
+              Metric = fallbackMetric;
+            })
+            siteNetworks;
 
           routingPolicyRules = [
             {
@@ -762,6 +790,9 @@ in {
           timerConfig = {
             OnBootSec = "1min";
             OnUnitActiveSec = "${toString cfg.watchdog.interval}s";
+            # Timers are a minute coarse by default, which would stretch
+            # any shorter interval.
+            AccuracySec = "1s";
           };
         };
       })

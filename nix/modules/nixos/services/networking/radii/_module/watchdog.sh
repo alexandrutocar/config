@@ -47,9 +47,10 @@ while read -r kind rest; do
 	esac
 done <"$config"
 
-# Whether the interface exists: tunnels brought up by hand may be down.
-exists() {
-	ip link show dev "$1" >/dev/null 2>&1
+# Whether the interface exists and is up: a tunnel a spoke brings up by hand
+# is left alone while it is down.
+up() {
+	[ -n "$(ip -o link show dev "$1" up 2>/dev/null)" ]
 }
 
 # Seconds since the tunnel's last handshake with its peer; large if never.
@@ -81,7 +82,7 @@ resolve() {
 # ---------------
 for entry in "${hubs[@]}"; do
 	read -r interface key candidates <<<"$entry"
-	exists "$interface" || continue
+	up "$interface" || continue
 
 	silent=$(age "$interface" "$key")
 	((silent >= stale)) || continue
@@ -111,7 +112,7 @@ done
 # -------------------
 for entry in "${devices[@]}"; do
 	read -r interface key address <<<"$entry"
-	exists "$interface" || continue
+	up "$interface" || continue
 
 	if (($(age "$interface" "$key") < stale)); then
 		ip -6 route replace "$address" dev "$interface" proto "$proto"
