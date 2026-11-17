@@ -6,15 +6,6 @@
 # addresses and public keys, owned networks that do not overlap, hubs with
 # a base port, devices without endpoints). Runs whether or not radii is
 # enabled anywhere.
-#
-# Wire it as a flake check, with the raw table as hosts get it:
-#   checks.x86_64-linux.radii-site =
-#     import ./nix/modules/nixos/networking/radii/_flake-check.nix {
-#       inherit pkgs lib;
-#       site = lib.alias.site;
-#     };
-#
-# Fails at evaluation with every problem listed; warnings are printed.
 {
   pkgs,
   lib,
@@ -24,14 +15,14 @@
   inherit (lib.lists) concatMap foldr unique;
   inherit (lib.strings) concatStringsSep;
 
-  radii = import ./lib/default.nix {inherit lib;};
+  radii = import ../_module/lib {inherit lib;};
 
   # The table typed by the module's own options, so the check sees exactly
   # what hosts see. The stubs stand in for the NixOS options the module
   # reads or defines.
   typed =
     (lib.evalModules {
-      specialArgs = {inherit lib;};
+      specialArgs = {inherit lib pkgs;};
       modules = [
         ../default.nix
         ({lib, ...}: let

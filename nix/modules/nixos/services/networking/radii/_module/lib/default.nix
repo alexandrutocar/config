@@ -1,12 +1,13 @@
 # RADII LIBRARY
 # -------------
 # Pure functions of the typed site table, shared by the module (derived
-# values, per-host assertions) and the flake check (the whole table), so both
-# see the same site.
+# values, per-host assertions, device files) and the flake check (the whole
+# table), so both see the same site.
 {lib}: let
   inherit (lib.extra) ip;
-  inherit (lib.attrsets) attrNames attrValues filterAttrs mapAttrs mapAttrsToList;
-  inherit (lib.lists) concatLists concatMap drop filter foldl' groupBy head imap0 length optional;
+  inherit (lib.attrsets) attrNames attrValues filterAttrs listToAttrs mapAttrs mapAttrsToList;
+  inherit (lib.generators) mkKeyValueDefault toINI;
+  inherit (lib.lists) concatLists concatMap drop filter foldl' groupBy head imap0 imap1 length optional;
   inherit (lib.strings) concatStringsSep;
   inherit (lib.trivial) max;
 
@@ -71,6 +72,75 @@
       })
     (filterAttrs (_: connects) hosts);
   };
+
+  # DEVICE TUNNELS
+  # --------------
+  # A device's WireGuard tunnels, one per hub and endpoint it can reach,
+  # keyed `<hub>-<n>` (n counts the hub's candidates from 1, in preference
+  # order). Each is { hub; endpoint; text; }, where `text` is a wg-quick file
+  # with a placeholder for the private key. The device switches tunnels by
+  # hand when a hub is down.
+  deviceTunnels = site: name: let
+    derived = derive site name;
+    device = derived.self;
+
+    # Everything the device reaches through a tunnel: every owned network
+    # of the site but its own.
+    siteNetworks =
+      attrValues derived.hosts
+      |> filter (host: host.name != name)
+      |> concatMap (host: host.ownedNetworks)
+      |> map ip.toCIDR;
+
+    hostText = endpoint:
+      if ip.isAddress endpoint
+      then ip.toURIHost endpoint
+      else endpoint;
+
+    tunnel = hub: endpoint: let
+      port =
+        if hub.endpointPort == null
+        then throw "radii: hub ${hub.name} has no basePort"
+        else toString hub.endpointPort;
+
+      # The wg-quick file as data; sections and keys come out sorted, which
+      # WireGuard does not mind.
+      config = {
+        Interface = {
+          PrivateKey = "<private key>";
+          Address = ip.toCIDR device.hostAddress;
+        };
+        Peer = {
+          PublicKey = hub.publicKey;
+          Endpoint = "${hostText endpoint}:${port}";
+          AllowedIPs = concatStringsSep ", " siteNetworks;
+          PersistentKeepalive = 25;
+        };
+      };
+    in {
+      hub = hub.name;
+      endpoint = config.Peer.Endpoint;
+      text =
+        ''
+          # radii: ${name} to ${hub.name} through ${hostText endpoint}.
+          # Replace the placeholder with ${name}'s private key; its public key
+          # is in the site table.
+        ''
+        + toINI {mkKeyValue = mkKeyValueDefault {} " = ";} config;
+    };
+  in
+    if device.kind != "device"
+    then throw "radii: ${name} is a ${device.kind} host; WireGuard files are generated for devices only"
+    else
+      attrValues derived.peers
+      |> filter (peer: peer.role == "hub")
+      |> concatMap (hub:
+        imap1 (index: endpoint: {
+          name = "${hub.name}-${toString index}";
+          value = tunnel hub endpoint;
+        })
+        hub.candidates)
+      |> listToAttrs;
 
   # CHECKS
   # ------
@@ -159,5 +229,5 @@
         "${self} reaches only one hub (${head reachable}): it has no failover";
     };
 in {
-  inherit derive checkSite checkHost;
+  inherit derive deviceTunnels checkSite checkHost;
 }

@@ -1,16 +1,19 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: let
   cfg = config.services.radii;
 
-  # Derivation and checks, shared with the flake check.
-  radii = import ./_tests/lib {inherit lib;};
+  # Derivation, device tunnels and checks, shared with the flake check.
+  radii = import ./_module/lib {inherit lib;};
 in {
   options = let
     inherit (lib.extra) ip;
     inherit (lib.extra.types.ip) addressData addressWith networkWith;
+    inherit (lib.attrsets) attrValues mapAttrs optionalAttrs;
+    inherit (lib.lists) head length unique;
     inherit (lib.options) literalExpression mkEnableOption mkOption;
     inherit (lib.strings) hasInfix;
     inherit (lib.types) addCheck attrsOf coercedTo either enum ints listOf nonEmptyListOf nullOr port raw str strMatching submodule;
@@ -161,6 +164,46 @@ in {
         };
       };
     });
+
+    # DEVICE FILES
+    # ------------
+    # A device's tunnels as files: `file` for `nix build` (a wg-quick file
+    # with the private key as a placeholder) and `qrCode` for `nix run`.
+    deviceFiles = name: let
+      tunnels = radii.deviceTunnels cfg.settings.site name;
+      hubs = unique (map (tunnel: tunnel.hub) (attrValues tunnels));
+    in
+      lib.warnIf (length hubs == 1) "radii: ${name} reaches only one hub (${head hubs}): it has no failover"
+      (mapAttrs (fileName: tunnel: rec {
+          file = pkgs.writeText "${fileName}.conf" tunnel.text;
+
+          # Prints the tunnel as a QR code for the WireGuard app. Given a
+          # file holding the private key (or - for standard input), it fills
+          # in the placeholder first; the key never enters the Nix store.
+          qrCode = pkgs.writeShellApplication {
+            name = "radii-${name}-${fileName}";
+            runtimeInputs = [pkgs.qrencode];
+            text = ''
+              config=$(< ${file})
+
+              if [ $# -gt 0 ]; then
+                key=$(cat -- "$1")
+                if ! [[ $key =~ ^[A-Za-z0-9+/]{43}=$ ]]; then
+                  echo "radii: $1 does not hold a WireGuard private key" >&2
+                  exit 1
+                fi
+                config=''${config/"<private key>"/$key}
+              fi
+
+              printf '%s\n' "$config" | qrencode --type=ansiutf8
+            '';
+          };
+        })
+        tunnels);
+
+    # Devices get `wg.<hub>-<n>` with their files; other hosts get nothing.
+    withFiles = name: host:
+      host // optionalAttrs (host.kind == "device") {wg = deviceFiles name;};
   in {
     services.radii = {
       enable = mkEnableOption "radii, the overlay between the site's hosts";
@@ -207,7 +250,14 @@ in {
       derived = mkOption {
         type = raw;
         readOnly = true;
-        default = radii.derive cfg.settings.site cfg.settings.self;
+        default = let
+          derived = radii.derive cfg.settings.site cfg.settings.self;
+        in
+          derived
+          // {
+            hosts = mapAttrs withFiles derived.hosts;
+            peers = mapAttrs withFiles derived.peers;
+          };
         defaultText = literalExpression "derived from settings.site and settings.self";
         description = ''
           What radii derives from the site table, for its own use and for
@@ -223,6 +273,17 @@ in {
             `endpointPort` (the port of the peer's endpoints, null when
             the peer is a spoke) and `candidates` (the peer's endpoints
             within this host's `availableNetworks`; DNS names always)
+          - `hosts.<device>.wg.<hub>-<n>` (also under `peers` on hubs):
+            a device's WireGuard tunnels, one per hub and endpoint it can
+            reach, `n` counting the hub's endpoints in preference order.
+            Each has `file`, a wg-quick file with `<private key>` as a
+            placeholder, and `qrCode`, which prints it as a QR code and
+            fills in the key from a file argument (or `-` for standard
+            input). Only devices have `wg`. For example, from any host with
+            the site table:
+
+                nix build .#nixosConfigurations.<host>.config.services.radii.derived.hosts.keqing.wg.beidou-1.file
+                nix run .#nixosConfigurations.<host>.config.services.radii.derived.hosts.keqing.wg.beidou-1.qrCode -- keqing.key
 
           Ports are null while a hub has no `basePort`.
         '';
