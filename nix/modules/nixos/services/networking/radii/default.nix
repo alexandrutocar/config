@@ -402,7 +402,7 @@ in {
     inherit (lib.attrsets) attrValues listToAttrs mapAttrs' nameValuePair optionalAttrs;
     inherit (lib.lists) any concatMap filter last optional optionals unique;
     inherit (lib.modules) mkIf mkMerge;
-    inherit (lib.strings) concatLines concatStringsSep fixedWidthString hasInfix splitString toLower;
+    inherit (lib.strings) concatLines concatStringsSep fixedWidthString hasInfix optionalString splitString toLower;
     inherit (lib.meta) getExe;
     inherit (lib.trivial) toHexString;
   in
@@ -420,6 +420,8 @@ in {
           "${self} is a device in the site table: only hosts of kind nixos run radii"
           ++ optional (cfg.privateKey == null)
           "services.radii.privateKey is not set: ${self} has no key for its tunnels"
+          ++ optional (!config.networking.nftables.enable)
+          "networking.nftables.enable is not set: radii validates overlay sources with nftables"
         );
       in {
         assertions = [
@@ -600,6 +602,54 @@ in {
 
         # Babel speaks UDP 6696 on its tunnels only.
         networking.firewall.interfaces = listToAttrs (map (peer: nameValuePair peer.interface {allowedUDPPorts = [6696];}) babelPeers);
+      })
+
+      # SOURCE VALIDATION
+      # -----------------
+      # Whoever owns a range enforces where its addresses may come from.
+      # Hubs' AllowedIPs for each spoke are the first check; this is the
+      # receiving host's. Always on: it drops only forged traffic, so its
+      # counters stay at zero. Runs at priority raw, before conntrack and the
+      # routing decision.
+      (let
+        me = cfg.derived.self;
+
+        # Towards hubs, WireGuard accepts any source (AllowedIPs ::/0). On
+        # tunnels to spokes and devices it already accepts only what the
+        # peer owns, so they need no second look.
+        hubInterfaces = attrValues peers |> filter (peer: peer.role == "hub") |> map (peer: ''"${peer.interface}"'');
+      in {
+        networking.nftables.tables.radii = {
+          family = "inet";
+          content = ''
+            counter forged-on-tunnel {
+              comment "from a tunnel to a hub, with a source whose route leads elsewhere"
+            }
+
+            counter own-network-from-outside {
+              comment "with a source this host owns, from anywhere but itself or its containers"
+            }
+
+            set owned {
+              type ipv6_addr
+              flags interval
+              elements = { ${concatStringsSep ", " (map ip.toCIDR me.ownedNetworks)} }
+            }
+
+            chain validate-source {
+              type filter hook prerouting priority raw; policy accept;
+
+              # From a hub: the route back to the source must lead through
+              # the same tunnel (strict reverse path).
+              ${optionalString (hubInterfaces != []) "iifname { ${concatStringsSep ", " hubInterfaces} } fib saddr . iif oif missing counter name forged-on-tunnel drop"}
+
+              # This host's own networks come only from itself (lo) and its
+              # containers (ve-*, which sigil validates): never from the
+              # uplink or a tunnel.
+              ip6 saddr @owned iifname != "lo" iifname != "ve-*" counter name own-network-from-outside drop
+            }
+          '';
+        };
       })
 
       # ENDPOINT WATCHDOG
