@@ -4,12 +4,13 @@
   ...
 }: let
   cfg = config.services.radii;
+
+  # Derivation and checks, shared with the flake check.
+  radii = import ./_tests/lib {inherit lib;};
 in {
   options = let
     inherit (lib.extra) ip;
-    inherit (lib.extra.types.ip) addressWith networkWith;
-    inherit (lib.attrsets) filterAttrs mapAttrs;
-    inherit (lib.lists) optional;
+    inherit (lib.extra.types.ip) addressData addressWith networkWith;
     inherit (lib.options) literalExpression mkEnableOption mkOption;
     inherit (lib.strings) hasInfix;
     inherit (lib.types) addCheck attrsOf coercedTo either enum ints listOf nonEmptyListOf nullOr port raw str strMatching submodule;
@@ -39,7 +40,7 @@ in {
     # Addresses are parsed by the coercion below, so this checks data only:
     # a parsing type here would try every name as an address and throw.
     singleHostData =
-      addCheck ip.types.addressData (address: ip.toCIDR address == ip.toCIDR (ip.address.singleHostRoute address))
+      addCheck addressData (address: ip.toCIDR address == ip.toCIDR (ip.address.singleHostRoute address))
       // {description = "single-host IP address";};
 
     endpoint = let
@@ -160,57 +161,6 @@ in {
         };
       };
     });
-
-    # DERIVATION
-    # ----------
-    # Everything later commits build on, computed from the site table alone,
-    # so every host derives the same picture of the site.
-    derive = site: self: let
-      isHub = host: host.endpoints != [];
-
-      # The host's /48, plus its host address as a /128 when it lies outside.
-      ownedNetworks = host: let
-        addressNetwork = ip.address.getNetwork host.hostAddress;
-        outside = host.prefix == null || !(ip.network.contains host.prefix host.hostAddress);
-      in
-        optional (host.prefix != null) host.prefix
-        ++ optional outside addressNetwork;
-
-      hosts = mapAttrs (_: host:
-        host
-        // {
-          role =
-            if isHub host
-            then "hub"
-            else "spoke";
-          ownedNetworks = ownedNetworks host;
-        })
-      site;
-
-      me = hosts.${self};
-
-      # A spoke connects to every hub; a hub connects to every host.
-      connects = peer:
-        peer.name != me.name && (isHub me || isHub peer);
-
-      # Where a hub listens for `peer`, or null (spoke, or no base port yet).
-      portOf = hub: peer:
-        if isHub hub && hub.basePort != null
-        then hub.basePort + peer.id
-        else null;
-    in {
-      inherit hosts;
-      self = me;
-      peers = mapAttrs (_: peer:
-        peer
-        // {
-          # This host's port for the tunnel to `peer`; null = any port.
-          listenPort = portOf me peer;
-          # The port of `peer`'s endpoints for this host; null for a spoke.
-          endpointPort = portOf peer me;
-        })
-      (filterAttrs (_: connects) hosts);
-    };
   in {
     services.radii = {
       enable = mkEnableOption "radii, the overlay between the site's hosts";
@@ -257,7 +207,7 @@ in {
       derived = mkOption {
         type = raw;
         readOnly = true;
-        default = derive cfg.settings.site cfg.settings.self;
+        default = radii.derive cfg.settings.site cfg.settings.self;
         defaultText = literalExpression "derived from settings.site and settings.self";
         description = ''
           What radii derives from the site table, for its own use and for
@@ -269,13 +219,40 @@ in {
           - `self`: this host's entry from `hosts`
           - `peers.<name>`: the hosts this host connects to (a spoke to
             every hub, a hub to every host), each from `hosts` plus
-            `listenPort` (this host's port for that tunnel, null for any)
-            and `endpointPort` (the port of the peer's endpoints, null when
-            the peer is a spoke)
+            `listenPort` (this host's port for that tunnel, null for any),
+            `endpointPort` (the port of the peer's endpoints, null when
+            the peer is a spoke) and `candidates` (the peer's endpoints
+            within this host's `availableNetworks`; DNS names always)
 
           Ports are null while a hub has no `basePort`.
         '';
       };
     };
   };
+
+  config = let
+    inherit (lib.lists) optional unique;
+    inherit (lib.modules) mkIf;
+    inherit (lib.strings) concatStringsSep;
+  in
+    mkIf cfg.enable (let
+      inherit (cfg.settings) self site;
+      host = radii.checkHost site self;
+
+      errors = unique (
+        radii.checkSite site
+        ++ host.errors
+        ++ optional (site ? ${self} && site.${self}.kind != "nixos")
+        "${self} is a device in the site table: only hosts of kind nixos run radii"
+      );
+    in {
+      assertions = [
+        {
+          assertion = errors == [];
+          message = concatStringsSep "\n" (["radii: the site table has problems:"] ++ map (error: "  ${error}") errors);
+        }
+      ];
+
+      warnings = map (warning: "radii: ${warning}") host.warnings;
+    });
 }

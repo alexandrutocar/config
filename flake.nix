@@ -283,6 +283,10 @@
       module-sigil-traffic-rules = import ./nix/modules/nixos/virtualisation/sigil/_tests/traffic-rules.nix {
         inherit pkgs lib self;
       };
+      module-radii-site-table = import ./nix/modules/nixos/services/networking/radii/_tests/site-table.nix {
+        inherit pkgs lib;
+        site = lib.alias.radii.site;
+      };
     });
 
     overlays = let
