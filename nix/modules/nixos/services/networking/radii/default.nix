@@ -645,13 +645,21 @@ in {
         # Towards hubs, WireGuard accepts any source (AllowedIPs ::/0). On
         # tunnels to spokes and devices it already accepts only what the
         # peer owns, so they need no second look.
-        hubInterfaces = attrValues peers |> filter (peer: peer.role == "hub") |> map (peer: ''"${peer.interface}"'');
+        quoted = peer: ''"${peer.interface}"'';
+        hubInterfaces = attrValues peers |> filter (peer: peer.role == "hub") |> map quoted;
+        tunnelInterfaces = attrValues peers |> map quoted;
       in {
+        # NixOS's reverse-path filter is strict on every interface, which
+        # would drop replies that come back through the other hub. Radii's
+        # tunnels are checked here and by WireGuard instead.
+        networking.firewall.extraReversePathFilterRules =
+          optionalString (tunnelInterfaces != []) "iifname { ${concatStringsSep ", " tunnelInterfaces} } accept";
+
         networking.nftables.tables.radii = {
           family = "inet";
           content = ''
             counter forged-on-tunnel {
-              comment "from a tunnel to a hub, with a source whose route leads elsewhere"
+              comment "from a tunnel to a hub, with a source the site does not route through a tunnel"
             }
 
             counter own-network-from-outside {
@@ -667,9 +675,11 @@ in {
             chain validate-source {
               type filter hook prerouting priority raw; policy accept;
 
-              # From a hub: the route back to the source must lead through
-              # the same tunnel (strict reverse path).
-              ${optionalString (hubInterfaces != []) "iifname { ${concatStringsSep ", " hubInterfaces} } fib saddr . iif oif missing counter name forged-on-tunnel drop"}
+              # From a hub: the source must be one the site routes through a
+              # tunnel of this host (loose reverse path within the overlay;
+              # paths through the two hubs need not be symmetric). Link-local
+              # sources are the hub itself.
+              ${optionalString (hubInterfaces != []) "iifname { ${concatStringsSep ", " hubInterfaces} } ip6 saddr != fe80::/10 fib saddr oifname != { ${concatStringsSep ", " tunnelInterfaces} } counter name forged-on-tunnel drop"}
 
               # This host's own networks come only from itself (lo) and its
               # containers (ve-*, which sigil validates): never from the
