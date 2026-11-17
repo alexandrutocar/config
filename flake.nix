@@ -279,6 +279,12 @@
       fischl = mkHeadlessServer "fischl" [];
     };
 
+    checks = forEachSystem (pkgs: {
+      module-sigil-traffic-rules = import ./nix/modules/nixos/virtualisation/sigil/_tests/traffic-rules.nix {
+        inherit pkgs lib self;
+      };
+    });
+
     overlays = let
       fixes = append ./nix "fixes?";
     in
