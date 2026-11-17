@@ -19,6 +19,13 @@
   # Unit names in systemd.network.{netdevs,networks}, one per tunnel.
   unitOf = peer: "40-${peer.interface}";
 
+  # Spokes depend on hubs, so a hub keeps its tunnels and host address up,
+  # bringing them back whatever happens to them. A plain value: NixOS checks
+  # networkd's [Link] settings before mkDefault or mkIf are resolved.
+  hubLink = lib.attrsets.optionalAttrs (cfg.settings.site ? ${cfg.settings.self} && cfg.derived.self.role == "hub") {
+    ActivationPolicy = "always-up";
+  };
+
   # The credential networkd reads the private key from.
   keyCredential = "radii.private-key";
 
@@ -304,6 +311,9 @@ in {
                 (_: { linkConfig.ActivationPolicy = "manual"; });
 
           The `radii` interface holding the host address is not among them.
+          Only spokes may do this: hubs set `always-up`, and an assertion
+          fails if one of a hub's units is set to `manual`, `down`,
+          `always-down` or left unmanaged.
         '';
       };
 
@@ -413,6 +423,21 @@ in {
         inherit (cfg.settings) self site;
         host = radii.checkHost site self;
 
+        # Spokes depend on hubs, so a hub's tunnels and host address stay up;
+        # spokes may bring theirs up by hand.
+        isHub = site ? ${self} && cfg.derived.self.role == "hub";
+        hubUnits = ["40-radii"] ++ map unitOf (attrValues peers);
+        heldDown =
+          hubUnits
+          |> concatMap (unit: let
+            link = config.systemd.network.networks.${unit}.linkConfig or {};
+            policy = link.ActivationPolicy or null;
+          in
+            optional (builtins.elem policy ["manual" "down" "always-down"])
+            "${self} is a hub but sets ActivationPolicy=${policy} on ${unit}: hubs keep their tunnels up"
+            ++ optional (builtins.elem (link.Unmanaged or false) [true "yes" "true" "on" "1"])
+            "${self} is a hub but leaves ${unit} unmanaged: hubs keep their tunnels up");
+
         errors = unique (
           radii.checkSite site
           ++ host.errors
@@ -422,6 +447,7 @@ in {
           "services.radii.privateKey is not set: ${self} has no key for its tunnels"
           ++ optional (!config.networking.nftables.enable)
           "networking.nftables.enable is not set: radii validates overlay sources with nftables"
+          ++ optionals isHub heldDown
         );
       in {
         assertions = [
@@ -489,7 +515,7 @@ in {
                 matchConfig.Name = "radii";
                 address = [(ip.toCIDR cfg.derived.self.hostAddress)];
                 networkConfig.LinkLocalAddressing = "no";
-                linkConfig.RequiredForOnline = "no";
+                linkConfig = {RequiredForOnline = "no";} // hubLink;
               };
             }
             // mapAttrs' (_: peer:
@@ -500,12 +526,14 @@ in {
                   LinkLocalAddressing = "no";
                   IPv6AcceptRA = false;
                 };
-                linkConfig = {
-                  RequiredForOnline = "no";
-                  MTUBytes = toString cfg.mtu;
-                  # WireGuard links lack the flag; babel sends hellos by multicast.
-                  Multicast = true;
-                };
+                linkConfig =
+                  {
+                    RequiredForOnline = "no";
+                    MTUBytes = toString cfg.mtu;
+                    # WireGuard links lack the flag; babel sends hellos by multicast.
+                    Multicast = true;
+                  }
+                  // hubLink;
               })
             peers;
         };
