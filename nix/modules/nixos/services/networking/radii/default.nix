@@ -21,6 +21,10 @@
 
   # The credential networkd reads the private key from.
   keyCredential = "radii.private-key";
+
+  # Routing protocol of the watchdog's routes to devices, which babeld
+  # announces from the hub a device uses.
+  deviceRouteProtocol = 200;
 in {
   options = let
     inherit (lib.extra) ip;
@@ -260,6 +264,26 @@ in {
         '';
       };
 
+      watchdog = {
+        interval = mkOption {
+          type = ints.positive;
+          default = 30;
+          description = "Seconds between the endpoint watchdog's checks.";
+        };
+
+        staleAfter = mkOption {
+          type = ints.positive;
+          default = 180;
+          description = ''
+            Seconds without a handshake after which a tunnel counts as
+            stale. A working tunnel renews its handshake about every two
+            minutes. A stale tunnel to a hub moves to the hub's next
+            endpoint; on a hub, a device whose tunnel is stale loses its
+            route there.
+          '';
+        };
+      };
+
       units = mkOption {
         type = raw;
         readOnly = true;
@@ -376,9 +400,10 @@ in {
     inherit (lib.extra) ip;
     inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
     inherit (lib.attrsets) attrValues listToAttrs mapAttrs' nameValuePair optionalAttrs;
-    inherit (lib.lists) concatMap filter last optional optionals unique;
+    inherit (lib.lists) any concatMap filter last optional optionals unique;
     inherit (lib.modules) mkIf mkMerge;
-    inherit (lib.strings) concatLines concatStringsSep fixedWidthString splitString toLower;
+    inherit (lib.strings) concatLines concatStringsSep fixedWidthString hasInfix splitString toLower;
+    inherit (lib.meta) getExe;
     inherit (lib.trivial) toHexString;
   in
     mkIf cfg.enable (mkMerge [
@@ -498,8 +523,9 @@ in {
       (let
         me = cfg.derived.self;
 
-        # Devices run no babel; their routes come with the watchdog.
+        # Devices run no babel; the watchdog routes to them instead.
         babelPeers = filter (peer: peer.kind == "nixos") (attrValues peers);
+        devicePeers = filter (peer: peer.kind == "device") (attrValues peers);
 
         lengthOf = network: last (splitString "/" (ip.toCIDR network));
 
@@ -563,6 +589,8 @@ in {
             # Announce what this host owns, and nothing else.
             ++ optional (me.prefix != null) "redistribute ${exactly me.prefix} proto 4 allow"
             ++ optional hostAddressOutside "redistribute local ip ${ip.toCIDR me.hostAddress} eq 128 allow"
+            # On hubs, each device while the watchdog routes to it here.
+            ++ map (device: "redistribute ${exactly device.hostAddress} proto ${toString deviceRouteProtocol} allow") devicePeers
             ++ [
               "redistribute local deny"
               "redistribute deny"
@@ -572,6 +600,73 @@ in {
 
         # Babel speaks UDP 6696 on its tunnels only.
         networking.firewall.interfaces = listToAttrs (map (peer: nameValuePair peer.interface {allowedUDPPorts = [6696];}) babelPeers);
+      })
+
+      # ENDPOINT WATCHDOG
+      # -----------------
+      # Moves stale tunnels to a hub's next endpoint, and on hubs routes to
+      # devices only while their tunnels are alive. The script lives in
+      # _module/watchdog.sh; its configuration is generated here.
+      (let
+        me = cfg.derived.self;
+
+        # Tunnels to hubs with somewhere to go.
+        hubPeers = filter (peer: peer.role == "hub" && peer.candidates != [] && peer.endpointPort != null) (attrValues peers);
+        devicePeers = filter (peer: peer.kind == "device") (attrValues peers);
+
+        candidate = peer: endpoint:
+          if ip.isAddress endpoint
+          then "a,${radii.endpointText endpoint peer.endpointPort}"
+          else "n,${endpoint},${toString peer.endpointPort}";
+
+        # Address families this host can reach endpoints through.
+        uses = version:
+          if any (network: hasInfix ":" (ip.toCIDR network) == (version == 6)) me.availableNetworks
+          then "1"
+          else "0";
+
+        configuration = pkgs.writeText "radii-watchdog.conf" (concatLines (
+          [
+            "stale ${toString cfg.watchdog.staleAfter}"
+            "settle ${toString (2 * cfg.watchdog.interval)}"
+            "proto ${toString deviceRouteProtocol}"
+            "ipv4 ${uses 4}"
+            "ipv6 ${uses 6}"
+          ]
+          ++ map (peer: "hub ${peer.interface} ${peer.publicKey} ${concatStringsSep " " (map (candidate peer) peer.candidates)}") hubPeers
+          ++ map (peer: "device ${peer.interface} ${peer.publicKey} ${ip.toCIDR peer.hostAddress}") devicePeers
+        ));
+
+        watchdog = pkgs.writeShellApplication {
+          name = "radii-watchdog";
+          runtimeInputs = with pkgs; [coreutils gawk getent iproute2 wireguard-tools];
+          text = builtins.readFile ./_module/watchdog.sh;
+        };
+      in {
+        systemd.services.radii-watchdog = {
+          description = "radii endpoint watchdog";
+          after = ["systemd-networkd.service"];
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${getExe watchdog} ${configuration}";
+            RuntimeDirectory = "radii-watchdog";
+            RuntimeDirectoryPreserve = true;
+            CapabilityBoundingSet = ["CAP_NET_ADMIN"];
+            NoNewPrivileges = true;
+            ProtectSystem = "strict";
+            ProtectHome = true;
+            PrivateTmp = true;
+            RestrictAddressFamilies = ["AF_UNIX" "AF_NETLINK" "AF_INET" "AF_INET6"];
+          };
+        };
+
+        systemd.timers.radii-watchdog = {
+          wantedBy = ["timers.target"];
+          timerConfig = {
+            OnBootSec = "1min";
+            OnUnitActiveSec = "${toString cfg.watchdog.interval}s";
+          };
+        };
       })
     ]);
 }

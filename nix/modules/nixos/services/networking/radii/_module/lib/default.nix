@@ -294,5 +294,5 @@
         "${self} reaches only one hub (${head reachable}): it has no failover";
     };
 in {
-  inherit derive deviceTunnels checkSite checkHost;
+  inherit derive deviceTunnels checkSite checkHost endpointText;
 }
