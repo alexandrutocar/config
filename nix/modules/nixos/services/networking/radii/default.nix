@@ -640,6 +640,11 @@ in {
             [
               "router-id ${routerId}"
               "export-table ${toString cfg.routeTable}"
+              # Traffic this host sends into the overlay leaves from its host
+              # address, the one source hubs accept from it. Left to itself,
+              # the kernel may pick another ULA (e.g. one on the LAN) that
+              # shares more bits with the destination.
+              "install pref-src ${me.hostAddress |> ip.toCompressed}"
             ]
             # From each peer, only what it may announce.
             ++ concatMap (peer:
