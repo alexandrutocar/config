@@ -8,9 +8,13 @@
 #     nothing logged
 #   - once that tunnel is brought up, the watchdog moves it past a dead
 #     endpoint
+#   - when a link becomes routable, networkd-dispatcher runs the watchdog,
+#     which moves a tunnel off an endpoint the spoke has lost its route to
+#     at once, though the tunnel is not stale
+#   - a working tunnel stays where it is once that route is back
 #
-# One hub, whose first endpoint answers nobody, and one spoke that brings
-# its tunnel up by hand (as the `units` option's description shows).
+# One hub, whose first endpoint answers nobody, and one dual-stack spoke that
+# brings its tunnel up by hand (as the `units` option's description shows).
 {
   pkgs,
   lib,
@@ -30,7 +34,8 @@
     };
   };
 
-  # The underlay: every machine on vlan 1, as 2001:db8:1::<id>.
+  # The underlay: every machine on vlan 1, as 192.168.1.<id> and
+  # 2001:db8:1::<id>.
   ids = {
     hub = 1;
     spoke = 2;
@@ -41,14 +46,15 @@
   interval = 5;
 
   site = {
-    # Its first endpoint answers nobody: the spoke's tunnel starts there.
+    # Its first endpoint answers nobody: the spoke's tunnel starts there. Its
+    # last one is the way in over IPv4.
     hub = {
       id = ids.hub;
       hostAddress = "fd00:a::1";
       prefix = "fd00:a::/48";
       publicKey = keys.hub.public;
       availableNetworks = ["::/0"];
-      endpoints = ["2001:db8:1::99" "2001:db8:1::1"];
+      endpoints = ["2001:db8:1::99" "2001:db8:1::1" "192.168.1.1"];
       basePort = 51820;
     };
 
@@ -57,7 +63,7 @@
       hostAddress = "fd00:b::2";
       prefix = "fd00:b::/48";
       publicKey = keys.spoke.public;
-      availableNetworks = ["::/0"];
+      availableNetworks = ["0.0.0.0/0" "::/0"];
     };
   };
 
@@ -69,12 +75,20 @@
     networking = {
       useNetworkd = true;
       nftables.enable = true;
-      interfaces.eth1.ipv6.addresses = mkForce [
-        {
-          address = "2001:db8:1::${toString ids.${name}}";
-          prefixLength = 64;
-        }
-      ];
+      interfaces.eth1 = {
+        ipv4.addresses = mkForce [
+          {
+            address = "192.168.1.${toString ids.${name}}";
+            prefixLength = 24;
+          }
+        ];
+        ipv6.addresses = mkForce [
+          {
+            address = "2001:db8:1::${toString ids.${name}}";
+            prefixLength = 64;
+          }
+        ];
+      };
     };
 
     environment.systemPackages = [pkgs.wireguard-tools];
@@ -181,5 +195,25 @@ in
           assert not endpoint(spoke, "rd-hub").startswith(DEAD), "still on the dead endpoint"
           assert "rd-hub: no handshake yet, trying" in moves(spoke), f"the watchdog did not report the move:\n{moves(spoke)}"
           spoke.wait_until_succeeds("ping -c1 -W2 fd00:a::1", timeout=LONG)
+
+      with subtest("a link becoming routable moves a tunnel off an endpoint without a route"):
+          assert endpoint(spoke, "rd-hub").startswith("[2001:db8:1::1]"), f"rd-hub is not on the hub's IPv6 endpoint: {endpoint(spoke, 'rd-hub')}"
+          # From here on only networkd-dispatcher runs the watchdog.
+          spoke.succeed("systemctl stop radii-watchdog.timer")
+          # The spoke loses its IPv6 route to the hub, as on an IPv4-only
+          # network. The tunnel's handshake is recent, so it is not stale:
+          # only the route check can move it.
+          spoke.succeed("ip -6 route add unreachable 2001:db8:1::/64 metric 1")
+          spoke.succeed("networkctl down eth1")
+          spoke.succeed("networkctl up eth1")
+          spoke.wait_until_succeeds("wg show rd-hub endpoints | grep -qF '192.168.1.1:'", timeout=timedelta(seconds=60))
+          assert "rd-hub: no route to [2001:db8:1::1]" in moves(spoke), f"the watchdog did not report the move:\n{moves(spoke)}"
+          spoke.wait_until_succeeds("ping -c1 -W2 fd00:a::1", timeout=LONG)
+
+      with subtest("a working tunnel stays where it is once the route is back"):
+          spoke.succeed("ip -6 route del unreachable 2001:db8:1::/64 metric 1")
+          spoke.succeed("systemctl start radii-watchdog.timer")
+          wait_for_runs(spoke, runs(spoke) + 3)
+          assert endpoint(spoke, "rd-hub").startswith("192.168.1.1:"), f"rd-hub left a working endpoint: {endpoint(spoke, 'rd-hub')}"
     '';
   }

@@ -2,13 +2,17 @@
 #
 # RADII ENDPOINT WATCHDOG
 # -----------------------
-# Runs on a timer, with the configuration file radii generates as its only
-# argument:
+# Runs on a timer, and on spokes also whenever a link becomes routable, with
+# the configuration file radii generates as its only argument:
 #
+#   - For every tunnel to a hub whose endpoint this host has no route to
+#     (e.g. IPv6 on an IPv4-only network), it moves the tunnel at once to
+#     the hub's most preferred endpoint that has one.
 #   - For every tunnel to a hub that has had no handshake for `stale`
-#     seconds, it moves the tunnel to the hub's next endpoint. DNS names are
-#     resolved again each time, within the address families this host can
-#     use. After a move it waits `settle` seconds before the next one.
+#     seconds, it moves the tunnel to the hub's next endpoint with a route,
+#     `settle` seconds after its last move at the earliest.
+#   - DNS names are resolved again each time, within the address families
+#     this host can use.
 #   - On hubs, it keeps a route to each device's host address only while the
 #     device's tunnel has a recent handshake. The route carries protocol
 #     `proto`, which babeld announces, so the site reaches the device through
@@ -78,17 +82,38 @@ resolve() {
 	esac
 }
 
+# Whether this host can send to an endpoint (as WireGuard writes it) now: it
+# has a route to the endpoint's address, and an address to send from that is
+# not link-local. Without one the endpoint cannot work, e.g. an IPv6 endpoint
+# on an IPv4-only network.
+routable() {
+	local host=${1%:*} source
+	host=${host#[}
+	host=${host%]}
+	source=$(ip route get "$host" 2>/dev/null | awk '{ for (i = 1; i < NF; i++) if ($i == "src") { print $(i + 1); exit } }') || true
+	[[ -n $source && $source != fe80:* && $source != 169.254.* ]]
+}
+
 # TUNNELS TO HUBS
 # ---------------
 for entry in "${hubs[@]}"; do
 	read -r interface key candidates <<<"$entry"
 	up "$interface" || continue
 
+	current=$(wg show "$interface" endpoints | awk -v key="$key" '$1 == key { print $2 }')
 	silent=$(age "$interface" "$key")
-	((silent >= stale)) || continue
 
-	switched=$(cat "$state/$interface.switched" 2>/dev/null || echo 0)
-	((now - switched >= settle)) || continue
+	# A tunnel leaves an endpoint without a route at once. On one with a
+	# route, it waits until it is stale, and until `settle` has passed since
+	# its last move.
+	if [[ -n $current && $current != "(none)" ]] && routable "$current"; then
+		dead=0
+		((silent >= stale)) || continue
+		switched=$(cat "$state/$interface.switched" 2>/dev/null || echo 0)
+		((now - switched >= settle)) || continue
+	else
+		dead=1
+	fi
 
 	read -r -a list <<<"$candidates"
 	mapfile -t endpoints < <(for candidate in "${list[@]}"; do resolve "$candidate"; done | awk '!seen[$0]++')
@@ -97,15 +122,44 @@ for entry in "${hubs[@]}"; do
 		continue
 	fi
 
-	# The tunnel starts on the first endpoint; move on from the current one.
-	index=$(cat "$state/$interface.index" 2>/dev/null || echo 0)
-	index=$(((index + 1) % ${#endpoints[@]}))
+	usable=()
+	for endpoint in "${endpoints[@]}"; do
+		if routable "$endpoint"; then usable+=("$endpoint"); fi
+	done
+	if ((${#usable[@]} == 0)); then
+		# Said once, not on every run while the host is offline.
+		if [ ! -e "$state/$interface.unroutable" ]; then
+			echo "$interface: no endpoint has a route" >&2
+			touch "$state/$interface.unroutable"
+		fi
+		continue
+	fi
+	rm -f "$state/$interface.unroutable"
 
-	wg set "$interface" peer "$key" endpoint "${endpoints[index]}"
-	echo "$index" >"$state/$interface.index"
+	# The usable endpoint after the current one. The most preferred one when
+	# the current one has no route, or is not among them (WireGuard followed
+	# the hub elsewhere, or a name now resolves differently).
+	next=${usable[0]}
+	if ((! dead)); then
+		for i in "${!usable[@]}"; do
+			if [[ ${usable[i]} == "$current" ]]; then
+				next=${usable[(i + 1) % ${#usable[@]}]}
+				break
+			fi
+		done
+	fi
+	if [[ $next == "$current" ]]; then continue; fi
+
+	wg set "$interface" peer "$key" endpoint "$next"
 	echo "$now" >"$state/$interface.switched"
-	if ((silent >= now)); then since="no handshake yet"; else since="no handshake for ${silent}s"; fi
-	echo "$interface: $since, trying ${endpoints[index]}"
+	if ((dead)); then
+		since="no route to ${current:-its endpoint}"
+	elif ((silent >= now)); then
+		since="no handshake yet"
+	else
+		since="no handshake for ${silent}s"
+	fi
+	echo "$interface: $since, trying $next"
 done
 
 # DEVICES (HUBS ONLY)

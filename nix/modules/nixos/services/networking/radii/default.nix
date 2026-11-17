@@ -40,7 +40,7 @@ in {
     inherit (lib.lists) head length unique;
     inherit (lib.options) literalExpression mkEnableOption mkOption;
     inherit (lib.strings) hasInfix;
-    inherit (lib.types) addCheck attrsOf coercedTo either enum ints listOf nonEmptyListOf nullOr port raw str strMatching submodule;
+    inherit (lib.types) addCheck attrsOf bool coercedTo either enum ints listOf nonEmptyListOf nullOr port raw str strMatching submodule;
 
     # IP TYPES
     # --------
@@ -295,6 +295,19 @@ in {
             about every two minutes. A stale tunnel to a hub moves to the
             hub's next endpoint; on a hub, a device whose tunnel is stale
             loses its route there.
+          '';
+        };
+
+        onNetworkChange = mkOption {
+          type = bool;
+          default = cfg.settings.site ? ${cfg.settings.self} && cfg.derived.self.role == "spoke";
+          defaultText = literalExpression "true on spokes, false on hubs";
+          description = ''
+            Also run the watchdog whenever a link becomes routable (through
+            networkd-dispatcher), not only on its timer. A host that changes
+            networks, such as a laptop moving to an IPv4-only network, then
+            leaves an endpoint it has no route to within seconds. Hubs stay
+            where they are, so it is off for them.
           '';
         };
       };
@@ -734,9 +747,10 @@ in {
 
       # ENDPOINT WATCHDOG
       # -----------------
-      # Moves stale tunnels to a hub's next endpoint, and on hubs routes to
-      # devices only while their tunnels are alive. The script lives in
-      # _module/watchdog.sh; its configuration is generated here.
+      # Moves tunnels off endpoints this host has no route to, and stale ones
+      # to a hub's next endpoint; on hubs, routes to devices only while their
+      # tunnels are alive. The script lives in _module/watchdog.sh; its
+      # configuration is generated here.
       (let
         me = cfg.derived.self;
 
@@ -798,6 +812,23 @@ in {
             # Timers are a minute coarse by default, which would stretch
             # any shorter interval.
             AccuracySec = "1s";
+          };
+        };
+
+        # A link that becomes routable may have brought another network: the
+        # watchdog checks right away whether each tunnel's endpoint still has
+        # a route. radii's own links becoming routable changes nothing.
+        services.networkd-dispatcher = mkIf cfg.watchdog.onNetworkChange {
+          enable = true;
+          rules.radii-watchdog = {
+            onState = ["routable"];
+            script = ''
+              #!${pkgs.runtimeShell}
+              case "$IFACE" in
+              rd-* | radii) exit 0 ;;
+              esac
+              exec ${config.systemd.package}/bin/systemctl start --no-block radii-watchdog.service
+            '';
           };
         };
       })
