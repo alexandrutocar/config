@@ -290,6 +290,9 @@
         inherit pkgs lib;
         site = lib.alias.radii.site;
       };
+      module-radii-networkd-babel = import ./nix/modules/nixos/services/networking/radii/_tests/networkd-babel.nix {
+        inherit pkgs lib;
+      };
     });
 
     overlays = let
