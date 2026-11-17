@@ -114,6 +114,19 @@
               babelGroup
             ];
 
+        # The routes babeld accepts from `peer`: from a hub, any network of
+        # the site but this host's own; from a spoke, only what it owns.
+        # Devices run no babel, so nothing comes from them.
+        acceptedNetworks =
+          if peer.kind != "nixos"
+          then []
+          else if isHub peer
+          then
+            attrValues hosts
+            |> filter (host: host.name != me.name)
+            |> concatMap (host: host.ownedNetworks)
+          else peer.ownedNetworks;
+
         # Where the tunnel starts: the first endpoint this host can reach,
         # or null for a spoke (it roams; the hub learns where it is).
         endpoint = let

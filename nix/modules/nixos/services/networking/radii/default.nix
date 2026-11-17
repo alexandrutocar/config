@@ -240,6 +240,26 @@ in {
         '';
       };
 
+      routeTable = mkOption {
+        type = ints.between 1 4294967294;
+        default = 6696;
+        description = ''
+          Routing table babeld installs the site's routes into. Two IPv6
+          rules consult it: first `main` without its default route (so local
+          routes, such as containers', win), then this table.
+        '';
+      };
+
+      mtu = mkOption {
+        type = ints.between 1280 1500;
+        default = 1420;
+        description = ''
+          MTU of the tunnels: 1420 leaves room for WireGuard over IPv6 on a
+          1500-byte link. Lower it where the link is smaller, e.g. 1412
+          behind PPPoE.
+        '';
+      };
+
       units = mkOption {
         type = raw;
         readOnly = true;
@@ -332,7 +352,8 @@ in {
             `linkLocal.peer` (`fe80::<id>/64` on each end), `allowedIPs`
             (`::/0` towards a hub; a spoke's owned networks, link-local
             address and babel's group on a hub) and `endpoint` (where the
-            tunnel to a hub starts, null towards a spoke)
+            tunnel to a hub starts, null towards a spoke) and
+            `acceptedNetworks` (the routes babeld takes from that peer)
           - `hosts.<device>.wg.<hub>-<n>` (also under `peers` on hubs):
             a device's WireGuard tunnels, one per hub and endpoint it can
             reach, `n` counting the hub's endpoints in preference order.
@@ -354,10 +375,11 @@ in {
   config = let
     inherit (lib.extra) ip;
     inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
-    inherit (lib.attrsets) attrValues mapAttrs' nameValuePair optionalAttrs;
-    inherit (lib.lists) filter optional optionals unique;
+    inherit (lib.attrsets) attrValues listToAttrs mapAttrs' nameValuePair optionalAttrs;
+    inherit (lib.lists) concatMap filter last optional optionals unique;
     inherit (lib.modules) mkIf mkMerge;
-    inherit (lib.strings) concatStringsSep;
+    inherit (lib.strings) concatLines concatStringsSep fixedWidthString splitString toLower;
+    inherit (lib.trivial) toHexString;
   in
     mkIf cfg.enable (mkMerge [
       # CHECKS
@@ -451,7 +473,12 @@ in {
                   LinkLocalAddressing = "no";
                   IPv6AcceptRA = false;
                 };
-                linkConfig.RequiredForOnline = "no";
+                linkConfig = {
+                  RequiredForOnline = "no";
+                  MTUBytes = toString cfg.mtu;
+                  # WireGuard links lack the flag; babel sends hellos by multicast.
+                  Multicast = true;
+                };
               })
             peers;
         };
@@ -462,5 +489,89 @@ in {
           |> filter (peer: peer.listenPort != null)
           |> map (peer: peer.listenPort);
       }
+
+      # ROUTING
+      # -------
+      # babeld on every tunnel to a NixOS peer. Each host announces what it
+      # owns; what a peer may announce is filtered by who it is. Routes land
+      # in their own table, consulted after main's specific routes.
+      (let
+        me = cfg.derived.self;
+
+        # Devices run no babel; their routes come with the watchdog.
+        babelPeers = filter (peer: peer.kind == "nixos") (attrValues peers);
+
+        lengthOf = network: last (splitString "/" (ip.toCIDR network));
+
+        # `<prefix> eq <length>`: exactly that network, not what lies in it.
+        exactly = network: "ip ${ip.toCIDR network} eq ${lengthOf network}";
+
+        # The host address needs announcing on its own only outside the /48.
+        hostAddressOutside = me.prefix == null || !(ip.network.contains me.prefix me.hostAddress);
+
+        # Unique per host, from its site id: babeld cannot derive one from
+        # WireGuard links, which have no hardware address.
+        routerId = let
+          hex = fixedWidthString 4 "0" (toLower (toHexString me.id));
+        in "00:00:00:00:00:00:${builtins.substring 0 2 hex}:${builtins.substring 2 2 hex}";
+      in {
+        # The /48 as a route babeld can announce. It leads to the dummy
+        # interface, which drops what no container route claims.
+        systemd.network.networks."40-radii" = {
+          routes = optional (me.prefix != null) {
+            Destination = ip.toCIDR me.prefix;
+            Protocol = "static";
+          };
+
+          routingPolicyRules = [
+            {
+              Family = "ipv6";
+              Priority = 1000;
+              Table = "main";
+              SuppressPrefixLength = 0;
+            }
+            {
+              Family = "ipv6";
+              Priority = 1001;
+              Table = cfg.routeTable;
+            }
+          ];
+        };
+
+        services.babeld = {
+          enable = true;
+
+          interfaces = listToAttrs (map (peer: nameValuePair peer.interface {type = "tunnel";}) babelPeers);
+
+          extraConfig = concatLines (
+            [
+              "router-id ${routerId}"
+              "export-table ${toString cfg.routeTable}"
+            ]
+            # From each peer, only what it may announce.
+            ++ concatMap (peer:
+              map (network: "in if ${peer.interface} ${exactly network} allow") peer.acceptedNetworks
+              ++ ["in if ${peer.interface} deny"])
+            babelPeers
+            ++ ["in deny"]
+            # A spoke passes on nothing it learned, so it never carries
+            # traffic between hubs.
+            ++ optionals (me.role == "spoke") (
+              map (network: "out ${exactly network} allow") me.ownedNetworks
+              ++ ["out deny"]
+            )
+            # Announce what this host owns, and nothing else.
+            ++ optional (me.prefix != null) "redistribute ${exactly me.prefix} proto 4 allow"
+            ++ optional hostAddressOutside "redistribute local ip ${ip.toCIDR me.hostAddress} eq 128 allow"
+            ++ [
+              "redistribute local deny"
+              "redistribute deny"
+            ]
+          );
+        };
+
+        # Babel speaks UDP 6696 on its tunnels only.
+        networking.firewall.interfaces = listToAttrs (map (peer: nameValuePair peer.interface {allowedUDPPorts = [6696];}) babelPeers);
+      })
     ]);
 }
