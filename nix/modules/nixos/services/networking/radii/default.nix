@@ -252,12 +252,17 @@ in {
       };
 
       routeTable = mkOption {
-        type = ints.between 1 4294967294;
-        default = 6696;
+        # babeld writes the table into rtm_table, which holds one byte, and
+        # sends no RTA_TABLE: a larger number wraps (6696 lands in table 40).
+        # 253 to 255 are the kernel's default, main and local.
+        type = ints.between 1 252;
+        default = 96;
         description = ''
           Routing table babeld installs the site's routes into. Two IPv6
           rules consult it: first `main` without its default route (so local
-          routes, such as containers', win), then this table.
+          routes, such as containers', win), then this table. At most 252:
+          babeld cannot address tables above 255, and 253 to 255 are the
+          kernel's own.
         '';
       };
 
@@ -593,6 +598,10 @@ in {
             }
           ];
         };
+
+        # babeld's routes are not in any .network file, so networkd would
+        # remove them as foreign routes. This applies to the whole host.
+        systemd.network.config.networkConfig.ManageForeignRoutes = false;
 
         services.babeld = {
           enable = true;
