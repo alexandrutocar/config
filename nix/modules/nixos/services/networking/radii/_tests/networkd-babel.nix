@@ -16,6 +16,8 @@
 #   - a hub brings a downed tunnel back up by itself
 #   - babeld follows a tunnel networkd recreates with a new interface index
 #   - stopping babeld leaves no routes behind, starting it brings them back
+#   - while babeld has no routes, the site is unreachable instead of
+#     following main's default route out of the uplink
 #   - the /48 goes with networkd's route and comes back when networkd
 #     restores it
 #   - a device's route from the watchdog is announced and survives a
@@ -24,13 +26,6 @@
 #
 # One hub, one spoke and a phone (a device, running wg-quick from the file
 # radii generates for it). Failover between hubs is overlay.nix's job.
-#
-# Takes the extended `lib` (with `lib.extra`), as hosts get it. Wire it as a
-# flake check, e.g.
-#   checks.x86_64-linux.module-radii-networkd-babel =
-#     import ./nix/modules/nixos/networking/radii/_tests/networkd-babel.nix {
-#       inherit pkgs lib;
-#     };
 {
   pkgs,
   lib,
@@ -283,6 +278,12 @@ in
             assert " dev rd-hub " in answer, f"{setting}: {destination} left the overlay:\n{answer}"
 
 
+        def unreachable(machine, destination: str, setting: str) -> None:
+            """Asserts that `destination` has no route at all: ip fails, or names an unreachable route."""
+            status, answer = machine.execute(f"ip -6 route get {destination} 2>&1")
+            assert status != 0 or "unreachable" in answer, f"{setting}: {machine.name} still routes {destination}:\n{answer}"
+
+
         with check("overlay routes win over main's default route, main's more specific routes win over the overlay"):
             # Hosts have a default route in main, as these VMs do through eth0
             # (from a router advertisement). Each step checks the hub's
@@ -340,6 +341,11 @@ in
         with check("stopping babeld leaves no routes behind, starting it brings them back"):
             spoke.succeed("systemctl stop babeld.service")
             spoke.succeed('test -z "$(ip -6 route show table all proto babel)"')
+            # The site's networks (the hub's address, its /48, the phone)
+            # must not fall through to main's default route, which these VMs
+            # have through eth0: that would send them out unencrypted.
+            for destination in ("fd00:a::1", "fd00:a:0:2::1", "fd00:c::3"):
+                unreachable(spoke, destination, "with babeld stopped")
             # The hub drops the spoke's routes once the spoke goes silent.
             hub.wait_until_fails(route("fd00:b::/48"), timeout=MEDIUM)
             spoke.succeed("systemctl start babeld.service")
