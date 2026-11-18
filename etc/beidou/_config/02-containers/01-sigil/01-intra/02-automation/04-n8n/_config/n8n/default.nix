@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  inherit (lib.alias) networks;
+  inherit (lib.alias) radii;
   inherit (lib.extra) ip url;
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
   inherit (lib.extra.sigil) getULA;
@@ -64,7 +64,7 @@ in {
                 "forge.dev.intra.net.internal"
               ]);
 
-          HTTPS_PROXY = url.mkOrigin "http" networks.aether.internal.net.hosts.beidou 8888;
+          HTTPS_PROXY = url.mkOrigin "http" radii.site.beidou.hostAddress 8888;
         }
         {
           listen-address = sigil.self |> getULA |> ip.toCompressed;

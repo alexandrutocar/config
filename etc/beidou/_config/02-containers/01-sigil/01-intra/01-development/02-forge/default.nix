@@ -50,10 +50,11 @@ in {
                       allowedTraffic = [
                         {
                           protocol = "tcp";
-                          ports = [
-                            targetConfig.services.forgejo.settings.server.HTTP_PORT
-                            22
-                          ];
+                          ports =
+                            [
+                              targetConfig.services.forgejo.settings.server.HTTP_PORT
+                            ]
+                            ++ targetConfig.services.openssh.ports;
                         }
                       ];
 

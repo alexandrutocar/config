@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  inherit (lib.alias) networks;
+  inherit (lib.alias) radii;
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
   inherit (lib.extra) url;
 in let
@@ -19,7 +19,7 @@ in let
       "host:host"
     ];
     envs = {
-      HTTPS_PROXY = url.mkOrigin "http" networks.aether.internal.net.hosts.beidou 8888;
+      HTTPS_PROXY = url.mkOrigin "http" radii.site.beidou.hostAddress 8888;
       NO_PROXY = "forge.dev.intra.net.internal,workflows.intra.net.internal";
       NIX_CONFIG = "experimental-features = ca-derivations flakes nix-command parse-toml-timestamps pipe-operators";
     };

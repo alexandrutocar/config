@@ -3,11 +3,10 @@
   lib,
   ...
 }: let
-  inherit (lib.alias) addresses networks;
-  inherit (lib.extra) ip url;
+  inherit (lib.extra) url;
   inherit (lib.extra.files.list) recursive;
   inherit (lib.extra.sigil) getConfig getULA shortPathToContainers;
-  inherit (lib.extra.trivial) pipeline;
+  inherit (lib.extra.trivial) mapPipeline;
   inherit (lib.modules) mkAfter;
 in let
   targetConfig = getConfig target;
@@ -39,7 +38,7 @@ in {
                       destinationAddresses = [(target |> getULA)];
 
                       allowedTraffic = let
-                        ports = targetConfig.services.unbound.settings.server.interface |> map (pipeline (with url.interface; [fromNLnetLabs getPort]));
+                        ports = targetConfig.services.unbound.settings.server.interface |> mapPipeline (with url.interface; [fromNLnetLabs getPort]);
                       in [
                         {
                           protocol = "tcp";
@@ -51,25 +50,9 @@ in {
                         }
                       ];
 
-                      sourceAddresses = let
-                        allowedHosts = with networks.aether.internal.net.hosts; [
-                          albedo
-                          beidou # nix  -> development/forge
-                          collei # nix  -> development/forge
-                          fischl # nix  -> development/forge
-                          keqing
-                        ];
-                        allowedHostsByULA = [
-                          # ────────────────────────────────────────────────────────────────────────
-                          # NOTE: Allow the host itself (Beidou) to use internal DNS resolver.
-                          # ────────────────────────────────────────────────────────────────────────
-                          addresses.on-prem.specht.hosts.beidou.ipv6.ula
-                        ];
-                      in
-                        [
-                          networks.aether.internal.net._meta.network
-                        ]
-                        ++ ((allowedHosts ++ allowedHostsByULA) |> map ip.address.singleHostRoute);
+                      sourceAddresses = import ./_config/unbound/_facts/rules/incoming.nix {
+                        inherit containers lib;
+                      };
                     }
                   ];
                 };

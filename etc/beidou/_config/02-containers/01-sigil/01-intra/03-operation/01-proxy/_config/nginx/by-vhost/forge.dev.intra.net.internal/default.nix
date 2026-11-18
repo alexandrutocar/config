@@ -52,7 +52,7 @@ in {
       locations = let
         target = sigil.containers.intra.acda4bf3-2678-43c5-bae9-e67bd8cb710d;
       in let
-        proxyPass = url.mkOrigin "http" (getULA target) 8080;
+        proxyPass = url.mkOrigin "http" (target |> getULA) 8080;
       in {
         "/" = {
           inherit proxyPass;

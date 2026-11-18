@@ -3,14 +3,14 @@
 # NOTE: NFS is the most reliable network file sharing protocol for Linux.
 # ────────────────────────────────────────────────────────────────────────
 {lib, ...}: let
-  inherit (lib.alias) networks;
+  inherit (lib.alias) radii;
   inherit (lib.extra) ip;
 in {
   networking = {
     firewall = {
-      allowedTCPPorts = [
-        2049 # NFS
-      ];
+      extraInputRules = ''
+        ip6 saddr ${radii.site.albedo.hostAddress |> ip.toCompressed} tcp dport 2049 accept
+      '';
     };
   };
 
@@ -19,7 +19,7 @@ in {
       enable = true;
 
       exports = ''
-        /export             ${(networks.aether.internal.net.hosts.albedo |> ip.toCompressed)}(rw,fsid=0,no_subtree_check)
+        /export             ${(radii.site.albedo.hostAddress |> ip.toCompressed)}(rw,fsid=0,no_subtree_check)
       '';
     };
   };

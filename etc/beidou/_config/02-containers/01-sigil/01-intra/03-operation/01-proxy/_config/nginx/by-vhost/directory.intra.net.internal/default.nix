@@ -53,7 +53,7 @@ in {
         "/" = let
           target = sigil.containers.intra.c38a828e-58a7-49af-894d-ba02f936d211;
         in {
-          proxyPass = url.mkOrigin "http" (getULA target) 8080;
+          proxyPass = url.mkOrigin "http" (target |> getULA) 8080;
         };
       };
     };

@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  inherit (lib.alias) networks;
+  inherit (lib.alias) radii;
   inherit (lib.extra) ip url;
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
   inherit (lib.extra.sigil) getULA;
@@ -41,7 +41,7 @@ in {
         target = sigil.containers.intra.b6cab864-64cc-454d-8647-30348af279da;
       in ''
         upstream uni_proxy {
-          server ${url.mkInterface (getULA target) 8888};
+          server ${url.mkInterface (target |> getULA) 8888};
         }
 
         server {
@@ -49,8 +49,8 @@ in {
 
           listen ${url.mkInterface (sigil.self |> getULA) 8443} ssl default_server;
 
-          allow ${(getULA sigil.containers.intra.a4205b50-197a-40c8-8057-fe1394630e91) |> ip.toCIDR};
-          allow ${(networks.aether.internal.net.hosts.albedo |> ip.address.singleHostRoute |> ip.toCIDR)};
+          allow ${sigil.containers.intra.a4205b50-197a-40c8-8057-fe1394630e91 |> getULA |> ip.toCIDR};
+          allow ${radii.site.albedo.hostAddress |> ip.toCIDR};
           deny all;
 
           ssl_certificate_key ${sslCertificateKey};
@@ -72,7 +72,7 @@ in {
 
           ssl_conf_command Options KTLS;
 
-          proxy_bind [${(sigil.self |> getULA) |> ip.toCompressed}];
+          proxy_bind [${sigil.self |> getULA |> ip.toCompressed}];
           proxy_pass uni_proxy;
         }
       '';

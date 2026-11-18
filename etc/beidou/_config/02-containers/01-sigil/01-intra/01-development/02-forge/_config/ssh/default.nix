@@ -6,12 +6,6 @@
 }: let
   inherit (lib.meta) getExe;
 in {
-  networking = {
-    firewall = {
-      allowedTCPPorts = config.services.openssh.ports;
-    };
-  };
-
   environment.etc."ssh/forgejo-keys" = {
     mode = "0755";
     text = ''

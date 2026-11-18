@@ -6,7 +6,7 @@
   inherit (lib.extra) url;
   inherit (lib.extra.files.list) recursive;
   inherit (lib.extra.sigil) getConfig getGUA shortPathToContainers;
-  inherit (lib.extra.trivial) pipeline;
+  inherit (lib.extra.trivial) mapPipeline;
   inherit (lib.modules) mkAfter;
 in let
   targetConfig = getConfig target;
@@ -38,7 +38,7 @@ in {
                       destinationAddresses = [(target |> getGUA)];
 
                       allowedTraffic = let
-                        ports = targetConfig.services.nsd.settings.server.interface |> map (pipeline (with url.interface; [fromNLnetLabs getPort]));
+                        ports = targetConfig.services.nsd.settings.server.interface |> mapPipeline (with url.interface; [fromNLnetLabs getPort]);
                       in [
                         {
                           protocol = "tcp";

@@ -4,14 +4,30 @@
   lib,
   ...
 }: let
-  inherit (lib.alias) networks;
+  inherit (lib.alias) radii;
   inherit (lib.extra) ip;
-  inherit (lib.extra.sigil) getULA;
-  inherit (lib.extra.trivial) pipeline;
+  inherit (lib.extra.sigil) getULA shortPathToContainers;
+  inherit (lib.extra.trivial) mapPipeline;
+  inherit (lib.strings) concatStringsSep;
+in let
+  beidouContainers = shortPathToContainers config;
+in let
+  Allow =
+    (with beidouContainers.intra; [
+      a4205b50-197a-40c8-8057-fe1394630e91 # intra/automation/n8n
+      fe616e36-c9d0-4ba9-8938-436e75ef0dc0 # intra/development/actions
+    ])
+    |> mapPipeline [getULA ip.toCompressed];
+
+  Port = 8888;
 in {
   networking = {
     firewall = {
-      allowedTCPPorts = [8888];
+      # Only the proxy's clients reach its port; tinyproxy's Allow checks
+      # them again.
+      extraInputRules = ''
+        ip6 saddr { ${concatStringsSep ", " Allow} } tcp dport ${toString Port} accept
+      '';
     };
   };
 
@@ -20,17 +36,9 @@ in {
       enable = true;
 
       settings = {
-        Listen = networks.aether.internal.net.hosts.beidou |> ip.toCompressed;
+        inherit Allow Port;
 
-        Port = 8888;
-
-        Allow = let
-          allowList = with config.services.sigil.settings.containers.intra; [
-            a4205b50-197a-40c8-8057-fe1394630e91 # intra/automation/n8n
-            fe616e36-c9d0-4ba9-8938-436e75ef0dc0 # intra/development/actions
-          ];
-        in
-          allowList |> map (pipeline [getULA ip.toCompressed]);
+        Listen = radii.site.beidou.hostAddress |> ip.toCompressed;
 
         ConnectPort = [
           443 # HTTPS

@@ -1,7 +1,16 @@
-{lib, ...}: let
+{
+  config,
+  lib,
+  ...
+}: let
+  inherit (lib.alias) radii;
   inherit (lib.extra.files.list) recursive;
   inherit (lib.modules) mkAfter;
+  inherit (lib.extra.sigil) getULA shortPathToContainers;
 in let
+  containers = shortPathToContainers config;
+
+  target = containers.porti.${mid};
   mid = "c7f4d370-8043-46c8-97ae-39417237ac82";
 in {
   services = {
@@ -11,6 +20,7 @@ in {
           porti = {
             ${mid} = {
               modules = recursive ./_config;
+
               nspawn = {
                 settings = {
                   Files = {
@@ -19,9 +29,39 @@ in {
                     ];
                   };
                 };
+
                 flags = mkAfter [
                   "--load-credential=credential.secret:%d/credential.secret"
                 ];
+              };
+
+              rules = {
+                networkTraffic = {
+                  incoming = [
+                    {
+                      destinationAddresses = [(target |> getULA)];
+
+                      allowedTraffic = [
+                        {
+                          protocol = "tcp";
+                          ports = [
+                            8080 # HTTP (Stalwart)
+                          ];
+                        }
+                      ];
+
+                      sourceAddresses = let
+                        allowedHosts =
+                          (with radii.site; [
+                            albedo
+                            keqing
+                          ])
+                          |> map (h: h.hostAddress);
+                      in
+                        allowedHosts;
+                    }
+                  ];
+                };
               };
             };
           };

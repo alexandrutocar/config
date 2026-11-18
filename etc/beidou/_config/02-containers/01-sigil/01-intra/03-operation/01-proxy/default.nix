@@ -3,8 +3,7 @@
   lib,
   ...
 }: let
-  inherit (lib.alias) networks;
-  inherit (lib.extra) ip;
+  inherit (lib.alias) radii;
   inherit (lib.extra.files.list) recursive;
   inherit (lib.extra.sigil) getULA shortPathToContainers;
   inherit (lib.modules) mkAfter;
@@ -51,9 +50,13 @@ in {
                         # NOTE: Only Albedo may connect via SSH.
                         # ────────────────────────────────────────────────────────────────────────
                         sourceAddresses = let
-                          allowedHosts = with networks.aether.internal.net.hosts; [albedo];
+                          allowedHosts =
+                            (with radii.site; [
+                              albedo
+                            ])
+                            |> map (h: h.hostAddress);
                         in
-                          allowedHosts |> map ip.address.singleHostRoute;
+                          allowedHosts;
                       }
                       {
                         inherit destinationAddresses;
@@ -69,9 +72,13 @@ in {
                         # NOTE: Only Keqing may need a .mobileconfig profile.
                         # ────────────────────────────────────────────────────────────────────────
                         sourceAddresses = let
-                          allowedHosts = with networks.aether.internal.net.hosts; [keqing];
+                          allowedHosts =
+                            (with radii.site; [
+                              keqing
+                            ])
+                            |> map (h: h.hostAddress);
                         in
-                          allowedHosts |> map ip.address.singleHostRoute;
+                          allowedHosts;
                       }
                       {
                         inherit destinationAddresses;
@@ -84,18 +91,23 @@ in {
                         ];
 
                         sourceAddresses = let
-                          allowedContainers = with containers.intra; [
-                            a4205b50-197a-40c8-8057-fe1394630e91 # automation/n8n       ->  development/forge, automation/ollama
-                            acda4bf3-2678-43c5-bae9-e67bd8cb710d # development/forge    ->  operation/auth
-                            fe616e36-c9d0-4ba9-8938-436e75ef0dc0 # development/actions  ->  automation/workflows
-                          ];
-                          allowedHosts = with networks.aether.internal.net.hosts; [
-                            albedo
-                            beidou # nix  -> development/forge
-                            keqing
-                          ];
+                          allowedContainers =
+                            (with containers.intra; [
+                              a4205b50-197a-40c8-8057-fe1394630e91 # automation/n8n       ->  development/forge, automation/ollama
+                              acda4bf3-2678-43c5-bae9-e67bd8cb710d # development/forge    ->  operation/auth
+                              fe616e36-c9d0-4ba9-8938-436e75ef0dc0 # development/actions  ->  automation/workflows
+                            ])
+                            |> map getULA;
+
+                          allowedHosts =
+                            (with radii.site; [
+                              albedo
+                              beidou # nix  -> development/forge
+                              keqing
+                            ])
+                            |> map (h: h.hostAddress);
                         in
-                          (allowedContainers |> map getULA) ++ (allowedHosts |> map ip.address.singleHostRoute);
+                          allowedContainers ++ allowedHosts;
                       }
                       {
                         inherit destinationAddresses;
@@ -108,12 +120,18 @@ in {
                         ];
 
                         sourceAddresses = let
-                          allowedContainers = with containers.intra; [
-                            a4205b50-197a-40c8-8057-fe1394630e91 # automation/n8n       ->  automation/connections
-                          ];
-                          allowedHosts = with networks.aether.internal.net.hosts; [albedo];
+                          allowedContainers =
+                            (with containers.intra; [
+                              a4205b50-197a-40c8-8057-fe1394630e91 # automation/n8n       ->  automation/connections
+                            ])
+                            |> map getULA;
+                          allowedHosts =
+                            (with radii.site; [
+                              albedo
+                            ])
+                            |> map (h: h.hostAddress);
                         in
-                          (allowedContainers |> map getULA) ++ (allowedHosts |> map ip.address.singleHostRoute);
+                          allowedContainers ++ allowedHosts;
                       }
 
                       {
@@ -127,12 +145,20 @@ in {
                         ];
 
                         sourceAddresses = let
-                          allowedContainers = with containers.intra; [
-                            a4205b50-197a-40c8-8057-fe1394630e91 # automation/n8n       ->  automation/ollama
-                          ];
-                          allowedHosts = with networks.aether.internal.net.hosts; [albedo keqing];
+                          allowedContainers =
+                            (with containers.intra; [
+                              a4205b50-197a-40c8-8057-fe1394630e91 # automation/n8n       ->  automation/ollama
+                            ])
+                            |> map getULA;
+
+                          allowedHosts =
+                            (with radii.site; [
+                              albedo
+                              keqing
+                            ])
+                            |> map (h: h.hostAddress);
                         in
-                          (allowedContainers |> map getULA) ++ (allowedHosts |> map ip.address.singleHostRoute);
+                          allowedContainers ++ allowedHosts;
                       }
                     ];
                 };

@@ -57,7 +57,7 @@ in {
           proxyPass = let
             target = sigil.containers.intra.fecc0d40-eb4e-43d4-b0ef-c0627fcce582;
           in
-            url.mkOrigin "http" (getULA target) 8080;
+            url.mkOrigin "http" (target |> getULA) 8080;
         };
       };
     };
