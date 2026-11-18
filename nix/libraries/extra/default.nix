@@ -142,8 +142,12 @@ in let
   # -------
   trivial = let
     inherit (super.trivial) flip pipe;
-  in {
+  in let
     pipeline = flip pipe;
+  in {
+    inherit pipeline;
+
+    mapPipeline = fs: l: l |> map (pipeline fs);
   };
 
   # TYPES
