@@ -53,6 +53,12 @@
       availableNetworks = ["0.0.0.0/0" "::/0"];
       endpoints = ["2001:db8:1::99" "2001:db8:1::1" "192.168.1.1"];
       basePort = 51820;
+      openPorts = [
+        {
+          from = 51822;
+          to = 51824;
+        }
+      ];
     };
 
     hub2 = {
@@ -63,6 +69,13 @@
       availableNetworks = ["0.0.0.0/0" "::/0"];
       endpoints = ["2001:db8:1::2" "192.168.1.2"];
       basePort = 52820;
+      openPorts = [
+        52821
+        {
+          from = 52823;
+          to = 52824;
+        }
+      ];
     };
 
     # Dual stack, with only a host address.

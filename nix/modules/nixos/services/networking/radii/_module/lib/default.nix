@@ -7,7 +7,7 @@
   inherit (lib.extra) ip;
   inherit (lib.attrsets) attrNames attrValues filterAttrs listToAttrs mapAttrs mapAttrsToList;
   inherit (lib.generators) mkKeyValueDefault toINI;
-  inherit (lib.lists) concatLists concatMap drop filter foldl' groupBy head imap0 imap1 length optional optionals;
+  inherit (lib.lists) concatLists concatMap drop elem filter foldl' groupBy head imap0 imap1 init last length optional optionals range sort sortOn unique;
   inherit (lib.strings) concatStringsSep;
   inherit (lib.trivial) max;
 
@@ -43,6 +43,67 @@
     else endpoint;
 
   endpointText = endpoint: port: "${hostText endpoint}:${toString port}";
+
+  # PORTS
+  # -----
+  # The ports `hub` must have open: one per host that can reach it (an
+  # endpoint of the hub lies in the host's availableNetworks), sorted. Each
+  # is { port; peer; via; }, `via` being the hub's endpoints that peer uses.
+  # Empty for a host that is not a hub or is missing from the table.
+  inboundPorts = site: hubName:
+    if !(site ? ${hubName})
+    then []
+    else let
+      hosts = deriveHosts site;
+      hub = hosts.${hubName};
+    in
+      if !(isHub hub) || hub.basePort == null
+      then []
+      else
+        attrValues hosts
+        |> filter (peer: peer.name != hubName && candidatesFor peer hub != [])
+        |> map (peer: {
+          port = hub.basePort + peer.id;
+          peer = peer.name;
+          via = map hostText (candidatesFor peer hub);
+        })
+        |> sortOn (entry: entry.port);
+
+  # The ports a host's openPorts lists, ranges spelled out.
+  openPortsOf = host:
+    if host.openPorts == null
+    then []
+    else
+      concatMap (entry:
+        if builtins.isInt entry
+        then [entry]
+        else range entry.from entry.to)
+      host.openPorts;
+
+  # Ports as a Nix value to paste into openPorts, runs as ranges:
+  # [ 50011 [ 50013 50015 ] ].
+  showPorts = ports: let
+    runs = foldl' (acc: port:
+      if acc != [] && (last acc).to + 1 == port
+      then init acc ++ [(last acc // {to = port;})]
+      else
+        acc
+        ++ [
+          {
+            from = port;
+            to = port;
+          }
+        ]) []
+    (sort builtins.lessThan (unique ports));
+
+    showRun = run:
+      if run.from == run.to
+      then toString run.from
+      else "[ ${toString run.from} ${toString run.to} ]";
+  in
+    if runs == []
+    then "[ ]"
+    else "[ ${concatStringsSep " " (map showRun runs)} ]";
 
   # TUNNELS
   # -------
@@ -273,6 +334,19 @@
         then "no port (basePort unset)"
         else toString port;
 
+      # The ports this host, as a hub, needs open outside, and what its
+      # openPorts says is.
+      inbound = inboundPorts site self;
+      needed = map (entry: entry.port) inbound;
+      open = openPortsOf me;
+      missing = filter (entry: !(elem entry.port open)) inbound;
+      unused = filter (port: !(elem port needed)) (unique open);
+      emptyRanges =
+        optionals (me.openPorts != null) me.openPorts
+        |> filter (entry: !(builtins.isInt entry) && entry.from > entry.to);
+
+      showInbound = entry: "${toString entry.port} for ${entry.peer} (through ${describe entry.via})";
+
       invalidPorts =
         attrValues derived.peers
         |> concatMap (peer:
@@ -287,12 +361,28 @@
           then "${self} reaches no hub: the site table has none"
           else "${self} reaches no hub: no endpoint of ${describe (attrNames hubs)} lies in its availableNetworks"
         )
-        ++ map (message: "invalid port: ${message}") invalidPorts;
+        ++ map (message: "invalid port: ${message}") invalidPorts
+        ++ optional (me.role == "hub" && me.openPorts == null) (
+          "hub ${self} has no openPorts: open UDP "
+          + (
+            if inbound == []
+            then "nothing (no host can reach it)"
+            else describe (map showInbound inbound)
+          )
+          + " at its router or provider firewall, then set openPorts = ${showPorts needed}"
+        )
+        ++ optional (me.role == "hub" && me.openPorts != null && missing != [])
+        "hub ${self} needs UDP ${describe (map showInbound missing)} open: open them at its router or provider firewall, then set openPorts = ${showPorts needed}"
+        ++ map (entry: "${self}: openPorts has an empty range, from ${toString entry.from} to ${toString entry.to}") emptyRanges;
 
       warnings =
         optional (me.role == "spoke" && length reachable == 1)
-        "${self} reaches only one hub (${head reachable}): it has no failover";
+        "${self} reaches only one hub (${head reachable}): it has no failover"
+        ++ optional (me.role == "hub" && me.openPorts != null && unused != [])
+        "hub ${self}: openPorts lists UDP ${describe (map toString unused)}, which no host uses: close them at its router or provider firewall, then set openPorts = ${showPorts needed}"
+        ++ optional (me.role != "hub" && me.openPorts != null)
+        "${self} is not a hub: its openPorts are not used";
     };
 in {
-  inherit derive deviceTunnels checkSite checkHost endpointText;
+  inherit derive deviceTunnels checkSite checkHost endpointText inboundPorts;
 }

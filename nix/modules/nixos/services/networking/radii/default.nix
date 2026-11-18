@@ -37,7 +37,7 @@ in {
     inherit (lib.extra) ip;
     inherit (lib.extra.types.ip) addressData addressWith networkWith;
     inherit (lib.attrsets) attrValues mapAttrs optionalAttrs;
-    inherit (lib.lists) head length unique;
+    inherit (lib.lists) head last length unique;
     inherit (lib.options) literalExpression mkEnableOption mkOption;
     inherit (lib.strings) hasInfix;
     inherit (lib.types) addCheck attrsOf bool coercedTo either enum ints listOf nonEmptyListOf nullOr port raw str strMatching submodule;
@@ -167,6 +167,53 @@ in {
           description = ''
             First port of a hub's listen range: it listens for each peer on
             `basePort` plus the peer's `id`. Every hub must set it.
+          '';
+        };
+
+        openPorts = mkOption {
+          type = let
+            range = submodule {
+              options = {
+                from = mkOption {
+                  type = port;
+                  description = "First port of the range.";
+                };
+                to = mkOption {
+                  type = port;
+                  description = "Last port of the range.";
+                };
+              };
+            };
+
+            # `[ from to ]`, exactly two ports, is a range too.
+            pair =
+              addCheck (listOf port) (ports: length ports == 2)
+              // {description = "list of two ports, [ from to ]";};
+          in
+            nullOr (listOf (either port (coercedTo pair (ports: {
+                from = head ports;
+                to = last ports;
+              })
+              range)));
+          default = null;
+          example = literalExpression "[ 50011 [ 50013 50015 ] ]";
+          description = ''
+            The UDP ports a hub's router or provider firewall lets through to
+            it, as ports or ranges (`[ from to ]`, or `{ from; to; }`): what the
+            administrator has opened outside the host, recorded here. Every
+            hub must set it. A range includes both ends; a list of anything
+            but two ports is an error, not a list of ports.
+
+            A hub needs one port per peer that can reach it (`basePort` plus
+            the peer's `id`). Until all of them are listed, the hub's build and
+            the site check fail and name each missing port, the peer it is
+            for and the endpoints that peer uses, so the administrator knows
+            what to open (an IPv4 forward on a router, an IPv6 opening on a
+            firewall). Listed ports no peer uses are reported too, so they can
+            be closed again. The hub's own firewall opens exactly the ports it
+            needs.
+
+            Leave it unset on spokes and devices.
           '';
         };
 
@@ -561,11 +608,12 @@ in {
             peers;
         };
 
-        # A hub opens exactly its listen ports, one per peer.
+        # A hub opens the port of every peer that can reach it, the ports its
+        # openPorts must list (an assertion holds it to that). Peers that
+        # cannot reach it (no endpoint in their availableNetworks) get none.
         networking.firewall.allowedUDPPorts =
-          attrValues peers
-          |> filter (peer: peer.listenPort != null)
-          |> map (peer: peer.listenPort);
+          radii.inboundPorts cfg.settings.site cfg.settings.self
+          |> map (entry: entry.port);
       }
 
       # ROUTING

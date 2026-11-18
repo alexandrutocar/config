@@ -67,6 +67,12 @@
       availableNetworks = ["::/0"];
       endpoints = ["2001:db8:1::1"];
       basePort = 51820;
+      openPorts = [
+        {
+          from = 51822;
+          to = 51823;
+        }
+      ];
     };
 
     spoke = {
