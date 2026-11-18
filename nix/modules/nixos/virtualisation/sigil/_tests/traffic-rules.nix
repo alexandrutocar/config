@@ -91,7 +91,6 @@ in
               ula.prefix = "fd00:1:2::/48";
               gua.prefix = "2001:db8:1:2::/64";
               inherit hostAddress;
-              enforceTrafficRules = true;
             };
 
             containers.${group} = {

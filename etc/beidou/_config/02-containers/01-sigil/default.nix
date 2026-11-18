@@ -14,8 +14,6 @@ in {
       in {
         inherit (radii.site.${hostName}) hostAddress;
 
-        enforceTrafficRules = true;
-
         gua = {
           prefix = systemSite.hosts.${hostName}.managedNetworks.ipv6.gua;
         };

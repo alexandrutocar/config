@@ -74,7 +74,7 @@ in {
     inherit (lib.lists) any optional optionals singleton;
     inherit (lib.modules) mkBefore;
     inherit (lib.options) literalExpression mkEnableOption mkOption;
-    inherit (lib.types) attrsOf bool deferredModule either enum ints listOf nonEmptyListOf nullOr raw str submodule;
+    inherit (lib.types) attrsOf deferredModule either enum ints listOf nonEmptyListOf nullOr str submodule;
     inherit (lib.strings) concatStringsSep substring;
     inherit (lib.trivial) fromHexString;
 
@@ -385,9 +385,7 @@ in {
                               firewall accepts what they allow, next to any openings
                               set by hand, so it also covers traffic from the host
                               itself. The host checks traffic it forwards to the
-                              container against them. Until
-                              `settings.network.enforceTrafficRules` is set, traffic
-                              no rule allows is counted and forwarded anyway.
+                              container against them.
                             '';
                           };
                         };
@@ -556,22 +554,7 @@ in {
               alias.
             '';
           };
-          # ──────────────────────────────────────────────────────────────────
-          # TODO: Remove once hosts have moved over, enforcing always.
-          # ──────────────────────────────────────────────────────────────────
-          enforceTrafficRules = mkOption {
-            type = bool;
-            default = false;
-            description = ''
-              Whether the host drops forwarded traffic to containers that
-              no traffic rule allows. When false, such traffic is counted
-              (counters `undeclared-incoming` and `invalid-incoming` in the
-              nftables table `inet sigil`) and forwarded as before.
 
-              Temporary: once every host has moved over, the rules are
-              always enforced and this option is removed.
-            '';
-          };
           gua = {
             prefix = mkOption {
               type = nullOr (networkWith {
@@ -983,15 +966,10 @@ in {
               # HOST FILTERING
               # --------------
               # Forwarded traffic to container addresses must be allowed by a
-              # traffic rule of the container holding the destination. Until
-              # enforceTrafficRules is set, the last two rules count and accept,
-              # so the host forwards exactly what it did before. Shares the
-              # `inet sigil` table with source validation.
+              # traffic rule of the container holding the destination. Shares
+              # the `inet sigil` table with source validation.
               networking.nftables.tables.sigil.content = let
-                verdict =
-                  if cfg.settings.network.enforceTrafficRules
-                  then "drop"
-                  else "accept";
+                drop = "drop";
               in ''
                 counter undeclared-incoming {
                   comment "forwarded to a container, allowed by no traffic rule"
@@ -1009,14 +987,14 @@ in {
 
                   # Replies to allowed connections, and their ICMPv6 errors.
                   ct state established,related accept
-                  ct state invalid counter name invalid-incoming ${verdict}
+                  ct state invalid counter name invalid-incoming ${drop}
 
                   # ICMPv6 errors that IPv6 needs to work (path MTU among them).
                   icmpv6 type { destination-unreachable, packet-too-big, time-exceeded, parameter-problem } accept
 
                   ${concatStringsSep "\n  " (containers.lib.mapToList incomingRuleLines)}
 
-                  counter name undeclared-incoming ${verdict}
+                  counter name undeclared-incoming ${drop}
                 }
               '';
             }
