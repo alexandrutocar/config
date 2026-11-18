@@ -296,6 +296,9 @@
       module-radii-assertions = import ./nix/modules/nixos/services/networking/radii/_tests/assertions.nix {
         inherit pkgs lib;
       };
+      module-radii-host-access = import ./nix/modules/nixos/services/networking/radii/_tests/host-access.nix {
+        inherit pkgs lib;
+      };
       module-radii-networkd-babel = import ./nix/modules/nixos/services/networking/radii/_tests/networkd-babel.nix {
         inherit pkgs lib;
       };

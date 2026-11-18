@@ -422,6 +422,47 @@ in {
             Set it once, in a module all hosts share.
           '';
         };
+
+        hostAccess = {
+          allow = mkOption {
+            type = listOf (submodule {
+              options = {
+                sources = mkOption {
+                  type = nonEmptyListOf (either singleHostData (networkWith {version = 6;}));
+                  example = literalExpression "[ (getULA colleiContainers.porti.<mid> |> ip.address.singleHostRoute) ]";
+                  description = ''
+                    Where the connections may come from: IPv6 single-host
+                    addresses or networks, as `lib.extra.ip` data.
+                  '';
+                };
+                protocol = mkOption {
+                  type = enum ["tcp" "udp"];
+                  description = "The transport protocol.";
+                };
+                ports = mkOption {
+                  type = nonEmptyListOf port;
+                  description = "The ports on this host they may connect to.";
+                };
+              };
+            });
+            default = [];
+            description = ''
+              Exceptions to the overlay's rule for this host: through radii's
+              tunnels, only the site's hosts themselves (devices included) may
+              open connections to this host. Everything else that comes
+              through a tunnel, in practice containers on other hosts, is
+              dropped and counted (`container-to-host` in the `radii` table),
+              whatever this host's firewall opens. Each entry here lets its
+              sources reach the given ports anyway; the host's firewall must
+              still open them.
+
+              Traffic this host forwards (to its containers, or between other
+              hosts on a hub) is not affected: sigil's traffic rules decide
+              it. Neither are this host's own containers, which arrive on
+              their veths, not through a tunnel.
+            '';
+          };
+        };
       };
 
       derived = mkOption {
@@ -480,7 +521,7 @@ in {
     inherit (lib.attrsets) attrValues listToAttrs mapAttrs' nameValuePair optionalAttrs;
     inherit (lib.lists) any concatMap filter last optional optionals unique;
     inherit (lib.modules) mkIf mkMerge;
-    inherit (lib.strings) concatLines concatStringsSep fixedWidthString hasInfix optionalString splitString toLower;
+    inherit (lib.strings) concatLines concatMapStringsSep concatStringsSep fixedWidthString hasInfix optionalString splitString toLower;
     inherit (lib.meta) getExe;
     inherit (lib.trivial) toHexString;
   in
@@ -517,6 +558,12 @@ in {
           "systemd.network.enable is not set: radii's tunnels and rules are systemd-networkd units"
           ++ optional (!config.networking.nftables.enable)
           "networking.nftables.enable is not set: radii validates overlay sources with nftables"
+          ++ (
+            cfg.settings.hostAccess.allow
+            |> concatMap (rule: rule.sources)
+            |> filter (source: !(hasInfix ":" (ip.toCIDR source)))
+            |> map (source: "settings.hostAccess.allow has the IPv4 source ${ip.toCIDR source}: the overlay carries IPv6 only")
+          )
           ++ optionals isHub heldDown
         );
       in {
@@ -791,6 +838,47 @@ in {
             }
           '';
         };
+      })
+
+      # HOST ACCESS
+      # -----------
+      # radii routes every host's /48, which would let containers on other
+      # hosts reach whatever this host opens. Through the tunnels, only the
+      # site's hosts themselves (devices included) may open connections to
+      # this host, plus what settings.hostAccess.allow lets in. Runs on the
+      # input hook, so forwarded traffic never meets it, and drops only: the
+      # host's firewall still decides what is open at all.
+      (let
+        quoted = peer: ''"${peer.interface}"'';
+        tunnels = concatStringsSep ", " (attrValues peers |> map quoted);
+
+        hostAddresses = attrValues cfg.derived.hosts |> map (host: ip.toCIDR host.hostAddress);
+
+        exception = rule: "iifname { ${tunnels} } ip6 saddr { ${concatMapStringsSep ", " ip.toCIDR rule.sources} } ${rule.protocol} dport { ${concatMapStringsSep ", " toString rule.ports} } accept";
+      in {
+        networking.nftables.tables.radii.content = optionalString (peers != {}) ''
+          counter container-to-host {
+            comment "a new connection to this host through a tunnel, from an address that is not a host of the site"
+          }
+
+          set site-hosts {
+            type ipv6_addr
+            flags interval
+            elements = { ${concatStringsSep ", " hostAddresses} }
+          }
+
+          chain guard-host {
+            type filter hook input priority filter; policy accept;
+
+            # Exceptions from settings.hostAccess.allow.
+            ${concatMapStringsSep "\n" exception cfg.settings.hostAccess.allow}
+
+            # Other hosts' containers (anything but a host of the site) may
+            # not open connections to this host. Link-local sources are the
+            # tunnels' other ends, babel among them.
+            iifname { ${tunnels} } ct state new ip6 saddr != @site-hosts ip6 saddr != fe80::/10 counter name container-to-host drop
+          }
+        '';
       })
 
       # ENDPOINT WATCHDOG
