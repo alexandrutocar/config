@@ -1,5 +1,10 @@
-{lib, ...}: let
+{
+  config,
+  lib,
+  ...
+}: let
   inherit (lib.alias) radii;
+  inherit (lib.extra.sigil) getULA shortPathToContainers;
 in {
   services = {
     radii = {
@@ -7,6 +12,23 @@ in {
 
       settings = {
         inherit (radii) site;
+
+        hostAccess = let
+          containers = shortPathToContainers config;
+        in {
+          allow = [
+            {
+              protocol = "tcp";
+              sources = [
+                (containers.porti.ea3680ca-4e51-4e86-b467-7f85d573834e |> getULA)
+              ];
+
+              ports = [
+                config.services.tinyproxy.settings.Port
+              ];
+            }
+          ];
+        };
       };
 
       # systemd-creds encrypt --with-key=host+tpm2 --name=radii.private-key radii.key -

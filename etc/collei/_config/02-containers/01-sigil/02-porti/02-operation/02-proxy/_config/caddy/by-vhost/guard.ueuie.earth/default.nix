@@ -11,16 +11,14 @@ in let
   fischlContainers = shortPathToContainers self.nixosConfigurations.fischl.config;
 in let
   serverDomain = "guard.ueuie.earth";
-  serverOrigin = url.mkURL {
-    scheme = "https";
-    host = serverDomain;
-  };
+  serverOrigin = url.mkOrigin "https" serverDomain null;
 in {
   services.caddy = {
     virtualHosts = {
       ${serverOrigin} = {
         listenAddresses = [
           (sigil.self |> getGUA |> ip.toCompressed)
+          (sigil.self |> getULA |> ip.toCompressed)
         ];
 
         logFormat = ''
@@ -29,7 +27,10 @@ in {
         '';
 
         extraConfig = let
-          target = fischlContainers.porti.c4a54e9b-fab6-4f57-ad12-3cfc34c950ab;
+          upstream = let
+            target = fischlContainers.porti.c4a54e9b-fab6-4f57-ad12-3cfc34c950ab;
+          in
+            url.mkInterface (target |> getULA) 8080;
         in ''
           tls {
             issuer acme {
@@ -38,7 +39,7 @@ in {
             }
           }
 
-          reverse_proxy ${url.mkInterface (target |> getULA) 8080}
+          reverse_proxy ${upstream}
         '';
       };
     };

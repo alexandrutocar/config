@@ -25,7 +25,7 @@ in let
     inherit container;
 
     services = {
-      pocket-id = "${state.container}/var/lib/pocket-id";
+      pocket-id = "${container}/var/lib/pocket-id";
     };
   };
 
@@ -55,23 +55,23 @@ in {
     restic = {
       backups = {
         ${backup.name} = let
-          sharedBackupDir = "${state.container}/.backup";
+          staging = "${state.container}/.backup";
         in
           mkMerge [
             {
               # Preparation
               # -----------
               backupPrepareCommand = ''
-                rm -rf ${sharedBackupDir}
-                install -d -m 700 ${sharedBackupDir}
+                rm -rf ${staging}
+                install -d -m 700 ${staging}
 
                 # Pocket-ID
                 # ---------
-                ${getExe pkgs.sqlite} ${state.services.pocket-id}/pocket-id.db ".backup '${sharedBackupDir}/pocket-id.db'"
+                ${getExe pkgs.sqlite} ${state.services.pocket-id}/pocket-id.db ".backup '${staging}/pocket-id.db'"
               '';
 
               backupCleanupCommand = ''
-                rm -rf ${sharedBackupDir}
+                rm -rf ${staging}
               '';
             }
             {
@@ -93,7 +93,7 @@ in {
               # Backup Configuration
               # --------------------
               paths = [
-                sharedBackupDir
+                staging
                 state.services.pocket-id
               ];
 

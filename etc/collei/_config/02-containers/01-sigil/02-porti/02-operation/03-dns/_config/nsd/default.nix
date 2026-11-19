@@ -37,8 +37,11 @@ in {
 
       zone = let
         target = {
-          proxy = {
-            _main = sigil.containers.porti.c8ac5cd5-7563-4e68-9dce-68bb11224eab |> getGUA |> ip.toCompressed;
+          proxy = let
+            target = sigil.containers.porti.c8ac5cd5-7563-4e68-9dce-68bb11224eab;
+          in {
+            _main = target |> getGUA |> ip.toCompressed;
+            forge = target.addresses.ipv6.extra.gua.forge |> ip.toCompressed;
           };
           dns = sigil.self |> getGUA |> ip.toCompressed;
         };
@@ -66,6 +69,11 @@ in {
 
           subdomains = mkMerge [
             {
+              "forge" = {
+                AAAA = with target.proxy; [
+                  forge
+                ];
+              };
               "guard" = {
                 AAAA = with target.proxy; [
                   _main
