@@ -6,7 +6,7 @@
 }: let
   inherit (lib.extra) ip url;
   inherit (lib.extra.sigil) getGUA getULA;
-  inherit (lib.modules) mkForce;
+  inherit (lib.modules) mkForce mkMerge;
 in {
   services.nsd = {
     enable = true;
@@ -51,7 +51,7 @@ in {
           SOA = {
             nameServer = "vega.ns.ueuie.earth.";
             minimum = 3600;
-            serial = 2026082801;
+            serial = 2026111901;
             retry = 3600;
             expire = 1209600;
             refresh = 10800;
@@ -64,21 +64,30 @@ in {
             "tara.ns.ueuie.earth."
           ];
 
-          subdomains = let
-            AAAA = [
-              target.dns
-            ];
-          in {
-            "vega.ns" = {
-              inherit AAAA;
-            };
-            "dara.ns" = {
-              inherit AAAA;
-            };
-            "tara.ns" = {
-              inherit AAAA;
-            };
-          };
+          subdomains = mkMerge [
+            {
+              "guard" = {
+                AAAA = with target.proxy; [
+                  _main
+                ];
+              };
+            }
+            (let
+              AAAA = [
+                target.dns
+              ];
+            in {
+              "vega.ns" = {
+                inherit AAAA;
+              };
+              "dara.ns" = {
+                inherit AAAA;
+              };
+              "tara.ns" = {
+                inherit AAAA;
+              };
+            })
+          ];
         })
       ];
     };
