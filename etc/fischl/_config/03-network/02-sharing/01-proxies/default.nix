@@ -43,12 +43,12 @@ in {
             ^codeload\.github\.com$
             ^gitlab\.com$
             ^codeberg\.org$
+            ^code\.forgejo\.org$
             ^forge\.dev\.intra\.net\.internal$
           '';
         };
 
         FilterExtended = true;
-
         FilterDefaultDeny = true;
       };
     };
