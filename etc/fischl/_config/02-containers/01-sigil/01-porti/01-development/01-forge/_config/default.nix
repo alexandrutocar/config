@@ -1,7 +1,6 @@
 {
   self,
   lib,
-  pkgs,
   ...
 }: let
   inherit (lib.alias) resolvers;
@@ -11,10 +10,6 @@
   inherit (lib.modules) mkForce;
   inherit (lib.strings) concatLines;
 in {
-  security.pki.certificateFiles = [
-    "${pkgs.certs}/etc/ssl/anchor/intra.net.pem"
-  ];
-
   services.resolved.enable = false;
 
   networking.resolvconf.enable = false;

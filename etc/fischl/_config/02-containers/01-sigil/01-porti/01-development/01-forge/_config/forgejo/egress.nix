@@ -9,7 +9,7 @@
 in let
   mirrors = {
     # Remotes allowed for migrations and pull/push mirrors.
-    http = ["github.com" "*.github.com" "codeberg.org" "gitlab.com" "code.forgejo.org" "forge.dev.intra.net.internal"];
+    http = ["github.com" "*.github.com" "codeberg.org" "gitlab.com" "code.forgejo.org"];
 
     # SSH push-mirror remotes, tunnelled through tinyproxy via HTTP CONNECT.
     ssh = ["github.com" "ssh.github.com" "codeberg.org" "gitlab.com"];
