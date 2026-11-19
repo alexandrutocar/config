@@ -43,6 +43,7 @@ in {
             ^codeload\.github\.com$
             ^gitlab\.com$
             ^codeberg\.org$
+            ^forge\.dev\.intra\.net\.internal$
           '';
         };
 

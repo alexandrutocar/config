@@ -103,6 +103,7 @@ in {
                             (with radii.site; [
                               albedo
                               beidou # nix  -> development/forge
+                              fischl
                               keqing
                             ])
                             |> map (h: h.hostAddress);
