@@ -5,15 +5,9 @@
   ...
 }: let
   inherit (lib.extra) ip url;
+  inherit (lib.extra.sigil) getGUA getULA;
   inherit (lib.modules) mkForce;
 in {
-  networking = {
-    firewall = {
-      allowedTCPPorts = [53];
-      allowedUDPPorts = [53];
-    };
-  };
-
   services.nsd = {
     enable = true;
 
@@ -24,7 +18,7 @@ in {
         interface = let
           inherit (url.interface) fromParts toNLnetLabs;
         in [
-          (toNLnetLabs (fromParts sigil.self.addresses.gua 53))
+          (toNLnetLabs (fromParts (sigil.self |> getGUA) 53))
         ];
 
         server-count = 1;
@@ -34,7 +28,7 @@ in {
         identity = "COLLEI";
 
         metrics-enable = true;
-        metrics-interface = sigil.self.addresses.ula |> ip.toCompressed;
+        metrics-interface = sigil.self |> getULA |> ip.toCompressed;
       };
 
       remote-control = {
@@ -44,9 +38,9 @@ in {
       zone = let
         target = {
           proxy = {
-            _main = sigil.containers.porti.c8ac5cd5-7563-4e68-9dce-68bb11224eab.addresses.gua |> ip.toCompressed;
+            _main = sigil.containers.porti.c8ac5cd5-7563-4e68-9dce-68bb11224eab |> getGUA |> ip.toCompressed;
           };
-          dns = sigil.self.addresses.gua |> ip.toCompressed;
+          dns = sigil.self |> getGUA |> ip.toCompressed;
         };
       in [
         (pkgs.custom.writeAuthZone "ueuie.earth" {

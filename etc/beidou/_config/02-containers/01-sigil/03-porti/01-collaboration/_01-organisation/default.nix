@@ -1,7 +1,19 @@
-{lib, ...}: let
+{
+  config,
+  self,
+  lib,
+  ...
+}: let
   inherit (lib.extra.files.list) recursive;
   inherit (lib.modules) mkAfter;
+  inherit (lib.extra.sigil) getConfig getULA shortPathToContainers;
 in let
+  targetConfig = getConfig target;
+
+  containers = shortPathToContainers config;
+
+  target = containers.porti.${mid};
+
   mid = "a8dd2ef7-86c8-4a7e-af8a-b3f98a2f31d3";
 in {
   services = {
@@ -24,6 +36,29 @@ in {
                 flags = mkAfter [
                   "--load-credential=credential.secret:%d/credential.secret"
                 ];
+              };
+
+              rules = {
+                networkTraffic = {
+                  incoming = let
+                    colleiContainers = shortPathToContainers self.nixosConfigurations.collei.config;
+                  in [
+                    {
+                      destinationAddresses = [(target |> getULA)];
+                      allowedTraffic = [
+                        {
+                          protocol = "tcp";
+                          ports = [
+                            8080 # HTTP (Stalwart)
+                            targetConfig.services.postgresql.settings.port
+                            targetConfig.services.redis.servers.stalwart.port
+                          ];
+                        }
+                      ];
+                      sourceAddresses = [(colleiContainers.porti.c7f4d370-8043-46c8-97ae-39417237ac82 |> getULA)];
+                    }
+                  ];
+                };
               };
             };
           };

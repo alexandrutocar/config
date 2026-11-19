@@ -4,18 +4,13 @@
   lib,
   ...
 }: let
-  inherit (lib.alias) addresses networks resolvers;
+  inherit (lib.alias) radii resolvers;
   inherit (lib.extra) ip url;
+  inherit (lib.extra.sigil) getULA;
+  inherit (lib.extra.trivial) mapPipeline;
   inherit (lib.lists) concatMap;
   inherit (lib.modules) mkMerge;
 in {
-  networking = {
-    firewall = {
-      allowedTCPPorts = [53];
-      allowedUDPPorts = [53];
-    };
-  };
-
   services = {
     unbound = {
       enable = true;
@@ -31,20 +26,20 @@ in {
             interface = let
               inherit (url.interface) fromParts toNLnetLabs;
             in [
-              (toNLnetLabs (fromParts sigil.self.addresses.ula 53))
+              (toNLnetLabs (fromParts (sigil.self |> getULA) 53))
             ];
 
             do-udp = true;
             do-tcp = true;
           }
           {
-            # https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html#unbound-conf-access-control
-            access-control = [
-              # NOTE: Allow requests from inside the internal network (intra.net®).
-              "${(networks.aether.internal.net._meta.network |> ip.toCIDR)} allow"
-              # NOTE: Allow the host itself (Beidou) to use the resolver.
-              "${(addresses.on-prem.specht.hosts.beidou.ipv6.ula |> ip.toCIDR)} allow"
-            ];
+            access-control = let
+              sourceAddresses = import ./_facts/rules/incoming.nix {
+                inherit (sigil) containers;
+                inherit lib;
+              };
+            in
+              sourceAddresses |> mapPipeline [ip.toCIDR (a: "${a} allow")];
           }
           {
             deny-any = true;
@@ -127,9 +122,9 @@ in {
         auth-zone = let
           target = {
             proxy = {
-              _main = sigil.containers.intra.e079b57e-4727-4408-8c33-39abaae975d9.addresses.ula |> ip.toCompressed;
+              _main = sigil.containers.intra.e079b57e-4727-4408-8c33-39abaae975d9 |> getULA |> ip.toCompressed;
             };
-            dns = sigil.self.addresses.ula |> ip.toCompressed;
+            dns = sigil.self |> getULA |> ip.toCompressed;
           };
         in [
           (pkgs.custom.writeAuthZone "intra.net.internal" {
@@ -215,27 +210,31 @@ in {
               {
                 "albedo" = {
                   AAAA = [
-                    (networks.aether.internal.net.hosts.albedo |> ip.toCompressed)
+                    (radii.site.albedo.hostAddress |> ip.toCompressed)
                   ];
                 };
+
                 "beidou" = {
                   AAAA = [
-                    (networks.aether.internal.net.hosts.beidou |> ip.toCompressed)
+                    (radii.site.beidou.hostAddress |> ip.toCompressed)
                   ];
                 };
+
                 "collei" = {
                   AAAA = [
-                    (networks.aether.internal.net.hosts.collei |> ip.toCompressed)
+                    (radii.site.collei.hostAddress |> ip.toCompressed)
                   ];
                 };
+
                 "fischl" = {
                   AAAA = [
-                    (networks.aether.internal.net.hosts.fischl |> ip.toCompressed)
+                    (radii.site.fischl.hostAddress |> ip.toCompressed)
                   ];
                 };
+
                 "keqing" = {
                   AAAA = [
-                    (networks.aether.internal.net.hosts.keqing |> ip.toCompressed)
+                    (radii.site.keqing.hostAddress |> ip.toCompressed)
                   ];
                 };
               }

@@ -5,13 +5,8 @@
   ...
 }: let
   inherit (lib.extra) ip;
+  inherit (lib.extra.sigil) getULA;
 in {
-  networking = {
-    firewall = {
-      allowedTCPPorts = [8888];
-    };
-  };
-
   systemd = {
     services = {
       tinyproxy = {
@@ -26,12 +21,12 @@ in {
       enable = true;
 
       settings = {
-        Listen = sigil.self.addresses.ula |> ip.toCompressed;
+        Listen = sigil.self |> getULA |> ip.toCompressed;
 
         Port = 8888;
 
         Allow = [
-          (sigil.containers.intra."e079b57e-4727-4408-8c33-39abaae975d9".addresses.ula |> ip.toCompressed)
+          (sigil.containers.intra.e079b57e-4727-4408-8c33-39abaae975d9 |> getULA |> ip.toCompressed)
         ];
 
         ConnectPort = [

@@ -142,8 +142,12 @@ in let
   # -------
   trivial = let
     inherit (super.trivial) flip pipe;
-  in {
+  in let
     pipeline = flip pipe;
+  in {
+    inherit pipeline;
+
+    mapPipeline = fs: l: l |> map (pipeline fs);
   };
 
   # TYPES
@@ -522,13 +526,25 @@ in let
     plainToHex = input: "#${super.strings.toLower input}";
   };
 
+  # SIGIL
+  # -----
+  sigil = {
+    shortPathToContainers = config: config.services.sigil.settings.containers;
+
+    getConfig = ctrCfg: ctrCfg.evaluation.config;
+
+    getGUA = ctrCfg: ctrCfg.addresses.ipv6.gua;
+
+    getULA = ctrCfg: ctrCfg.addresses.ipv6.ula;
+  };
+
   # STRINGS
   # -------
   strings = {
     lines.asOne = lines: super.strings.concatStrings (super.strings.splitString "\n" lines);
   };
 in {
-  inherit colors cs facter files math strings trivial types;
+  inherit colors cs facter files math sigil strings trivial types;
 
   url = removeAttrs adts.url ["types"];
 

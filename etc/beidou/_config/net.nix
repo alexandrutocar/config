@@ -1,15 +1,33 @@
 {
+  config,
   self,
   lib,
   pkgs,
   ...
 }: let
   inherit (lib.lists) singleton;
+  inherit (lib.extra) ip;
+  inherit (lib.extra.sigil) getULA shortPathToContainers;
+in let
+  beidouContainers = shortPathToContainers config;
 in {
   imports = singleton (self + "/etc/shared/01-settings/net.nix");
 
-  # SYSTEMD NETWORK
-  # ------- -------
+  # DNS (INTERNAL)
+  # --------------
+  networking.nameservers = [
+    (beidouContainers.intra.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a |> getULA |> ip.toCompressed)
+  ];
+
+  services.resolved = {
+    enable = true;
+
+    settings = {
+      Resolve = {
+        Domains = ["~intra.net.internal" "~hosts.net.internal"];
+      };
+    };
+  };
 
   # CERTIFICATE
   # -----------

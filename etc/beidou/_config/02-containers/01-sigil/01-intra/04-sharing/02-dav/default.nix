@@ -1,7 +1,18 @@
-{lib, ...}: let
+{
+  config,
+  lib,
+  ...
+}: let
   inherit (lib.extra.files.list) recursive;
+  inherit (lib.extra.sigil) getConfig getULA shortPathToContainers;
   inherit (lib.modules) mkAfter;
 in let
+  targetConfig = getConfig target;
+
+  containers = shortPathToContainers config;
+
+  target = containers.intra.${mid};
+
   mid = "a8e714de-f158-49fc-958a-9176f25d2973";
 in {
   services = {
@@ -26,6 +37,25 @@ in {
                 flags = mkAfter [
                   "--load-credential=credential.secret:%d/credential.secret"
                 ];
+              };
+
+              rules = {
+                networkTraffic = {
+                  incoming = [
+                    {
+                      destinationAddresses = [(target |> getULA)];
+
+                      allowedTraffic = [
+                        {
+                          protocol = "tcp";
+                          ports = targetConfig.services.davis.nginx.listen |> map (l: l.port);
+                        }
+                      ];
+
+                      sourceAddresses = [(containers.intra.e079b57e-4727-4408-8c33-39abaae975d9 |> getULA)];
+                    }
+                  ];
+                };
               };
             };
           };

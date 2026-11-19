@@ -3,8 +3,7 @@
   lib,
   ...
 }: let
-  inherit (lib.alias) addresses networks;
-  inherit (lib.extra) ip;
+  inherit (lib.alias) addresses radii;
 in {
   services.sigil = {
     enable = true;
@@ -13,13 +12,14 @@ in {
       network = let
         systemSite = addresses.provider.hetzner-cloud-server;
       in {
+        inherit (radii.site.${hostName}) hostAddress;
+
         gua = {
-          prefix = systemSite.hosts.${hostName}.managedNetworks.ipv6.gua |> ip.network.toPrefixGroups;
+          prefix = systemSite.hosts.${hostName}.managedNetworks.ipv6.gua;
         };
 
         ula = {
-          prefix = networks.aether.internal.net._meta.network |> ip.network.toPrefixGroups;
-          source = networks.aether.internal.net.hosts.collei |> ip.toCompressed;
+          inherit (radii.site.${hostName}) prefix;
         };
       };
     };

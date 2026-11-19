@@ -1,12 +1,4 @@
-{config, ...}: {
-  networking = {
-    firewall = {
-      allowedTCPPorts = [
-        config.services.redis.servers.stalwart.port
-      ];
-    };
-  };
-
+_: {
   services = {
     redis = {
       servers = {

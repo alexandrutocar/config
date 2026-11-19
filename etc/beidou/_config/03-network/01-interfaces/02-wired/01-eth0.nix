@@ -1,16 +1,11 @@
 {
   hostName,
-  self,
   lib,
   ...
 }: let
   inherit (lib.alias) addresses;
   inherit (lib.extra) ip;
   inherit (lib.strings) toSentenceCase;
-in let
-  containers.beidou = {
-    inherit (self.nixosConfigurations.beidou.config.services.sigil.settings.containers.intra) cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a;
-  };
 in {
   systemd.network = {
     networks = {
@@ -30,19 +25,6 @@ in {
         };
 
         networkConfig = {
-          DNSDefaultRoute = true;
-
-          DNS = [
-            (containers.beidou.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a.addresses.ula |> ip.toCompressed)
-          ];
-
-          Domains =
-            [
-              "~intra.net.internal"
-              "~hosts.net.internal"
-            ]
-            ++ ["~."];
-
           Address = hostAddresses |> map ip.toCIDR;
 
           Gateway = gatewayAddresses |> map ip.toCompressed;

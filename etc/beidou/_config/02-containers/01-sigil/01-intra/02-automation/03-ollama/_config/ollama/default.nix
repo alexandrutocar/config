@@ -1,19 +1,13 @@
 {
   hostConfig,
-  config,
   sigil,
   pkgs,
   lib,
   ...
 }: let
   inherit (lib.extra) ip;
+  inherit (lib.extra.sigil) getULA;
 in {
-  networking = {
-    firewall = {
-      allowedTCPPorts = [config.services.ollama.port];
-    };
-  };
-
   systemd.tmpfiles.settings = {
     "10-nvidia" = {
       "/run/opengl-driver" = {
@@ -36,7 +30,7 @@ in {
 
       package = pkgs.ollama-cuda;
 
-      host = sigil.self.addresses.ula |> ip.toURIHost;
+      host = sigil.self |> getULA |> ip.toURIHost;
       port = 11434;
 
       user = "ollama";

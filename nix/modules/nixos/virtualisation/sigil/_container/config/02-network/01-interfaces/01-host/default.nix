@@ -3,10 +3,9 @@
   lib,
   ...
 }: let
-  inherit (lib.extra.ip) toCIDR toCompressed;
-  inherit (lib.extra.ip.network) fromCIDR;
+  inherit (lib.extra) ip;
 
-  anywhere = fromCIDR 6 "::/0";
+  anywhere = ip.network.fromCIDR 6 "::/0";
 in {
   systemd = {
     network = {
@@ -24,15 +23,15 @@ in {
           addresses = [
             {
               # The host0 end, on the container side.
-              Address = toCIDR sigil.linkLocal.container;
+              Address = ip.toCIDR sigil.linkLocal.container;
             }
           ];
 
           routes = [
             {
-              Destination = toCIDR anywhere;
+              Destination = ip.toCIDR anywhere;
               # The ve-* end, on the host side.
-              Gateway = toCompressed sigil.linkLocal.host;
+              Gateway = ip.toCompressed sigil.linkLocal.host;
               GatewayOnLink = true;
             }
           ];

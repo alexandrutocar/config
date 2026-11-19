@@ -1,7 +1,20 @@
-{lib, ...}: let
+{
+  config,
+  lib,
+  ...
+}: let
+  inherit (lib.extra) url;
   inherit (lib.extra.files.list) recursive;
+  inherit (lib.extra.sigil) getConfig getGUA shortPathToContainers;
+  inherit (lib.extra.trivial) mapPipeline;
   inherit (lib.modules) mkAfter;
 in let
+  targetConfig = getConfig target;
+
+  containers = shortPathToContainers config;
+
+  target = containers.porti.${mid};
+
   mid = "baa45f8a-4c43-41ed-bcc6-5365c1c4a555";
 in {
   services = {
@@ -11,18 +24,36 @@ in {
           porti = {
             ${mid} = {
               modules = recursive ./_config;
+
               nspawn = {
-                settings = {
-                  Network = {
-                    Port = [
-                      "tcp:53:53"
-                      "udp:53:53"
-                    ];
-                  };
-                };
                 flags = mkAfter [
                   "--load-credential=credential.secret:%d/credential.secret"
                 ];
+              };
+
+              rules = {
+                networkTraffic = {
+                  incoming = [
+                    {
+                      destinationAddresses = [(target |> getGUA)];
+
+                      allowedTraffic = let
+                        ports = targetConfig.services.nsd.settings.server.interface |> mapPipeline (with url.interface; [fromNLnetLabs getPort]);
+                      in [
+                        {
+                          protocol = "tcp";
+                          inherit ports;
+                        }
+                        {
+                          protocol = "udp";
+                          inherit ports;
+                        }
+                      ];
+
+                      sourceAddresses = ["::/0"];
+                    }
+                  ];
+                };
               };
             };
           };

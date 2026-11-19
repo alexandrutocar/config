@@ -5,7 +5,7 @@
 }: let
   inherit (lib.alias) addresses;
   inherit (lib.extra) ip;
-  inherit (lib.extra.trivial) pipeline;
+  inherit (lib.extra.trivial) mapPipeline;
   inherit (lib.strings) toSentenceCase;
 in {
   systemd = {
@@ -32,7 +32,7 @@ in {
             Gateway = gatewayAddresses |> map ip.toCompressed;
           };
 
-          routes = gatewayAddresses |> map (pipeline [ip.toCompressed (Gateway: {inherit Gateway;})]);
+          routes = gatewayAddresses |> mapPipeline [ip.toCompressed (Gateway: {inherit Gateway;})];
 
           dhcpConfig = {
             Hostname = toSentenceCase hostName;

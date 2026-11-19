@@ -1,5 +1,5 @@
 lib: {
   addresses = import ./addresses lib;
-  networks = import ./networks lib;
+  radii.site = import ./radii.site lib;
   resolvers = import ./resolvers lib;
 }

@@ -4,8 +4,16 @@
   ...
 }: let
   inherit (lib.extra.files.list) recursive;
+  inherit (lib.extra.sigil) getConfig getULA shortPathToContainers;
   inherit (lib.modules) mkAfter;
+  inherit (lib.strings) toInt;
 in let
+  targetConfig = getConfig target;
+
+  containers = shortPathToContainers config;
+
+  target = containers.intra.${mid};
+
   mid = "a4205b50-197a-40c8-8057-fe1394630e91";
 in {
   services = {
@@ -15,6 +23,7 @@ in {
           intra = {
             ${mid} = {
               modules = recursive ./_config;
+
               nspawn = {
                 settings = {
                   Files = {
@@ -28,20 +37,27 @@ in {
                   "--load-credential=credential.secret:%d/credential.secret"
                 ];
               };
-            };
-          };
-        };
-        network = {
-          links = {
-            intra = {
-              ${mid} = [
-                {
-                  target = config.services.sigil.settings.containers.intra.d86c8e1c-2bcd-4d2f-a3b2-7962afc28a51; # intra/automation/ollama
-                }
-                {
-                  target = config.services.sigil.settings.containers.intra.cd4e7991-27fc-425b-9f9c-a0b3ec1b4f1a; # intra/operation/dns
-                }
-              ];
+
+              rules = {
+                networkTraffic = {
+                  incoming = [
+                    {
+                      destinationAddresses = [(target |> getULA)];
+
+                      allowedTraffic = [
+                        {
+                          protocol = "tcp";
+                          ports = [
+                            (targetConfig.services.n8n.settings.port |> toInt)
+                          ];
+                        }
+                      ];
+
+                      sourceAddresses = [(containers.intra.e079b57e-4727-4408-8c33-39abaae975d9 |> getULA)];
+                    }
+                  ];
+                };
+              };
             };
           };
         };

@@ -3,9 +3,15 @@
   lib,
   ...
 }: let
+  inherit (lib.alias) radii;
   inherit (lib.extra.files.list) recursive;
+  inherit (lib.extra.sigil) getULA shortPathToContainers;
   inherit (lib.modules) mkAfter;
 in let
+  containers = shortPathToContainers config;
+
+  target = containers.intra.${mid};
+
   mid = "e079b57e-4727-4408-8c33-39abaae975d9";
 in {
   services = {
@@ -15,32 +21,148 @@ in {
           intra = {
             ${mid} = {
               modules = recursive ./_config;
+
               nspawn = {
                 flags = mkAfter [
                   "--load-credential=credential.secret:%d/credential.secret"
                 ];
               };
-            };
-          };
-        };
 
-        network = {
-          links = {
-            intra = {
-              ${mid} = [
-                {
-                  target = config.services.sigil.settings.containers.intra.a8e714de-f158-49fc-958a-9176f25d2973; # intra/sharing/dav
-                }
-                {
-                  target = config.services.sigil.settings.containers.intra.c38a828e-58a7-49af-894d-ba02f936d211; # intra/operation/auth
-                }
-                {
-                  target = config.services.sigil.settings.containers.intra.acda4bf3-2678-43c5-bae9-e67bd8cb710d; # intra/development/forge
-                }
-                {
-                  target = config.services.sigil.settings.containers.intra.a4205b50-197a-40c8-8057-fe1394630e91; # intra/automation/n8n
-                }
-              ];
+              rules = {
+                networkTraffic = {
+                  incoming = let
+                    destinationAddresses = [(target |> getULA)];
+                  in
+                    # PORT-BY-PORT RULE
+                    # -----------------
+                    [
+                      {
+                        inherit destinationAddresses;
+
+                        allowedTraffic = [
+                          {
+                            protocol = "tcp";
+                            ports = [22];
+                          }
+                        ];
+
+                        # ────────────────────────────────────────────────────────────────────────
+                        # NOTE: Only Albedo may connect via SSH.
+                        # ────────────────────────────────────────────────────────────────────────
+                        sourceAddresses = let
+                          allowedHosts =
+                            (with radii.site; [
+                              albedo
+                            ])
+                            |> map (h: h.hostAddress);
+                        in
+                          allowedHosts;
+                      }
+                      {
+                        inherit destinationAddresses;
+
+                        allowedTraffic = [
+                          {
+                            protocol = "tcp";
+                            ports = [80];
+                          }
+                        ];
+
+                        # ────────────────────────────────────────────────────────────────────────
+                        # NOTE: Only Keqing may need a .mobileconfig profile.
+                        # ────────────────────────────────────────────────────────────────────────
+                        sourceAddresses = let
+                          allowedHosts =
+                            (with radii.site; [
+                              keqing
+                            ])
+                            |> map (h: h.hostAddress);
+                        in
+                          allowedHosts;
+                      }
+                      {
+                        inherit destinationAddresses;
+
+                        allowedTraffic = [
+                          {
+                            protocol = "tcp";
+                            ports = [443];
+                          }
+                        ];
+
+                        sourceAddresses = let
+                          allowedContainers =
+                            (with containers.intra; [
+                              a4205b50-197a-40c8-8057-fe1394630e91 # automation/n8n       ->  development/forge, automation/ollama
+                              acda4bf3-2678-43c5-bae9-e67bd8cb710d # development/forge    ->  operation/auth
+                              fe616e36-c9d0-4ba9-8938-436e75ef0dc0 # development/actions  ->  automation/workflows
+                            ])
+                            |> map getULA;
+
+                          allowedHosts =
+                            (with radii.site; [
+                              albedo
+                              beidou # nix  -> development/forge
+                              keqing
+                            ])
+                            |> map (h: h.hostAddress);
+                        in
+                          allowedContainers ++ allowedHosts;
+                      }
+                      {
+                        inherit destinationAddresses;
+
+                        allowedTraffic = [
+                          {
+                            protocol = "tcp";
+                            ports = [8443];
+                          }
+                        ];
+
+                        sourceAddresses = let
+                          allowedContainers =
+                            (with containers.intra; [
+                              a4205b50-197a-40c8-8057-fe1394630e91 # automation/n8n       ->  automation/connections
+                            ])
+                            |> map getULA;
+                          allowedHosts =
+                            (with radii.site; [
+                              albedo
+                            ])
+                            |> map (h: h.hostAddress);
+                        in
+                          allowedContainers ++ allowedHosts;
+                      }
+
+                      {
+                        inherit destinationAddresses;
+
+                        allowedTraffic = [
+                          {
+                            protocol = "tcp";
+                            ports = [11434];
+                          }
+                        ];
+
+                        sourceAddresses = let
+                          allowedContainers =
+                            (with containers.intra; [
+                              a4205b50-197a-40c8-8057-fe1394630e91 # automation/n8n       ->  automation/ollama
+                            ])
+                            |> map getULA;
+
+                          allowedHosts =
+                            (with radii.site; [
+                              albedo
+                              keqing
+                            ])
+                            |> map (h: h.hostAddress);
+                        in
+                          allowedContainers ++ allowedHosts;
+                      }
+                    ];
+                };
+              };
             };
           };
         };

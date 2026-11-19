@@ -4,19 +4,13 @@
   lib,
   ...
 }: let
-  inherit (lib.alias) networks;
+  inherit (lib.alias) radii;
+  inherit (lib.extra) ip url;
   inherit (lib.extra.cs.systemd) credentialsDirectory mkSetCredentialEncrypted;
-  inherit (lib.extra) ip;
-  inherit (lib.extra) url;
+  inherit (lib.extra.sigil) getULA;
   inherit (lib.modules) mkMerge;
-  inherit (lib.strings) concatStringsSep toInt;
+  inherit (lib.strings) concatStringsSep;
 in {
-  networking = {
-    firewall = {
-      allowedTCPPorts = [(toInt config.services.n8n.settings.port)];
-    };
-  };
-
   systemd = {
     services = {
       n8n = {
@@ -70,10 +64,10 @@ in {
                 "forge.dev.intra.net.internal"
               ]);
 
-          HTTPS_PROXY = url.mkOrigin "http" networks.aether.internal.net.hosts.beidou 8888;
+          HTTPS_PROXY = url.mkOrigin "http" radii.site.beidou.hostAddress 8888;
         }
         {
-          listen-address = sigil.self.addresses.ula |> ip.toCompressed;
+          listen-address = sigil.self |> getULA |> ip.toCompressed;
           proxy-hops = 1;
           host = "workflows.intra.net.internal";
           port = 8080;

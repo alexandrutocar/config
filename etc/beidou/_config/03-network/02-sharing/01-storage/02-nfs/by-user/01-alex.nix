@@ -1,5 +1,5 @@
 {lib, ...}: let
-  inherit (lib.alias) networks;
+  inherit (lib.alias) radii;
   inherit (lib.extra) ip;
   inherit (lib.modules) mkAfter;
 in let
@@ -8,7 +8,7 @@ in {
   services = {
     nfs.server = {
       exports = mkAfter ''
-        /export/share/${user} ${(networks.aether.internal.net.hosts.albedo |> ip.toCompressed)}(rw,nohide,insecure,no_subtree_check)
+        /export/share/${user} ${(radii.site.albedo.hostAddress |> ip.toCompressed)}(rw,nohide,insecure,no_subtree_check)
       '';
     };
   };

@@ -279,6 +279,31 @@
       fischl = mkHeadlessServer "fischl" [];
     };
 
+    checks = forEachSystem (pkgs: {
+      module-sigil-traffic-rules = import ./nix/modules/nixos/virtualisation/sigil/_tests/traffic-rules.nix {
+        inherit pkgs lib self;
+      };
+      module-radii-site-table = import ./nix/modules/nixos/services/networking/radii/_tests/site-table.nix {
+        inherit pkgs lib;
+        site = lib.alias.radii.site;
+      };
+      module-radii-overlay = import ./nix/modules/nixos/services/networking/radii/_tests/overlay.nix {
+        inherit pkgs lib;
+      };
+      module-radii-watchdog = import ./nix/modules/nixos/services/networking/radii/_tests/watchdog.nix {
+        inherit pkgs lib;
+      };
+      module-radii-assertions = import ./nix/modules/nixos/services/networking/radii/_tests/assertions.nix {
+        inherit pkgs lib;
+      };
+      module-radii-host-access = import ./nix/modules/nixos/services/networking/radii/_tests/host-access.nix {
+        inherit pkgs lib;
+      };
+      module-radii-networkd-babel = import ./nix/modules/nixos/services/networking/radii/_tests/networkd-babel.nix {
+        inherit pkgs lib;
+      };
+    });
+
     overlays = let
       fixes = append ./nix "fixes?";
     in
