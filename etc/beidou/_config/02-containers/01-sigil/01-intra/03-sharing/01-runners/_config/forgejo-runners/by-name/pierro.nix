@@ -24,7 +24,7 @@ in {
           ];
           envs = {
             HTTPS_PROXY = url.mkOrigin "http" radii.site.beidou.hostAddress 8888;
-            NO_PROXY = ".ueuie.proxy,.intra.net.internal";
+            NO_PROXY = ".ueuie.earth,.intra.net.internal";
             NIX_CONFIG = "experimental-features = ca-derivations flakes nix-command parse-toml-timestamps pipe-operators";
           };
         };
