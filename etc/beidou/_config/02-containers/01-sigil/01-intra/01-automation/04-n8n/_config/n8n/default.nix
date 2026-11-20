@@ -60,6 +60,7 @@ in {
           in
             concatStringsSep "," (loopback
               ++ [
+                "forge.ueuie.earth"
                 "ollama.ai.intra.net.internal"
               ]);
 
