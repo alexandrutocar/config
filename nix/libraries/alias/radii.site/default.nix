@@ -58,11 +58,16 @@ in {
     // (let
       systemSite = addresses.provider.hetzner-cloud-server;
     in {
-      openPorts = [[51821 51822] 51825];
+      openPorts = [[51821 51822] [51824 51825]];
 
       basePort = 51820;
 
-      endpoints = (with systemSite; [hosts.collei.ipv6.gua]) |> map ip.address.singleHostRoute;
+      endpoints =
+        (with systemSite.hosts.collei; [
+          ipv4.wan
+          ipv6.gua
+        ])
+        |> map ip.address.singleHostRoute;
     });
 
   fischl = let
