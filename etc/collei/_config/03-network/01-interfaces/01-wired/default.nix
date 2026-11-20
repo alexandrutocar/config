@@ -12,13 +12,12 @@ in {
     network = {
       networks = {
         "30-enp1s0" = let
-          gatewayAddresses = let
-            ll = (builtins.head ip.ranges.ipv6.linkLocal) |> ip.network.getFirstHost;
-          in [
-            ll
+          gatewayAddresses = with systemSite.defaultGateway; [
+            ipv4.lan
+            ipv6.ll
           ];
 
-          hostAddresses = with systemSite.hosts.${hostName}; [ipv6.gua];
+          hostAddresses = with systemSite.hosts.${hostName}; [ipv4.wan ipv6.gua];
 
           systemSite = addresses.provider.hetzner-cloud-server;
         in {
@@ -32,7 +31,15 @@ in {
             Gateway = gatewayAddresses |> map ip.toCompressed;
           };
 
-          routes = gatewayAddresses |> mapPipeline [ip.toCompressed (Gateway: {inherit Gateway;})];
+          routes =
+            gatewayAddresses
+            |> mapPipeline [
+              ip.toCompressed
+              (Gateway: {
+                inherit Gateway;
+                GatewayOnLink = true;
+              })
+            ];
 
           dhcpConfig = {
             Hostname = toSentenceCase hostName;
