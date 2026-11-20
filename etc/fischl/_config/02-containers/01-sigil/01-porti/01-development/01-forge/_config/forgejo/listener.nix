@@ -17,7 +17,7 @@ in {
       forgejo = {
         serviceConfig = {
           IPAddressAllow = [
-            (with forgejo.settings.server; toString HTTP_PORT)
+            (with forgejo.settings.server; HTTP_ADDR)
           ];
         };
       };
