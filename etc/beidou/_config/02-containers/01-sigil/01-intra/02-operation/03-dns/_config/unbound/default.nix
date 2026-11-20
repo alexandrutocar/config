@@ -135,7 +135,7 @@ in {
             SOA = {
               nameServer = "beidou.ns.intra.net.internal.";
               minimum = 86400;
-              serial = 2026082701;
+              serial = 2026112001;
               retry = 1800;
               expire = 604800;
               refresh = 3600;
@@ -157,9 +157,6 @@ in {
                 }
                 {
                   "directory" = {
-                    inherit AAAA;
-                  };
-                  "forge.dev" = {
                     inherit AAAA;
                   };
                   "ollama.ai" = {

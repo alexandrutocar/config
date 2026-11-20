@@ -33,7 +33,7 @@ in let
       version = "unstable-451b3c4b1d4b83e5f023fca1ccbeabbd2155de68";
 
       src = fetchFromForgejo {
-        domain = "forge.dev.intra.net.internal";
+        domain = "forge.ueuie.earth";
         owner = "alex";
         repo = "web";
         rev = "451b3c4b1d4b83e5f023fca1ccbeabbd2155de68";

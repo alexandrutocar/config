@@ -42,28 +42,6 @@ in {
                         allowedTraffic = [
                           {
                             protocol = "tcp";
-                            ports = [22];
-                          }
-                        ];
-
-                        # ────────────────────────────────────────────────────────────────────────
-                        # NOTE: Only Albedo may connect via SSH.
-                        # ────────────────────────────────────────────────────────────────────────
-                        sourceAddresses = let
-                          allowedHosts =
-                            (with radii.site; [
-                              albedo
-                            ])
-                            |> map (h: h.hostAddress);
-                        in
-                          allowedHosts;
-                      }
-                      {
-                        inherit destinationAddresses;
-
-                        allowedTraffic = [
-                          {
-                            protocol = "tcp";
                             ports = [80];
                           }
                         ];
@@ -93,16 +71,13 @@ in {
                         sourceAddresses = let
                           allowedContainers =
                             (with containers.intra; [
-                              a4205b50-197a-40c8-8057-fe1394630e91 # automation/n8n       ->  development/forge, automation/ollama
-                              acda4bf3-2678-43c5-bae9-e67bd8cb710d # development/forge    ->  operation/auth
-                              fe616e36-c9d0-4ba9-8938-436e75ef0dc0 # development/actions  ->  automation/workflows
+                              a4205b50-197a-40c8-8057-fe1394630e91 # automation/n8n       ->  automation/ollama
                             ])
                             |> map getULA;
 
                           allowedHosts =
                             (with radii.site; [
                               albedo
-                              beidou # nix  -> development/forge
                               keqing
                             ])
                             |> map (h: h.hostAddress);

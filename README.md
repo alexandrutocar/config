@@ -2,7 +2,7 @@
 # Reproducible configuration for Albedo (Client), Beidou (Server/On-Premise), Collei (Server/VPS) and Fischl (Server/On-Premise).
 
 > [!NOTE]
-> Mirrors exist on [Codeberg](https://codeberg.org/alexandrutocar/config) and [GitHub](https://github.com/alexandrutocar/config). Issue tracking, milestone planning, and pull requests all take place on a private [Forgejo](https://forgejo.org) instance.
+> Mirrors exist on [Codeberg](https://codeberg.org/alexandrutocar/config) and [GitHub](https://github.com/alexandrutocar/config). Issue tracking, milestone planning, and pull requests all take place on a private Forgejo instance.
 
 > [!IMPORTANT]
 > Portions of this project are developed with assistance from LLM tools. Assistance ranges from small tasks, such as transferring style and formatting between files or finding and fixing errors, to larger ones: planning, reviewing, and iterating on substantial pieces of code (modules, libraries, workflows). All such code is reviewed thoroughly. The conversational parts of the project, including documentation and most comments, are written by hand.

@@ -61,7 +61,6 @@ in {
             concatStringsSep "," (loopback
               ++ [
                 "ollama.ai.intra.net.internal"
-                "forge.dev.intra.net.internal"
               ]);
 
           HTTPS_PROXY = url.mkOrigin "http" radii.site.beidou.hostAddress 8888;
