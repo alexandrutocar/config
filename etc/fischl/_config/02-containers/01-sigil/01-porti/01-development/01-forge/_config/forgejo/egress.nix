@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   ...
@@ -68,7 +69,13 @@ in {
         # Catch-all for HTTP clients (Go default transport, git, curl) that
         # do not use Forgejo's [proxy] settings.
         environment = let
-          exclude = concatStringsSep "," ["localhost" "127.0.0.1" "::1" "guard.ueuie.earth"];
+          exclude = concatStringsSep "," [
+            "localhost"
+            "127.0.0.1"
+            "::1"
+            config.services.forgejo.settings.server.HTTP_ADDR
+            "guard.ueuie.earth"
+          ];
         in {
           HTTP_PROXY = proxy.url;
           http_proxy = proxy.url;
