@@ -38,10 +38,20 @@ in {
 
         "git.config"."http.proxy" = proxy.url;
 
+        "git.timeout" = {
+          DEFAULT = 3600;
+          MIGRATE = 7200;
+          CLONE = 7200;
+          PULL = 3600;
+        };
+
         migrations = {
           # Allow-listed domains skip the local-network check, so they work
           # through the ULA proxy while everything else stays blocked.
           ALLOWED_DOMAINS = concatStringsSep "," mirrors.http;
+
+          # Migrating large repositories may fail on first attempt.
+          MAX_ATTEMPTS = 3;
         };
 
         # Queries a DNS TXT record, which would bypass the proxy.

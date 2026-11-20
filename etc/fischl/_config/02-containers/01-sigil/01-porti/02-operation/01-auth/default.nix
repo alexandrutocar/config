@@ -112,6 +112,13 @@ in {
                 RandomizedDelaySec = "5m";
                 Persistent = true;
               };
+
+              extraBackupArgs = [
+                # ────────────────────────────────────────────────────────────────────────
+                # NOTE: Backup should not congest uplink. This is a temporary solution.
+                # ────────────────────────────────────────────────────────────────────────
+                "--limit-upload 1024"
+              ];
             }
             {
               # Maintenance/Pruning
@@ -181,6 +188,12 @@ in {
   systemd.services = {
     ${backup.serviceName} = {
       serviceConfig = {
+        # ────────────────────────────────────────────────────────────────────────
+        # NOTE: Backup should not take up tpp many resources.
+        # ────────────────────────────────────────────────────────────────────────
+        CPUSchedulingPolicy = "idle";
+        IOSchedulingClass = "idle";
+
         SetCredentialEncrypted = mkSetCredentialEncrypted {
           # tr -dc 'a-f0-9' < /dev/urandom | head -c 64 | systemd-creds encrypt --with-key=host+tpm2 --name=password - -
           "password" = ''
