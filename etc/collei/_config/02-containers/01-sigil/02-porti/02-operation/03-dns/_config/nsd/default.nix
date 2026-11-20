@@ -6,7 +6,7 @@
 }: let
   inherit (lib.extra) ip url;
   inherit (lib.extra.sigil) getGUA getULA;
-  inherit (lib.modules) mkForce;
+  inherit (lib.modules) mkForce mkMerge;
 in {
   services.nsd = {
     enable = true;
@@ -37,8 +37,11 @@ in {
 
       zone = let
         target = {
-          proxy = {
-            _main = sigil.containers.porti.c8ac5cd5-7563-4e68-9dce-68bb11224eab |> getGUA |> ip.toCompressed;
+          proxy = let
+            target = sigil.containers.porti.c8ac5cd5-7563-4e68-9dce-68bb11224eab;
+          in {
+            _main = target |> getGUA |> ip.toCompressed;
+            forge = target.addresses.ipv6.extra.gua.forge |> ip.toCompressed;
           };
           dns = sigil.self |> getGUA |> ip.toCompressed;
         };
@@ -51,7 +54,7 @@ in {
           SOA = {
             nameServer = "vega.ns.ueuie.earth.";
             minimum = 3600;
-            serial = 2026082801;
+            serial = 2026111901;
             retry = 3600;
             expire = 1209600;
             refresh = 10800;
@@ -64,21 +67,35 @@ in {
             "tara.ns.ueuie.earth."
           ];
 
-          subdomains = let
-            AAAA = [
-              target.dns
-            ];
-          in {
-            "vega.ns" = {
-              inherit AAAA;
-            };
-            "dara.ns" = {
-              inherit AAAA;
-            };
-            "tara.ns" = {
-              inherit AAAA;
-            };
-          };
+          subdomains = mkMerge [
+            {
+              "forge" = {
+                AAAA = with target.proxy; [
+                  forge
+                ];
+              };
+              "guard" = {
+                AAAA = with target.proxy; [
+                  _main
+                ];
+              };
+            }
+            (let
+              AAAA = [
+                target.dns
+              ];
+            in {
+              "vega.ns" = {
+                inherit AAAA;
+              };
+              "dara.ns" = {
+                inherit AAAA;
+              };
+              "tara.ns" = {
+                inherit AAAA;
+              };
+            })
+          ];
         })
       ];
     };
