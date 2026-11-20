@@ -15,6 +15,7 @@ in let
   Allow =
     (with beidouContainers.intra; [
       a4205b50-197a-40c8-8057-fe1394630e91 # intra/automation/n8n
+      fe616e36-c9d0-4ba9-8938-436e75ef0dc0 # intra/sharing/runners
     ])
     |> mapPipeline [getULA ip.toCompressed];
 
